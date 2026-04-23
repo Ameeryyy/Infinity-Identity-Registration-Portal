@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>App Lock</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center;
+        }
+
+        .container { width: 85%; max-width: 400px; animation: fadeIn 0.5s; z-index: 10; padding: 30px; border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); }
+        button { padding: 12px 24px; margin-top: 10px; border: 1px solid var(--fg); background: transparent; color: var(--fg); border-radius: 8px; cursor: pointer; font-size: 14px; width: 100%; font-weight: bold; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+        button:hover { background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); }
+        button:active { transform: scale(0.95); }
+        h2 { margin-top: 0; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; }
+        p { margin-top: 0; margin-bottom: 30px; font-size: 14px; opacity: 0.8; line-height: 1.6; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        /* Custom Modal CSS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .modal-desc { font-size: 12px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: rgba(255,255,255,0.1); }
+        .modal-btn:active { transform: scale(0.95); }
+        .modal-btn.danger { color: var(--c-red); border-color: rgba(255,68,68,0.4); background: rgba(255,68,68,0.1); }
+        .modal-btn.danger:hover { background: rgba(255,68,68,0.2); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="minimal-ui">
+    <div class="container" id="lockContainer">
+        <h2>Secure Your App</h2>
+        <p>Click the button below to <strong>verify your identity</strong> using your device's <strong>screen lock</strong> or <strong>fingerprint</strong>.</p>
+        <button onclick="enableLock()">Authenticate & Lock</button>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Title</div>
+            <div class="modal-desc" id="modalDesc">Description goes here...</div>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        function showModal(title, desc, type, confirmCallback = null) {
+            const modal = document.getElementById('customModal');
+            const mTitle = document.getElementById('modalTitle');
+            const mDesc = document.getElementById('modalDesc');
+            const mActions = document.getElementById('modalActions');
+
+            mTitle.innerText = title;
+            mTitle.style.color = type === 'danger' ? 'var(--c-red)' : 'var(--c-yellow)';
+            mDesc.innerText = desc;
+
+            if (type === 'danger' && confirmCallback) {
+                mActions.innerHTML = `
+                    <button class="modal-btn" onclick="closeModal()">CANCEL</button>
+                    <button class="modal-btn danger" id="confirmBtn">RESET</button>
+                `;
+                document.getElementById('confirmBtn').onclick = () => {
+                    closeModal();
+                    confirmCallback();
+                };
+            } else {
+                mActions.innerHTML = `<button class="modal-btn" onclick="closeModal()">DISMISS</button>`;
+            }
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('show');
+        }
+
+        async function enableLock() {
+            const success = await brain.setupAuth();
+            if (success) {
+                const isFirstTime = !brain.settings || !brain.settings.setupComplete;
+                brain.saveSettings({ appLock: true, setupComplete: true });
+                localStorage.removeItem('inf_needs_lock');
+                
+                if (isFirstTime) {
+                    const container = document.getElementById('lockContainer');
+                    container.style.animation = 'none';
+                    container.innerHTML = `
+                        <h2>Thank You!</h2>
+                        <p>Your <strong>setup is complete</strong> and your <strong>identity is now secure</strong>.</p>
+                        <button onclick="window.location.href='agreement.html'">Enter Infinity</button>
+                    `;
+                    setTimeout(() => container.style.animation = 'fadeIn 0.5s', 10);
+                } else {
+                    const returnUrl = localStorage.getItem('inf_lock_return') || 'agreement.html';
+                    localStorage.removeItem('inf_lock_return');
+                    window.location.href = returnUrl;
+                }
+            } else {
+                showModal('Authentication Failed', 'Identity verification failed for this node. Please authenticate again to proceed.', 'warning');
+            }
+        }
+    </script>
+</body>
+</html>

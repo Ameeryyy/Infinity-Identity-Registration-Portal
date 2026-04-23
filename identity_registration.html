@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Name Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { margin-bottom: clamp(25px, 6vw, 35px); position: relative; z-index: 1; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: border-color 0.3s, box-shadow 0.3s; background: transparent; position: relative; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input, .input-wrapper textarea { width: 100%; padding: clamp(12px, 3.5vw, 15px) 16px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3.5vw, 14px); outline: none; font-family: inherit; font-weight: bold; letter-spacing: 1px; border-radius: 12px; }
+        .input-wrapper input::placeholder, .input-wrapper textarea::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: normal; }
+        .input-wrapper input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .char-count { position: absolute; right: 5px; bottom: -20px; font-size: 11px; opacity: 0.6; font-weight: bold; }
+        .warning-text { position: absolute; left: 5px; bottom: -20px; font-size: 11px; color: var(--c-red); opacity: 0; transition: opacity 0.3s; font-weight: bold; pointer-events: none; }
+        .warning-text.show { opacity: 0.8; }
+
+        .btn-edit { background: transparent; border: none; color: inherit; padding: 0 18px; cursor: pointer; opacity: 0.4; transition: opacity 0.3s, transform 0.2s, color 0.3s; display: flex; align-items: center; justify-content: center; height: 100%; }
+        .btn-edit:hover { opacity: 0.8; transform: scale(1.1); color: var(--c-blue); }
+        .btn-edit.active { opacity: 1; color: var(--c-blue); }
+        .btn-edit svg { width: 20px; height: 20px; fill: currentColor; }
+
+        #reasonDropdownGroup { z-index: 50; }
+        .custom-select-wrapper { position: relative; width: 100%; user-select: none; cursor: pointer; }
+        .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: clamp(12px, 3.5vw, 15px) 16px; font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; letter-spacing: 1px; color: inherit; }
+        .custom-select-trigger span { opacity: 0.5; font-weight: normal; transition: opacity 0.3s; }
+        .custom-select-trigger.selected span { opacity: 1; font-weight: bold; }
+        .select-arrow { width: 16px; height: 16px; fill: var(--fg); opacity: 0.5; transition: transform 0.3s ease, fill 0.3s ease; }
+        .custom-select-wrapper.open .select-arrow { transform: rotate(180deg); fill: var(--c-blue); }
+        
+        .custom-options { position: absolute; top: calc(100% + 5px); left: 0; right: 0; background-color: var(--bg) !important; border: 1px solid var(--fg); border-radius: 12px; z-index: 9999; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 30px rgba(0,0,0,0.9); overflow: hidden; backdrop-filter: none; }
+        .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; transform: translateY(0); }
+        .custom-option { padding: 12px 16px; cursor: pointer; font-size: clamp(11px, 3vw, 13px); transition: background 0.2s; border-bottom: 1px solid rgba(128,128,128,0.3); background-color: var(--bg); }
+        .custom-option:last-child { border-bottom: none; }
+        .custom-option:hover, .custom-option.selected { background-color: rgba(128,128,128,0.2); color: var(--c-blue); font-weight: bold; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+        
+        #reasonContainer { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin-top 0.5s ease-in-out, padding-top 0.5s ease-in-out; }
+        #reasonContainer.show { max-height: 800px; opacity: 1; margin-top: 10px; border-top: 1px dashed rgba(128,128,128,0.3); padding-top: 25px; overflow: visible; }
+        
+        #otherReasonGroup { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease; margin-bottom: 0; }
+        #otherReasonGroup.show { max-height: 100px; opacity: 1; margin-bottom: clamp(25px, 6vw, 35px); overflow: visible; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="security.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Identity Nomenclature</strong></h2>
+        <p class="desc">Enter your <strong>legal designation</strong> to initialize the node.</p>
+
+        <div class="input-group">
+            <label style="margin-bottom: 4px;">Name Given at Birth</label>
+            <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-yellow);">* Initials are strictly prohibited. Enter exactly the name given to you.</span>
+            <div class="input-wrapper">
+                <input type="text" id="birthName" maxlength="50" placeholder="ENTER YOUR FULL NAME" oninput="formatName(this); syncNames();" oncopy="return false;" onpaste="return false;" oncut="return false;" ondrop="return false;" oncontextmenu="return false;" autocomplete="off">
+            </div>
+            <span class="warning-text" id="warn-birthName">Minimum 3 characters required.</span>
+            <span class="char-count" id="count-birthName">0/50</span>
+        </div>
+
+        <div class="input-group" style="margin-bottom: 10px;">
+            <label>Current Legal Name</label>
+            <div class="input-wrapper">
+                <input type="text" id="currentName" maxlength="50" placeholder="SAME AS BIRTH NAME" oninput="formatName(this);" disabled oncopy="return false;" onpaste="return false;" oncut="return false;" ondrop="return false;" oncontextmenu="return false;" autocomplete="off">
+                <button type="button" class="btn-edit" id="btnEdit" onclick="toggleEditMode()" title="Edit Name">
+                    <svg viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>
+                </button>
+            </div>
+            <span class="warning-text" id="warn-currentName">Make a valid modification to proceed.</span>
+            <span class="char-count" id="count-currentName">0/50</span>
+        </div>
+
+        <div id="reasonContainer">
+            <div class="input-group" id="reasonDropdownGroup">
+                <label>Reason For Change</label>
+                <div class="input-wrapper custom-select-wrapper" id="customSelect" onclick="toggleDropdown()">
+                    <input type="hidden" id="changeReasonVal" value="">
+                    <div class="custom-select-trigger">
+                        <span id="selectText">SELECT A REASON</span>
+                        <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5-5-5z"/></svg>
+                    </div>
+                    <div class="custom-options">
+                        <div class="custom-option" data-value="Personal Preference" onclick="selectOption(this, event)">Personal Preference / Dislike</div>
+                        <div class="custom-option" data-value="Social Mockery" onclick="selectOption(this, event)">Social Issues / Mockery</div>
+                        <div class="custom-option" data-value="Astrology/Numerology" onclick="selectOption(this, event)">Astrology / Numerology</div>
+                        <div class="custom-option" data-value="Religious/Cultural" onclick="selectOption(this, event)">Religious / Cultural Change</div>
+                        <div class="custom-option" data-value="Other" onclick="selectOption(this, event)">Other (Specify Below)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group" id="otherReasonGroup">
+                <label>Specify Reason</label>
+                <div class="input-wrapper">
+                    <input type="text" id="otherReason" maxlength="50" placeholder="ENTER YOUR SPECIFIC REASON" oninput="formatAlphaNum(this, 50); validateForm();" oncopy="return false;" onpaste="return false;" oncut="return false;" ondrop="return false;" oncontextmenu="return false;" autocomplete="off">
+                </div>
+                <span class="char-count" id="count-otherReason">0/50</span>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 10px;">
+                <label>Detailed Description</label>
+                <div class="input-wrapper" style="padding: 0;">
+                    <textarea id="changeDescription" rows="3" maxlength="100" placeholder="PROVIDE MORE DETAILS ABOUT THE CHANGE (REQUIRED)" oninput="formatAlphaNum(this, 100); validateForm();" style="resize: none;" oncopy="return false;" onpaste="return false;" oncut="return false;" ondrop="return false;" oncontextmenu="return false;" autocomplete="off"></textarea>
+                </div>
+                <span class="char-count" id="count-changeDescription">0/100</span>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let isEditMode = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input[type="text"], textarea').forEach(inp => {
+                ['paste', 'copy', 'cut', 'drop', 'contextmenu'].forEach(evt => {
+                    inp.addEventListener(evt, e => e.preventDefault());
+                });
+                inp.addEventListener('keydown', e => {
+                    if ((e.ctrlKey || e.metaKey) && ['v', 'c', 'x'].includes(e.key.toLowerCase())) {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                const selectWrapper = document.getElementById('customSelect');
+                if (!selectWrapper.contains(e.target)) {
+                    selectWrapper.classList.remove('open');
+                }
+            });
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'security.html';
+
+            const s = brain.settings || {};
+            if(s.birthName) {
+                document.getElementById('birthName').value = s.birthName;
+                document.getElementById('currentName').value = s.currentName || s.birthName;
+                if(s.currentName && s.birthName !== s.currentName) {
+                    isEditMode = true;
+                    document.getElementById('currentName').disabled = false;
+                    document.getElementById('btnEdit').classList.add('active');
+                    
+                    if(s.nameChangeReason) {
+                        document.getElementById('changeReasonVal').value = s.nameChangeReason;
+                        const opt = document.querySelector(`.custom-option[data-value="${s.nameChangeReason}"]`);
+                        if(opt) {
+                            document.getElementById('selectText').innerText = opt.innerText;
+                            document.getElementById('selectText').parentElement.classList.add('selected');
+                            opt.classList.add('selected');
+                        }
+                        if(s.nameChangeReason === 'Other' && s.nameChangeReasonDetails) {
+                            document.getElementById('otherReasonGroup').classList.add('show');
+                            document.getElementById('otherReason').value = s.nameChangeReasonDetails;
+                        }
+                    }
+                    if(s.nameChangeDescription) {
+                        document.getElementById('changeDescription').value = s.nameChangeDescription;
+                    }
+                }
+                
+                updateCharCount('birthName', 50);
+                updateCharCount('currentName', 50);
+                updateCharCount('otherReason', 50);
+                updateCharCount('changeDescription', 100);
+                validateForm();
+                
+                const btn = document.getElementById('btnNext');
+                if (btn.classList.contains('active')) {
+                    btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                    btn.dataset.saved = 'true';
+                }
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function updateCharCount(id, max) {
+            const el = document.getElementById(id);
+            const count = document.getElementById('count-' + id);
+            if(count && el) {
+                if (el.value.length > max) {
+                    el.value = el.value.substring(0, max);
+                }
+                let currentLen = el.value.length;
+                if (currentLen >= max) {
+                    count.innerHTML = `<span style="color: var(--c-red); margin-right: 4px;">MAX</span>${currentLen}/${max}`;
+                } else {
+                    count.innerText = `${currentLen}/${max}`;
+                }
+            }
+        }
+
+        function formatName(el) {
+            markUnsaved();
+            let val = el.value;
+            val = val.replace(/\d/g, ' ');
+            val = val.toUpperCase();
+            val = val.replace(/[^A-Z\s]/g, '');
+            val = val.replace(/\s{2,}/g, ' ');
+            if (val.startsWith(' ')) val = val.trimStart();
+            if (val.length > 50) val = val.substring(0, 50);
+            
+            el.value = val;
+            updateCharCount(el.id, 50);
+            validateForm();
+        }
+
+        function formatAlphaNum(el, max) {
+            markUnsaved();
+            let val = el.value;
+            val = val.toUpperCase();
+            val = val.replace(/[^A-Z0-9\s]/g, '');
+            val = val.replace(/\s{2,}/g, ' ');
+            if (val.startsWith(' ')) val = val.trimStart();
+            if (val.length > max) val = val.substring(0, max);
+            
+            el.value = val;
+            updateCharCount(el.id, max);
+        }
+
+        function syncNames() {
+            if (!isEditMode) {
+                const bName = document.getElementById('birthName').value;
+                const cName = document.getElementById('currentName');
+                cName.value = bName;
+                updateCharCount('currentName', 50);
+            }
+        }
+
+        function toggleDropdown() {
+            document.getElementById('customSelect').classList.toggle('open');
+        }
+
+        function selectOption(el, event) {
+            if(event) event.stopPropagation();
+            markUnsaved();
+            const val = el.getAttribute('data-value');
+            const text = el.innerText;
+            
+            document.getElementById('changeReasonVal').value = val;
+            const triggerText = document.getElementById('selectText');
+            triggerText.innerText = text;
+            triggerText.parentElement.classList.add('selected');
+            
+            document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            
+            document.getElementById('customSelect').classList.remove('open');
+            
+            handleReasonChange(val);
+            validateForm();
+        }
+
+        function handleReasonChange(val) {
+            const otherGroup = document.getElementById('otherReasonGroup');
+            if(val === 'Other') {
+                otherGroup.classList.add('show');
+            } else {
+                otherGroup.classList.remove('show');
+                document.getElementById('otherReason').value = '';
+                updateCharCount('otherReason', 50);
+            }
+        }
+
+        function toggleEditMode() {
+            markUnsaved();
+            isEditMode = !isEditMode;
+            const currentNameInput = document.getElementById('currentName');
+            const btnEdit = document.getElementById('btnEdit');
+            const reasonContainer = document.getElementById('reasonContainer');
+
+            currentNameInput.disabled = !isEditMode;
+            
+            if(isEditMode) {
+                btnEdit.classList.add('active');
+            } else {
+                btnEdit.classList.remove('active');
+                reasonContainer.classList.remove('show');
+                
+                document.getElementById('changeReasonVal').value = '';
+                document.getElementById('selectText').innerText = 'SELECT A REASON';
+                document.getElementById('selectText').parentElement.classList.remove('selected');
+                document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+                
+                document.getElementById('otherReason').value = '';
+                document.getElementById('changeDescription').value = '';
+                document.getElementById('otherReasonGroup').classList.remove('show');
+                
+                updateCharCount('otherReason', 50);
+                updateCharCount('changeDescription', 100);
+                
+                syncNames();
+            }
+            validateForm();
+        }
+
+        function validateForm() {
+            const btn = document.getElementById('btnNext');
+            const bName = document.getElementById('birthName').value.trim();
+            const cName = document.getElementById('currentName').value.trim();
+            const warnBirth = document.getElementById('warn-birthName');
+            const warnCurrent = document.getElementById('warn-currentName');
+            const reasonContainer = document.getElementById('reasonContainer');
+            
+            let valid = true;
+
+            if (bName.length > 0 && bName.length < 3) {
+                warnBirth.classList.add('show');
+                valid = false;
+            } else {
+                warnBirth.classList.remove('show');
+                if (bName.length === 0) valid = false;
+            }
+
+            if (isEditMode) {
+                if (cName.length < 3) {
+                    warnCurrent.innerText = 'Minimum 3 characters required.';
+                    warnCurrent.classList.add('show');
+                    valid = false;
+                    reasonContainer.classList.remove('show');
+                } else if (bName === cName) {
+                    warnCurrent.innerText = 'Name must be different to apply changes.';
+                    warnCurrent.classList.add('show');
+                    valid = false;
+                    reasonContainer.classList.remove('show');
+                } else {
+                    warnCurrent.classList.remove('show');
+                    reasonContainer.classList.add('show');
+                }
+
+                if (reasonContainer.classList.contains('show')) {
+                    const reason = document.getElementById('changeReasonVal').value;
+                    const desc = document.getElementById('changeDescription').value.trim();
+                    
+                    if (!reason || desc.length < 5) {
+                        valid = false;
+                    } else if (reason === 'Other') {
+                        const otherVal = document.getElementById('otherReason').value.trim();
+                        if (otherVal.length < 3) valid = false;
+                    }
+                }
+            } else {
+                warnCurrent.classList.remove('show');
+                reasonContainer.classList.remove('show');
+            }
+            
+            if (valid) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function saveAndProceed() {
+            const btn = document.getElementById('btnNext');
+            const bName = document.getElementById('birthName').value.trim();
+            const cName = document.getElementById('currentName').value.trim();
+
+            btn.classList.add('saved');
+            btn.innerHTML = 'SAVED ✔';
+
+            const userSettings = brain.settings || {};
+            userSettings.birthName = bName;
+            userSettings.currentName = cName;
+            
+            if(isEditMode && bName !== cName) {
+                userSettings.nameChangeReason = document.getElementById('changeReasonVal').value;
+                if(userSettings.nameChangeReason === 'Other') {
+                    userSettings.nameChangeReasonDetails = document.getElementById('otherReason').value.trim();
+                }
+                userSettings.nameChangeDescription = document.getElementById('changeDescription').value.trim();
+            } else {
+                delete userSettings.nameChangeReason;
+                delete userSettings.nameChangeReasonDetails;
+                delete userSettings.nameChangeDescription;
+            }
+            
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'temporal_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

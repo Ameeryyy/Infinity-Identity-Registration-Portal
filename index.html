@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - System Boot</title>
+    
+    <link rel="icon" href="logo.png">
+    <meta property="og:title" content="Infinity Identity - The Universal User Registration Portal">
+    <meta property="og:image" content="https://ameeryyy.github.io/Infinity-Identity-Registration-Portal/share.png">
+    <meta property="og:description" content="Infinity Identity - The World's Most Secure, Mobile-Built Digital Identity Framework. Your private data, under your control.">
+    <meta name="description" content="Infinity Identity - The Universal User Registration Portal. The Future of Digital Citizenship. Built on advanced cryptographic protocols, ensuring your private data remains under your absolute control.">
+
+    <style>
+        :root { 
+            --bg: #000000; 
+            --fg: #ffffff; 
+            --c-blue: #ffffff; /* Initial Pure Theme for Index */
+        }
+        
+        html, body {
+            width: 100vw; height: 100dvh;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+            cursor: default; /* Pure pointer */
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--fg); 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .loader-wrapper {
+            position: relative;
+            width: clamp(80px, 18vmin, 220px); 
+            height: clamp(80px, 18vmin, 220px);
+            margin-bottom: clamp(40px, 8vmin, 80px);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .cyber-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            border: 2px dashed var(--fg);
+            opacity: 0.2;
+            border-radius: 50%;
+            animation: spin 6s linear infinite;
+        }
+
+        .cyber-ring-inner {
+            position: absolute;
+            width: 70%; height: 70%;
+            border: 1.5px solid transparent;
+            border-top-color: var(--c-blue);
+            border-bottom-color: var(--c-blue);
+            opacity: 0.8;
+            border-radius: 50%;
+            animation: spinReverse 2s ease-in-out infinite;
+        }
+
+        .cyber-core {
+            position: absolute;
+            width: clamp(14px, 3vmin, 40px); 
+            height: clamp(14px, 3vmin, 40px);
+            background: var(--c-blue);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+
+        .brand-name {
+            font-size: clamp(18px, 4vmin, 50px);
+            font-weight: bold;
+            letter-spacing: clamp(5px, 1.2vmin, 18px);
+            text-transform: uppercase;
+            margin-bottom: clamp(15px, 3vmin, 30px);
+            animation: fadeIn 1s ease-in-out;
+            text-align: center;
+        }
+
+        .status-text {
+            font-size: clamp(11px, 2vmin, 24px);
+            font-weight: bold;
+            opacity: 0.8;
+            color: var(--c-blue);
+            letter-spacing: clamp(3px, 1vmin, 10px);
+            text-transform: uppercase;
+            animation: blink 1.2s infinite alternate;
+            text-align: center;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spinReverse { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
+        @keyframes pulse { 
+            0% { transform: scale(0.8); opacity: 0.7; box-shadow: 0 0 10px 2px var(--c-blue); } 
+            100% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 25px 5px var(--c-blue); } 
+        }
+        @keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="loader-wrapper">
+        <div class="cyber-ring"></div>
+        <div class="cyber-ring-inner"></div>
+        <div class="cyber-core"></div>
+    </div>
+    <div class="brand-name">Infinity Identity</div>
+    <div class="status-text">USER REGISTRATION</div>
+    
+    <script src="brain.js"></script>
+    <script>
+        // Index page starts with pure monochrome style
+        setTimeout(() => {
+            const isFirstVisit = !brain.settings || Object.keys(brain.settings).length === 0 || !brain.settings.theme;
+            window.location.href = isFirstVisit ? 'setup.html' : 'landing.html';
+        }, 3000);
+    </script>
+</body>
+</html>

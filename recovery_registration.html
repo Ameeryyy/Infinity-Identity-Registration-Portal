@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Security Questions</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); z-index: 10; }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 12px; font-size: clamp(24px, 7vw, 32px); text-align: center; color: var(--c-blue); }
+        p.desc { font-size: 12px; opacity: 0.7; text-align: center; margin-bottom: 15px; line-height: 1.6; padding: 0 10px; }
+        p.desc strong { color: var(--c-blue); opacity: 1; }
+
+        .instructions { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 25px; display: flex; flex-direction: column; gap: 5px; text-align: center; }
+        .instructions .warn-red { color: var(--c-red); }
+        .instructions .warn-yellow { color: var(--c-yellow); font-size: 9px; opacity: 0.9; }
+        
+        .counter-badge { display: inline-block; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; font-size: 10px; font-weight: bold; letter-spacing: 2px; margin-bottom: 25px; text-align: center; width: 100%; box-sizing: border-box; transition: all 0.3s; text-transform: uppercase; color: var(--fg); }
+        .counter-badge.valid { background: rgba(0, 200, 81, 0.1); border-color: var(--c-green); color: var(--c-green); text-shadow: 0 0 10px rgba(0,200,81,0.5); }
+        
+        .questions-list { display: flex; flex-direction: column; }
+        
+        .q-card { border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; overflow: hidden; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); background: transparent; }
+        
+        .q-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; opacity: 0.7; transition: 0.3s; user-select: none; letter-spacing: 0.5px; }
+        .q-header span { color: inherit; }
+        .btn-delete { cursor: pointer; opacity: 0.5; fill: var(--c-red); transition: 0.3s; flex-shrink: 0; width: 18px; height: 18px; }
+        .btn-delete:hover { opacity: 1; transform: scale(1.1); }
+
+        .add-form-card { border: 1px solid var(--c-blue); background: rgba(0, 123, 255, 0.02); border-radius: 12px; padding: 20px 16px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,123,255,0.05); }
+        .add-form-title { font-size: 11px; font-weight: bold; color: var(--c-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; text-align: center; }
+
+        .input-group { margin-bottom: 15px; position: relative; }
+        
+        .custom-select-wrapper { display: flex; flex-direction: column; width: 100%; user-select: none; cursor: pointer; position: relative; z-index: 20; }
+        .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 0 15px; height: 48px; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-size: 12px; font-weight: bold; letter-spacing: 1px; color: inherit; transition: 0.3s; box-sizing: border-box; background: transparent; }
+        .custom-select-wrapper.open .custom-select-trigger { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .custom-select-trigger span { opacity: 0.5; font-weight: normal; transition: 0.3s; text-transform: uppercase; }
+        .custom-select-trigger.selected span { opacity: 1; font-weight: bold; }
+        .select-arrow { width: 16px; height: 16px; fill: var(--fg); opacity: 0.5; transition: transform 0.3s ease; }
+        .custom-select-wrapper.open .select-arrow { transform: rotate(180deg); fill: var(--c-blue); }
+        
+        .custom-options { position: absolute; top: 100%; left: 0; width: 100%; background-color: #111111; border-radius: 12px; opacity: 0; visibility: hidden; transition: all 0.3s ease; overflow-y: auto; max-height: 0; padding: 0; margin-top: 0; border: none; box-sizing: border-box; z-index: 20; }
+        .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; max-height: 220px; padding: 5px 0; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .custom-options::-webkit-scrollbar { width: 4px; }
+        .custom-options::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .custom-option { padding: 12px 15px; cursor: pointer; font-size: 11px; transition: 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: bold; text-transform: uppercase; line-height: 1.4; color: rgba(255,255,255,0.8); }
+        .custom-option:last-child { border-bottom: none; }
+        .custom-option:hover, .custom-option.selected { background-color: rgba(255,255,255,0.05); color: var(--c-blue); }
+        .custom-option.custom-add { color: var(--c-yellow); text-align: center; }
+
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 48px; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 13px; outline: none; font-family: inherit; font-weight: bold; letter-spacing: 1px; width: 100%; min-width: 0; text-transform: uppercase; height: 100%; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: normal; }
+
+        .btn-add-custom { width: 100%; padding: 14px; background: rgba(0, 123, 255, 0.1); border: 1px dashed var(--c-blue); color: var(--c-blue); border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-add-custom:hover:not(:disabled) { background: var(--c-blue); color: #fff; border-style: solid; }
+        .btn-add-custom:disabled { opacity: 0.2; pointer-events: none; border-color: rgba(255,255,255,0.2); color: var(--fg); background: transparent; }
+        .btn-add-custom svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .btn-next { width: 100%; padding: 16px; background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="password_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Recovery Nodes</h2>
+        <p class="desc">Set security checkpoints to recover your <strong>cryptographic key</strong> if lost.</p>
+        
+        <div class="instructions">
+            <span class="warn-red">WARNING: SECURE YOUR RECOVERY ANSWERS</span>
+            <span class="warn-yellow">THESE ARE THE ONLY BACKUP TO RESTORE YOUR NODE ACCESS</span>
+        </div>
+        
+        <div class="counter-badge" id="counterBadge">SELECTED: 0 / 3 (MINIMUM)</div>
+        
+        <div class="questions-list" id="addedQuestionsList"></div>
+        
+        <div class="add-form-card" id="addFormCard">
+            <div class="add-form-title">Configure New Node</div>
+            
+            <div class="input-group">
+                <div class="custom-select-wrapper" id="qSelect" onclick="toggleQDropdown()">
+                    <input type="hidden" id="qVal" value="">
+                    <div class="custom-select-trigger">
+                        <span id="qSelectText">SELECT A QUESTION</span>
+                        <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                    <div class="custom-options" id="qOptions"></div>
+                </div>
+            </div>
+
+            <div class="input-group" id="customQGroup" style="display: none;">
+                <div class="input-wrapper">
+                    <input type="text" id="customQInput" placeholder="ENTER CUSTOM QUESTION" oninput="validateAdd()" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <input type="text" id="aInput" placeholder="YOUR SECURE ANSWER" oninput="validateAdd()" autocomplete="off">
+                </div>
+            </div>
+
+            <button class="btn-add-custom" id="btnAddNode" onclick="addNode()" disabled>
+                <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+                SAVE & ADD NEXT
+            </button>
+        </div>
+        
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        const predefinedQuestions = [
+            "What is the name of your first pet?",
+            "Where is your ancestral house located?",
+            "What was your childhood nickname?",
+            "What is the name of your favorite childhood friend?",
+            "In which city did your parents meet?",
+            "What is the name of your favorite teacher?",
+            "What was the model of your first vehicle?"
+        ];
+        
+        let recoveryNodes = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            const backBtn = document.getElementById('backBtn');
+            if (backBtn) backBtn.href = isEdit ? 'edit.html' : 'password_registration.html';
+            
+            buildDropdown();
+            
+            const s = brain.settings || {};
+            if (s.recoveryHints && s.recoveryHints.length > 0) {
+                recoveryNodes = [...s.recoveryHints];
+                renderNodes();
+                
+                if (recoveryNodes.length >= 3) {
+                    const btn = document.getElementById('btnNext');
+                    btn.classList.add('active');
+                    btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                    btn.dataset.saved = 'true';
+                }
+            }
+            
+            document.addEventListener('click', (e) => {
+                const select = document.getElementById('qSelect');
+                if (select && !select.contains(e.target)) select.classList.remove('open');
+            });
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function buildDropdown() {
+            const optionsContainer = document.getElementById('qOptions');
+            optionsContainer.innerHTML = '';
+            
+            predefinedQuestions.forEach((q, index) => {
+                const opt = document.createElement('div');
+                opt.className = 'custom-option';
+                opt.setAttribute('data-value', index);
+                opt.innerText = q;
+                opt.onclick = (e) => selectQOption(opt, e);
+                optionsContainer.appendChild(opt);
+            });
+            
+            const customOpt = document.createElement('div');
+            customOpt.className = 'custom-option custom-add';
+            customOpt.setAttribute('data-value', 'custom');
+            customOpt.innerText = '+ WRITE CUSTOM QUESTION';
+            customOpt.onclick = (e) => selectQOption(customOpt, e);
+            optionsContainer.appendChild(customOpt);
+        }
+
+        function toggleQDropdown() {
+            document.getElementById('qSelect').classList.toggle('open');
+        }
+
+        function selectQOption(el, e) {
+            if(e) e.stopPropagation();
+            const val = el.getAttribute('data-value');
+            const text = el.innerText;
+            
+            document.getElementById('qVal').value = val;
+            const triggerText = document.getElementById('qSelectText');
+            triggerText.innerText = text;
+            triggerText.parentElement.classList.add('selected');
+            
+            document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            
+            document.getElementById('qSelect').classList.remove('open');
+            
+            const customGroup = document.getElementById('customQGroup');
+            if (val === 'custom') {
+                customGroup.style.display = 'block';
+                setTimeout(() => document.getElementById('customQInput').focus(), 50);
+            } else {
+                customGroup.style.display = 'none';
+                setTimeout(() => document.getElementById('aInput').focus(), 50);
+            }
+            validateAdd();
+        }
+
+        function formatText(el) {
+            el.value = el.value.toUpperCase().replace(/[^A-Z0-9 ?\-\.\,]/g, '');
+        }
+
+        function validateAdd() {
+            const qVal = document.getElementById('qVal').value;
+            const customQ = document.getElementById('customQInput');
+            const ans = document.getElementById('aInput');
+            
+            formatText(customQ);
+            formatText(ans);
+            
+            let isValid = true;
+            if (!qVal) isValid = false;
+            if (qVal === 'custom' && customQ.value.trim().length < 5) isValid = false;
+            if (ans.value.trim().length < 3) isValid = false;
+            
+            const btn = document.getElementById('btnAddNode');
+            if (isValid) {
+                btn.removeAttribute('disabled');
+            } else {
+                btn.setAttribute('disabled', 'true');
+            }
+        }
+
+        function addNode() {
+            markUnsaved();
+            const qVal = document.getElementById('qVal').value;
+            const customQ = document.getElementById('customQInput').value.trim();
+            const ans = document.getElementById('aInput').value.trim();
+            
+            let questionText = qVal === 'custom' ? customQ : predefinedQuestions[parseInt(qVal)].toUpperCase();
+            
+            recoveryNodes.push({ question: questionText, answer: ans });
+            
+            // Reset Form
+            document.getElementById('qVal').value = '';
+            document.getElementById('qSelectText').innerText = 'SELECT A QUESTION';
+            document.getElementById('qSelectText').parentElement.classList.remove('selected');
+            document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+            document.getElementById('customQGroup').style.display = 'none';
+            document.getElementById('customQInput').value = '';
+            document.getElementById('aInput').value = '';
+            validateAdd();
+            
+            renderNodes();
+        }
+
+        function removeNode(index) {
+            markUnsaved();
+            recoveryNodes.splice(index, 1);
+            renderNodes();
+        }
+
+        function renderNodes() {
+            const list = document.getElementById('addedQuestionsList');
+            list.innerHTML = '';
+            
+            recoveryNodes.forEach((node, index) => {
+                const card = document.createElement('div');
+                card.className = 'q-card';
+                card.style.borderColor = 'var(--c-green)';
+                card.style.background = 'rgba(0, 200, 81, 0.05)';
+                card.style.marginBottom = '15px';
+                card.innerHTML = `
+                    <div class="q-header" style="opacity: 1;">
+                        <span style="font-size: 11px; line-height: 1.4; padding-right: 15px; color: var(--c-green);">${index + 1}. ${node.question}</span>
+                        <svg viewBox="0 0 24 24" class="btn-delete" onclick="removeNode(${index})"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+            
+            const counter = document.getElementById('counterBadge');
+            counter.innerText = `SELECTED: ${recoveryNodes.length} / 3 (MINIMUM)`;
+            
+            if (recoveryNodes.length >= 3) {
+                counter.classList.add('valid');
+                document.getElementById('btnNext').classList.add('active');
+            } else {
+                counter.classList.remove('valid');
+                document.getElementById('btnNext').classList.remove('active');
+            }
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+            
+            const btnNext = document.getElementById('btnNext');
+            btnNext.classList.add('saved');
+            btnNext.innerHTML = 'SAVED ✔';
+            
+            const userSettings = brain.settings || {};
+            userSettings.recoveryHints = recoveryNodes;
+            brain.saveSettings(userSettings);
+            
+            setTimeout(() => { 
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'edit.html'; 
+            }, 800);
+        }
+    </script>
+</body>
+</html>

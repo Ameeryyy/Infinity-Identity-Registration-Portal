@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Human Verification</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+
+        .container { text-align: center; animation: fadeIn 0.5s; z-index: 10; display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 400px; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(24px, 7vw, 32px); color: var(--c-blue); }
+        p.desc { font-size: 12px; opacity: 0.7; margin-bottom: 40px; line-height: 1.6; padding: 0 10px; }
+
+        /* reCAPTCHA Box Styles */
+        .recaptcha-box { width: 100%; max-width: 320px; margin: 0 auto 30px auto; background: #111111; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-sizing: border-box; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .rc-left { display: flex; align-items: center; gap: 15px; }
+        .rc-checkbox { width: 24px; height: 24px; border: 2px solid #888888; border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; background: #ffffff; box-sizing: border-box; }
+        .rc-checkbox.loading { border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--c-blue); border-radius: 50%; background: transparent; animation: spin 1s linear infinite; }
+        .rc-checkbox.checked { border: none; background: transparent; }
+        .rc-checkbox.checked::after { content: '✔'; color: var(--c-green); font-size: 26px; font-weight: bold; text-shadow: 0 0 10px rgba(0,200,81,0.5); }
+        .rc-text { font-size: 13px; font-weight: bold; color: #ffffff; letter-spacing: 0.5px; }
+        .rc-logo { display: flex; flex-direction: column; align-items: center; opacity: 0.7; }
+        .rc-logo svg { width: 26px; height: 26px; fill: var(--c-blue); }
+        .rc-logo span { font-size: 9px; margin-top: 4px; letter-spacing: 1px; color: rgba(255,255,255,0.8); }
+
+        .verification-area { display: none; width: 100%; flex-direction: column; align-items: center; animation: fadeIn 0.5s; }
+        .verification-area.show { display: flex; }
+
+        /* Inner Challenge Styles */
+        .v-box { width: 100%; min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .hold-container { position: relative; width: 120px; height: 120px; margin: 0 auto 30px auto; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; touch-action: none; }
+        .hold-progress { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(var(--c-blue) 0%, transparent 0%); transition: background 0.1s; }
+        .hold-btn { position: absolute; top: 5px; left: 5px; width: 110px; height: 110px; background: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.1); box-sizing: border-box; font-weight: bold; font-size: 13px; letter-spacing: 2px; transition: 0.3s; z-index: 2; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .hold-container:active .hold-btn { transform: scale(0.95); border-color: rgba(0, 123, 255, 0.5); }
+        .hold-btn.success { border-color: var(--c-green); color: var(--c-green); font-size: 40px; }
+        
+        .slide-container { width: 280px; height: 60px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; position: relative; overflow: hidden; margin: 0 auto 30px auto; }
+        .slide-track { position: absolute; top: 0; left: 0; height: 100%; background: var(--c-blue); opacity: 0.2; width: 0; transition: width 0.1s; }
+        .slide-thumb { position: absolute; top: 5px; left: 5px; width: 50px; height: 50px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: grab; z-index: 3; }
+        .slide-thumb svg { width: 24px; height: 24px; fill: #000000; }
+        .slide-text { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; letter-spacing: 1px; opacity: 0.4; pointer-events: none; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 240px; margin: 0 auto 30px auto; }
+        .grid-item { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .grid-item:active { transform: scale(0.9); }
+        .grid-item svg { width: 30px; height: 30px; fill: rgba(255,255,255,0.4); }
+        .grid-item.target svg { fill: var(--c-blue); }
+
+        .success-pulse { animation: pulseGreen 1.5s infinite; }
+        .status-msg { font-size: 11px; font-weight: bold; letter-spacing: 2px; opacity: 0.5; text-transform: uppercase; transition: 0.3s; height: 15px; }
+
+        .btn-restart { display: none; margin-top: 15px; padding: 12px 25px; background: transparent; color: var(--c-red); border: 1px solid var(--c-red); border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; }
+        .btn-restart:active { background: rgba(255, 68, 68, 0.1); transform: scale(0.95); }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(0, 200, 81, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(0, 200, 81, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 200, 81, 0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <a href="edit.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2 id="titleMain">Human Verification</h2>
+        <p class="desc" id="descMain">Prove physical presence to finalize the cryptographic node sequence.</p>
+
+        <div class="recaptcha-box" id="recaptchaBox" onclick="clickRecaptcha()">
+            <div class="rc-left">
+                <div class="rc-checkbox" id="rcCheckbox"></div>
+                <div class="rc-text">I'm not a robot</div>
+            </div>
+            <div class="rc-logo">
+                <svg viewBox="0 0 24 24"><path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,3.19L19,6.3V11C19,15.52 16.08,19.78 12,20.93C7.92,19.78 5,15.52 5,11V6.3L12,3.19M11,7V9H13V7H11M11,11V17H13V11H11Z"/></svg>
+                <span>reCAPTCHA</span>
+            </div>
+        </div>
+
+        <div class="verification-area" id="verificationArea">
+            <div class="v-box" id="vBox"></div>
+            <div class="status-msg" id="statusMsg">INITIALIZING...</div>
+            <button class="btn-restart" id="btnRestart" onclick="initVerification()">Restart Verification</button>
+        </div>
+
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const vBox = document.getElementById('vBox');
+        const statusMsg = document.getElementById('statusMsg');
+        const btnRestart = document.getElementById('btnRestart');
+        
+        let testCount = 0;
+        let isVerified = false;
+        let isRcChecked = false;
+        const methods = ['hold', 'slide', 'grid'];
+
+        function clickRecaptcha() {
+            if (isRcChecked) return;
+            const cb = document.getElementById('rcCheckbox');
+            cb.className = 'rc-checkbox loading';
+            
+            setTimeout(() => {
+                cb.className = 'rc-checkbox checked';
+                isRcChecked = true;
+                
+                setTimeout(() => {
+                    document.getElementById('recaptchaBox').style.display = 'none';
+                    document.getElementById('verificationArea').classList.add('show');
+                    initVerification();
+                }, 800);
+            }, 1000);
+        }
+
+        function initVerification() {
+            btnRestart.style.display = 'none';
+            vBox.innerHTML = '';
+            statusMsg.style.color = 'var(--fg)';
+            statusMsg.style.opacity = '0.5';
+            
+            const randomMethod = methods[Math.floor(Math.random() * methods.length)];
+            if (randomMethod === 'hold') setupHold();
+            else if (randomMethod === 'slide') setupSlide();
+            else if (randomMethod === 'grid') setupGrid();
+        }
+
+        function fail(msg) {
+            statusMsg.innerText = msg;
+            statusMsg.style.color = 'var(--c-red)';
+            statusMsg.style.opacity = '1';
+            btnRestart.style.display = 'block';
+            vBox.innerHTML = '<div style="color:var(--c-red); font-weight:bold; font-size:12px; letter-spacing:1px;">BOT DETECTION TRIGGERED</div>';
+        }
+
+        function success() {
+            testCount++;
+            if (testCount < (Math.random() > 0.7 ? 2 : 1)) {
+                statusMsg.innerText = "PRIMARY TEST PASSED. SECONDARY TEST REQUIRED.";
+                statusMsg.style.opacity = '1';
+                setTimeout(initVerification, 1000);
+            } else {
+                isVerified = true;
+                statusMsg.innerText = "HUMAN ENTITY CONFIRMED";
+                statusMsg.style.color = 'var(--c-green)';
+                statusMsg.style.opacity = '1';
+                setTimeout(() => window.location.href = 'payment.html', 1200);
+            }
+        }
+
+        function setupHold() {
+            statusMsg.innerText = "PRESS AND HOLD TO CONFIRM";
+            vBox.innerHTML = `
+                <div class="hold-container" id="hc">
+                    <div class="hold-progress" id="hp"></div>
+                    <div class="hold-btn" id="hb">HOLD</div>
+                </div>`;
+            
+            let hb = document.getElementById('hb');
+            let hp = document.getElementById('hp');
+            let timer, progress = 0;
+
+            const start = (e) => {
+                e.preventDefault();
+                statusMsg.innerText = "VERIFYING BIOMETRIC PRESENCE...";
+                statusMsg.style.opacity = '1';
+                statusMsg.style.color = 'var(--c-blue)';
+                timer = setInterval(() => {
+                    progress += 2;
+                    hp.style.background = `conic-gradient(var(--c-blue) ${progress}%, transparent 0%)`;
+                    if (progress >= 100) { 
+                        clearInterval(timer); 
+                        hb.innerHTML = '✔';
+                        hb.classList.add('success', 'success-pulse');
+                        hp.style.background = `conic-gradient(var(--c-green) 100%, transparent 100%)`;
+                        success(); 
+                    }
+                }, 30);
+            };
+            
+            const end = () => {
+                clearInterval(timer);
+                if (progress < 100 && progress > 0) { 
+                    progress = 0; 
+                    hp.style.background = 'none'; 
+                    fail("HOLD INTERRUPTED. TRY AGAIN."); 
+                }
+            };
+
+            hb.addEventListener('mousedown', start);
+            hb.addEventListener('touchstart', start, {passive: false});
+            window.addEventListener('mouseup', end);
+            window.addEventListener('touchend', end);
+        }
+
+        function setupSlide() {
+            statusMsg.innerText = "SWIPE TO VERIFY";
+            vBox.innerHTML = `
+                <div class="slide-container">
+                    <div class="slide-text">SWIPE TO RIGHT</div>
+                    <div class="slide-track" id="st"></div>
+                    <div class="slide-thumb" id="sl">
+                        <svg viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
+                    </div>
+                </div>`;
+                
+            let sl = document.getElementById('sl');
+            let st = document.getElementById('st');
+            let active = false, startX;
+
+            const move = (e) => {
+                if (!active) return;
+                let x = (e.pageX || e.touches[0].pageX) - startX;
+                x = Math.max(0, Math.min(x, 230)); 
+                sl.style.transform = `translateX(${x}px)`;
+                st.style.width = `${x + 50}px`;
+                if (x >= 220) { 
+                    active = false; 
+                    success(); 
+                }
+            };
+
+            const end = () => { 
+                if (active) { 
+                    active = false; 
+                    sl.style.transform = 'none'; 
+                    st.style.width = '0'; 
+                    fail("SWIPE INCOMPLETE"); 
+                } 
+            };
+
+            sl.addEventListener('mousedown', (e) => { active = true; startX = e.pageX; });
+            sl.addEventListener('touchstart', (e) => { active = true; startX = e.touches[0].pageX; }, {passive: false});
+            window.addEventListener('mousemove', move);
+            window.addEventListener('touchmove', move, {passive: false});
+            window.addEventListener('mouseup', end);
+            window.addEventListener('touchend', end);
+        }
+
+        function setupGrid() {
+            statusMsg.innerText = "SELECT THE HIGHLIGHTED NODE";
+            vBox.innerHTML = `<div class="grid-container" id="gc"></div>`;
+            
+            let gc = document.getElementById('gc');
+            let target = Math.floor(Math.random() * 9);
+            
+            for (let i = 0; i < 9; i++) {
+                let div = document.createElement('div');
+                div.className = 'grid-item' + (i === target ? ' target' : '');
+                div.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2Z"/></svg>`;
+                div.onclick = () => { 
+                    if (i === target) success(); 
+                    else fail("WRONG NODE SELECTED"); 
+                };
+                gc.appendChild(div);
+            }
+        }
+    </script>
+</body>
+</html>

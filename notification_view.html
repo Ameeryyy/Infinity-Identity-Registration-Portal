@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Notification Details</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+        }
+
+        /* Re-usable styles */
+        .card-base { border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); position: relative; overflow: hidden; display: flex; }
+        .card-warning::before { content: ''; position: absolute; left: 0; top: 0; right: 0; height: 4px; background: var(--c-yellow); opacity: 1; transition: 0.3s; }
+        .card-warning .d-icon { color: var(--c-yellow); background: rgba(255, 187, 51, 0.1); }
+        .card-danger::before { background: var(--c-red); opacity: 1; }
+        .card-danger .d-icon { color: var(--c-red); background: rgba(255, 68, 68, 0.1); }
+
+        .btn-base { padding: 8px 16px; border: none; border-radius: 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-action-primary { background: var(--c-blue); color: #fff; }
+        .btn-action-secondary { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--fg); }
+        .btn-danger-fill { background: var(--c-red); color: #fff; }
+
+        .top-left { position: fixed; top: clamp(15px, 4vw, 25px); left: clamp(15px, 4vw, 25px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 100; background: var(--bg); padding: 5px; border-radius: 50%; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 5vw, 24px); height: clamp(20px, 5vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 600px; animation: fadeIn 0.5s; margin: clamp(60px, 10vh, 80px) auto clamp(40px, 8vh, 60px) auto; padding-bottom: 40px; text-align: center; z-index: 10; position: relative; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        
+        .detail-card { flex-direction: column; align-items: center; text-align: center; gap: 20px; padding: clamp(25px, 6vw, 40px); }
+        
+        .detail-card.success::before { background: var(--c-green); opacity: 1; }
+        .detail-card.success .d-icon { color: var(--c-green); background: rgba(0, 200, 81, 0.1); }
+
+        .detail-card.danger::before { background: var(--c-red); opacity: 1; }
+        .detail-card.danger .d-icon { color: var(--c-red); background: rgba(255, 68, 68, 0.1); }
+
+        .detail-card.warning::before { background: var(--c-yellow); opacity: 1; }
+        .detail-card.warning .d-icon { color: var(--c-yellow); background: rgba(255, 187, 51, 0.1); }
+
+        .detail-card.info::before { background: var(--c-blue); opacity: 1; }
+        .detail-card.info .d-icon { color: var(--c-blue); background: rgba(0, 123, 255, 0.1); }
+
+        .d-icon { width: clamp(60px, 15vw, 80px); height: clamp(60px, 15vw, 80px); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); margin-bottom: 10px; }
+        .d-icon svg { width: clamp(30px, 8vw, 40px); height: clamp(30px, 8vw, 40px); fill: currentColor; }
+
+        .d-title { font-size: clamp(20px, 6vw, 26px); font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .d-time { font-size: clamp(10px, 3vw, 12px); opacity: 0.5; font-weight: bold; letter-spacing: 2px; }
+        .d-desc { font-size: clamp(14px, 4vw, 16px); opacity: 0.8; line-height: 1.6; margin: 0; }
+
+        .update-meta { font-size: 11px; color: var(--c-yellow); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; padding: 6px 12px; background: rgba(255, 187, 51, 0.1); border-radius: 6px; display: inline-block; border: 1px dashed rgba(255, 187, 51, 0.3); }
+
+        .action-container { width: 100%; margin-top: 10px; }
+        
+        .btn-update { width: 100%; padding: clamp(14px, 4vw, 16px); background: var(--c-blue); color: #fff; border: none; border-radius: 12px; font-size: clamp(13px, 4vw, 15px); font-weight: bold; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-update:hover { background: #0056b3; }
+        .btn-update:active { transform: scale(0.97); }
+        .btn-update svg { width: 18px; height: 18px; fill: currentColor; }
+
+        .update-box { background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 25px 15px; text-align: center; display: none; flex-direction: column; align-items: center; gap: 15px; width: 100%; box-sizing: border-box; }
+        
+        .term-log { font-family: monospace; font-size: 11px; opacity: 0.7; color: var(--c-blue); text-transform: uppercase; letter-spacing: 1px; height: 15px; transition: 0.3s; width: 100%; }
+        
+        .dl-row { display: flex; align-items: center; gap: 10px; width: 100%; }
+        .progress-track { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; position: relative; }
+        .progress-fill { height: 100%; width: 0%; background: var(--c-blue); transition: width 0.2s linear; position: absolute; left: 0; top: 0; }
+        .percent-text { font-size: 13px; font-weight: bold; color: var(--c-blue); font-family: monospace; width: 40px; text-align: right; }
+
+        .update-stats { display: none; justify-content: space-between; width: 100%; font-size: 10px; opacity: 0.9; font-family: monospace; letter-spacing: 1px; }
+
+        .update-warning { font-size: 9px; color: var(--c-red); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px; animation: pulse 2s infinite; display: none; padding: 0 10px; line-height: 1.4; }
+
+        .btn-cancel-update { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--c-red); color: var(--c-red); border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px; display: none; }
+        .btn-cancel-update:hover { background: rgba(255,68,68,0.1); }
+        .btn-cancel-update:active { transform: scale(0.95); }
+
+        .btn-restart { width: 100%; padding: clamp(14px, 4vw, 16px); background: var(--c-green); color: #fff; border: none; border-radius: 12px; font-size: clamp(13px, 4vw, 15px); font-weight: bold; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; text-transform: uppercase; display: none; margin-top: 10px; }
+        .btn-restart:hover { box-shadow: 0 0 20px rgba(0, 200, 81, 0.4); }
+        .btn-restart:active { transform: scale(0.97); }
+
+        /* Custom Exit Modal styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 1001; display: none; align-items: center; justify-content: center; animation: fadeIn 0.3s; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { max-width: 90%; width: 100%; margin: 0; padding: clamp(20px, 5vw, 30px); text-align: center; }
+        .modal-content::before { border-radius: 16px 16px 0 0; }
+        .modal-title { font-size: clamp(18px, 5vw, 22px); font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .modal-desc { font-size: clamp(12px, 3.5vw, 14px); opacity: 0.8; line-height: 1.5; margin: 15px 0 25px 0; }
+        .modal-actions { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+        .modal-btn { width: 100%; padding: 12px; font-size: 11px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+    </style>
+</head>
+<body>
+
+    <a href="notification.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        
+        <div class="detail-card card-base" id="detailCard">
+            <div class="d-icon" id="dIcon"></div>
+            <h2 class="d-title" id="dTitle">Loading...</h2>
+            <div class="d-time" id="dTime">--</div>
+            <p class="d-desc" id="dDesc">Please wait while the notification data is being retrieved.</p>
+            <div id="sizeBadgeContainer"></div>
+            
+            <div class="action-container" id="actionContainer"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="customExitModal">
+        <div class="modal-content card-base card-warning">
+            <div class="d-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M13 16H11V14H13M13 12H11V8H13V12Z"/></svg>
+            </div>
+            <h2 class="modal-title">പ്രക്രിയ പുരോഗമിക്കുന്നു</h2>
+            <p class="modal-desc">നാവിഗേഷൻ ഈ പ്രക്രിയയെ തടസ്സപ്പെടുത്തിയേക്കാം. നിങ്ങൾക്ക് ഉറപ്പാണോ?</p>
+            <div class="modal-actions">
+                <button class="modal-btn btn-base btn-action-primary" onclick="hideCustomExitModal()">ഡൗൺലോഡ് തുടരുക</button>
+                <button class="modal-btn btn-base btn-danger-fill" onclick="cancelAndLeave()">റദ്ദാക്കി പോവുക</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        const notifData = {
+            'accepted': {
+                type: 'success',
+                title: 'Identity Node Accepted',
+                time: '10 MIN AGO',
+                desc: 'Your registration request has been successfully verified and approved by the central authority. Your node is now active and fully synchronized with the Infinity Network. You can now access all secured modules.',
+                icon: '<svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>',
+                actionText: null,
+                sizeMB: null
+            },
+            'patch': {
+                type: 'info',
+                title: 'Security Patch v2.1',
+                time: '2 HRS AGO',
+                desc: 'A critical cryptographic security update is available for your node to prevent unauthorized access. It is highly recommended to install this update immediately to maintain network integrity.',
+                icon: '<svg viewBox="0 0 24 24"><path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,7.5 15.9,8.5L14.5,9.9C13.8,9.3 12.9,9 12,9C10.3,9 9,10.3 9,12C9,13.7 10.3,15 12,15C13.3,15 14.4,14.2 14.8,13H12V11H17V12C17,14.8 14.8,17 12,17C9.2,17 7,14.8 7,12C7,9.2 9.2,7 12,7Z"/></svg>',
+                actionText: 'INSTALL UPDATE',
+                actionIcon: '<svg viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>',
+                sizeMB: 24.2
+            },
+            'transfer': {
+                type: 'warning',
+                title: 'Request Transferred',
+                time: '1 DAY AGO',
+                desc: 'Your profile review request has been transferred to a higher authority tier for manual verification. Please wait while the administrators process your data securely.',
+                icon: '<svg viewBox="0 0 24 24"><path d="M16,17H5V7H16L19.55,12M17.63,5.84C17.27,5.33 16.67,5 16,5H5A2,2 0 0,0 3,7V17A2,2 0 0,0 5,19H16C16.67,19 17.27,18.66 17.63,18.15L22,12L17.63,5.84Z"/></svg>',
+                actionText: null,
+                sizeMB: null
+            },
+            'update': {
+                type: 'info',
+                title: 'Infinity App Update',
+                time: '2 DAYS AGO',
+                desc: 'Infinity Identity core application has a new version available with enhanced biometric features. Download the latest version to ensure smooth performance.',
+                icon: '<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17L7,12H10V8H14V12H17L12,17Z"/></svg>',
+                actionText: 'DOWNLOAD NOW',
+                actionIcon: '<svg viewBox="0 0 24 24"><path d="M12 2C17.5 2 22 6.5 22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2M8 7.71V16.29L15.14 12L8 7.71Z"/></svg>',
+                sizeMB: 1250.8
+            },
+            'rejected': {
+                type: 'danger',
+                title: 'Node Registry Rejected',
+                time: '5 DAYS AGO',
+                desc: 'Your previous identity submission was rejected due to inconsistent biometric data. Please re-apply carefully following all the security guidelines provided.',
+                icon: '<svg viewBox="0 0 24 24"><path d="M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z"/></svg>',
+                actionText: null,
+                sizeMB: null
+            },
+            'dispatched': {
+                type: 'info',
+                title: 'Request Dispatched',
+                time: '1 WEEK AGO',
+                desc: 'Your initial node configuration was dispatched to the central server and is currently awaiting processing. You will be notified once the review is complete.',
+                icon: '<svg viewBox="0 0 24 24"><path d="M2 12C2 6.5 6.5 2 12 2S22 6.5 22 12 17.5 22 12 22 2.5 17.5 2 12M12.5 7H11V13L16.2 16.2L17 14.9L12.5 12.2V7Z"/></svg>',
+                actionText: null,
+                sizeMB: null
+            }
+        };
+
+        const logs = [
+            "CONNECTING TO SECURE SERVER...",
+            "DOWNLOADING ENCRYPTED PACKAGES...",
+            "UNPACKING MODULES...",
+            "VERIFYING CRYPTOGRAPHIC SIGNATURES...",
+            "INSTALLING NEW CORE UPDATES...",
+            "CLEARING CACHE MEMORY...",
+            "FINALIZING DEPLOYMENT..."
+        ];
+
+        let notifId = '';
+        let simInterval = null;
+        let logInterval = null;
+        let downloaded = 0;
+        let currentTotalSize = 0;
+        let isDownloading = false;
+
+        const backBtn = document.getElementById('backBtn');
+        const originalBackHref = backBtn.getAttribute('href');
+
+        function formatSize(mb) {
+            if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
+            return mb.toFixed(1) + ' MB';
+        }
+
+        function showCustomExitModal() {
+            document.getElementById('customExitModal').classList.add('show');
+        }
+
+        function hideCustomExitModal() {
+            document.getElementById('customExitModal').classList.remove('show');
+        }
+
+        function cancelAndLeave() {
+            hideCustomExitModal();
+            window.onbeforeunload = null; 
+            cancelUpdateProcess(); 
+            
+            setTimeout(() => {
+                window.location.href = originalBackHref;
+            }, 100);
+        }
+
+        function setupActiveDownloadNavigation() {
+            isDownloading = true;
+            window.onbeforeunload = function() {
+                return "Update in progress. Are you sure you want to leave?";
+            };
+            
+            backBtn.removeAttribute('href');
+            backBtn.onclick = function() {
+                showCustomExitModal();
+                return false; 
+            };
+        }
+
+        function restoreStaticNavigation() {
+            isDownloading = false;
+            window.onbeforeunload = null;
+            backBtn.setAttribute('href', originalBackHref);
+            backBtn.onclick = null;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            notifId = urlParams.get('id');
+            const autoStart = urlParams.get('auto') === 'true';
+
+            if (notifId && notifData[notifId]) {
+                // Register as read
+                let readList = JSON.parse(localStorage.getItem('inf_read_notifs') || '[]');
+                if (!readList.includes(notifId)) {
+                    readList.push(notifId);
+                    localStorage.setItem('inf_read_notifs', JSON.stringify(readList));
+                }
+
+                const data = notifData[notifId];
+                currentTotalSize = data.sizeMB;
+                
+                const card = document.getElementById('detailCard');
+                card.className = `detail-card card-base ${data.type}`;
+                
+                document.getElementById('dIcon').innerHTML = data.icon;
+                document.getElementById('dTitle').innerText = data.title;
+                document.getElementById('dTime').innerText = data.time;
+                document.getElementById('dDesc').innerText = data.desc;
+
+                if (data.sizeMB) {
+                    document.getElementById('sizeBadgeContainer').innerHTML = `<div class="update-meta">TOTAL SIZE: ${formatSize(data.sizeMB)}</div>`;
+                }
+
+                if (data.actionText) {
+                    const actionHtml = `
+                        <button class="btn-update" id="btnUpdate" onclick="startUpdateProcess()">
+                            ${data.actionIcon} ${data.actionText}
+                        </button>
+                        
+                        <div class="update-box" id="updateBox">
+                            <div class="term-log" id="termLog">INITIALIZING CONNECTION...</div>
+                            
+                            <div class="dl-row">
+                                <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+                                <div class="percent-text" id="dlPercent">0%</div>
+                            </div>
+                            
+                            <div class="update-stats" id="updateStats">
+                                <span id="dlSize" style="color: var(--fg);">0.0 MB / ${formatSize(currentTotalSize)}</span>
+                                <span id="dlSpeed" style="color: var(--c-green);">0.0 MB/S</span>
+                                <span id="dlEta" style="color: var(--c-yellow);">ETA: --</span>
+                            </div>
+                        </div>
+                        
+                        <div class="update-warning" id="updateWarning">
+                            ⚠ WARNING: DO NOT CLOSE THE APP OR TURN OFF THE SCREEN. BACKGROUND UPDATES ARE NOT SUPPORTED.
+                        </div>
+                        
+                        <button class="btn-cancel-update" id="btnCancelUpdate" onclick="cancelUpdateProcess()">CANCEL DOWNLOAD</button>
+
+                        <button class="btn-restart" id="btnRestart" onclick="window.location.href='index.html'">RESTART SYSTEM</button>
+                    `;
+                    document.getElementById('actionContainer').innerHTML = actionHtml;
+                    
+                    if (autoStart) {
+                        setTimeout(startUpdateProcess, 500);
+                    }
+                }
+            } else {
+                document.getElementById('dTitle').innerText = "Notification Not Found";
+                document.getElementById('dDesc').innerText = "The requested notification could not be located in the system log.";
+            }
+        });
+
+        function startUpdateProcess() {
+            downloaded = 0;
+            setupActiveDownloadNavigation(); 
+
+            const btnUpdate = document.getElementById('btnUpdate');
+            const updateBox = document.getElementById('updateBox');
+            const termLog = document.getElementById('termLog');
+            const progressFill = document.getElementById('progressFill');
+            const btnRestart = document.getElementById('btnRestart');
+            const statsRow = document.getElementById('updateStats');
+            const cancelBtn = document.getElementById('btnCancelUpdate');
+            const warningText = document.getElementById('updateWarning');
+
+            btnUpdate.style.display = 'none';
+            updateBox.style.display = 'flex';
+            statsRow.style.display = 'flex';
+            cancelBtn.style.display = 'block';
+            warningText.style.display = 'block';
+            
+            let logIndex = 0;
+
+            logInterval = setInterval(() => {
+                if (logIndex < logs.length) {
+                    termLog.style.opacity = '0';
+                    setTimeout(() => {
+                        termLog.innerText = logs[logIndex];
+                        termLog.style.opacity = '1';
+                        logIndex++;
+                    }, 200);
+                }
+            }, 1500);
+
+            simInterval = setInterval(() => {
+                let speed = (Math.random() * 20.0) + 5.5; 
+                downloaded += speed / 4;
+                
+                if (downloaded >= currentTotalSize) {
+                    downloaded = currentTotalSize;
+                    clearInterval(simInterval);
+                    clearInterval(logInterval);
+                    
+                    restoreStaticNavigation(); 
+
+                    progressFill.style.width = '100%';
+                    document.getElementById('dlPercent').innerText = '100%';
+                    document.getElementById('dlSize').innerText = `${formatSize(currentTotalSize)} / ${formatSize(currentTotalSize)}`;
+                    document.getElementById('dlSpeed').innerText = `0.0 MB/S`;
+                    document.getElementById('dlEta').innerText = `ETA: 0S`;
+                    
+                    cancelBtn.style.display = 'none';
+                    warningText.style.display = 'none';
+
+                    setTimeout(() => {
+                        termLog.innerText = "UPDATE INSTALLED SUCCESSFULLY.";
+                        termLog.style.color = "var(--c-green)";
+                        btnRestart.style.display = 'block';
+                    }, 600);
+                } else {
+                    let percent = (downloaded / currentTotalSize) * 100;
+                    progressFill.style.width = percent + '%';
+                    document.getElementById('dlPercent').innerText = Math.floor(percent) + '%';
+                    document.getElementById('dlSize').innerText = `${formatSize(downloaded)} / ${formatSize(currentTotalSize)}`;
+                    document.getElementById('dlSpeed').innerText = `${speed.toFixed(1)} MB/S`;
+                    
+                    let remainingSize = currentTotalSize - downloaded;
+                    let etaSeconds = Math.ceil(remainingSize / speed);
+                    document.getElementById('dlEta').innerText = `ETA: ${etaSeconds}S`;
+                }
+            }, 250);
+        }
+
+        function cancelUpdateProcess() {
+            clearInterval(simInterval);
+            clearInterval(logInterval);
+            restoreStaticNavigation(); 
+            
+            document.getElementById('updateBox').style.display = 'none';
+            document.getElementById('btnUpdate').style.display = 'flex';
+            document.getElementById('btnCancelUpdate').style.display = 'none';
+            document.getElementById('updateWarning').style.display = 'none';
+            
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('dlPercent').innerText = '0%';
+            document.getElementById('termLog').innerText = 'INITIALIZING CONNECTION...';
+            document.getElementById('termLog').style.color = 'var(--c-blue)';
+        }
+    </script>
+</body>
+</html>

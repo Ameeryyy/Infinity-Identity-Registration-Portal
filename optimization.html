@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>System Optimization</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow-x: hidden; overscroll-behavior: none; }
+        body { background-color: var(--bg) !important; color: var(--fg) !important; display: flex; flex-direction: column; align-items: center; font-family: system-ui, -apple-system, sans-serif; padding: 50px 0; }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 26px); height: clamp(20px, 6vw, 26px); fill: currentColor; }
+
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; padding: 20px; box-sizing: border-box; z-index: 10; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); }
+        
+        h2 { font-weight: bold; margin: 0 0 5px 0; font-size: clamp(20px, 5vw, 26px); text-transform: uppercase; letter-spacing: 2px; color: var(--c-green); text-align: center; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.6; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+
+        .setting-group { margin-bottom: 25px; }
+        .setting-group h3 { font-size: 13px; font-weight: bold; margin-bottom: 15px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; border-left: 3px solid var(--c-blue); padding-left: 10px; }
+
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; margin-bottom: 10px; }
+        .toggle-info { display: flex; flex-direction: column; gap: 4px; }
+        .toggle-title { font-size: 14px; font-weight: bold; }
+        .toggle-desc { font-size: 11px; opacity: 0.6; }
+
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.2); transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--c-green); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .card-title { font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .card-value { font-size: 16px; font-weight: bold; color: var(--c-blue); font-family: monospace; }
+
+        select { width: 100%; padding: 15px; background: rgba(255,255,255,0.05); color: var(--fg); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; outline: none; appearance: none; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) { .container { border: none; background: transparent; backdrop-filter: none; } }
+    </style>
+</head>
+<body>
+    <a href="settings.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <h2>Optimization</h2>
+        <p class="desc">Performance & Data Management</p>
+
+        <div class="setting-group">
+            <h3>Live Diagnostics</h3>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-title">Battery Level</div>
+                    <div class="card-value" id="battLevel">--%</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Network Link</div>
+                    <div class="card-value" id="netType" style="color: var(--c-green);">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <h3>System Controls</h3>
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <span class="toggle-title">Auto Power Saving</span>
+                    <span class="toggle-desc">Reduces UI animations below 20% battery</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="powerToggle" onchange="togglePower()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <span class="toggle-title">Data Saver Mode</span>
+                    <span class="toggle-desc">Auto compresses assets on cellular networks</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="dataToggle" onchange="toggleData()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <h3>Language / Region</h3>
+            <select id="langSelect" onchange="changeLang()">
+                <option value="en">English (Global)</option>
+                <option value="ml">Malayalam (Kerala)</option>
+            </select>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        function loadPrefs() {
+            document.getElementById('powerToggle').checked = brain.settings.powerSavingAuto || false;
+            document.getElementById('dataToggle').checked = brain.settings.dataSaverAuto || false;
+            document.getElementById('langSelect').value = brain.settings.language || 'en';
+            
+            document.getElementById('battLevel').innerText = (brain.settings.batteryLevel || 100) + '%';
+            document.getElementById('netType').innerText = brain.settings.connectionType || 'WiFi';
+        }
+
+        function togglePower() {
+            brain.saveSettings({ powerSavingAuto: document.getElementById('powerToggle').checked });
+        }
+
+        function toggleData() {
+            brain.saveSettings({ dataSaverAuto: document.getElementById('dataToggle').checked });
+        }
+
+        function changeLang() {
+            brain.saveSettings({ language: document.getElementById('langSelect').value });
+        }
+
+        setInterval(() => {
+            document.getElementById('battLevel').innerText = (brain.settings.batteryLevel || 100) + '%';
+            document.getElementById('netType').innerText = brain.settings.connectionType || 'WiFi';
+        }, 5000);
+
+        loadPrefs();
+    </script>
+</body>
+</html>

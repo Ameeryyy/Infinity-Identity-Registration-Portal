@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Relation Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { margin-bottom: clamp(25px, 6vw, 30px); position: relative; z-index: 1; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 4px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(6px, 2vw, 10px); }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(6px, 2vw, 10px); }
+        
+        .card-btn { border: 1px solid var(--fg); padding: clamp(12px, 3vw, 15px) 5px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: clamp(11px, 3vw, 13px); opacity: 0.5; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; user-select: none; }
+        .card-btn:hover { opacity: 0.8; }
+        .card-btn.active { opacity: 1; background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); transform: scale(0.96); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
+
+        .motivation-msg { font-size: clamp(10px, 2.5vw, 12px); color: var(--c-yellow); text-align: center; margin-top: 0; font-weight: bold; font-style: italic; letter-spacing: 1px; opacity: 0; transform: translateY(-5px); transition: opacity 0.4s ease, transform 0.4s ease, margin-top 0.4s ease; line-height: 1.5; pointer-events: none; height: 0; overflow: hidden; }
+        .motivation-msg.show { opacity: 0.9; transform: translateY(0); height: auto; margin-top: 20px; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="guardian_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Vital & Social Metrics</strong></h2>
+        <p class="desc">Enter your <strong>biological data</strong> and <strong>relationship status</strong> to define your node parameters.</p>
+
+        <div class="input-group">
+            <label>Biological Blood Group</label>
+            <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-yellow);">* Select your exact present situation.</span>
+            <div class="grid-4" id="grid-blood">
+                <div class="card-btn" onclick="selectCard('blood', 'A+')">A+</div>
+                <div class="card-btn" onclick="selectCard('blood', 'B+')">B+</div>
+                <div class="card-btn" onclick="selectCard('blood', 'O+')">O+</div>
+                <div class="card-btn" onclick="selectCard('blood', 'AB+')">AB+</div>
+                <div class="card-btn" onclick="selectCard('blood', 'A-')">A-</div>
+                <div class="card-btn" onclick="selectCard('blood', 'B-')">B-</div>
+                <div class="card-btn" onclick="selectCard('blood', 'O-')">O-</div>
+                <div class="card-btn" onclick="selectCard('blood', 'AB-')">AB-</div>
+            </div>
+            <div id="bloodDescMsg" class="motivation-msg"></div>
+        </div>
+
+        <div class="input-group">
+            <label>Current Relationship Status</label>
+            <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-yellow);">* Select your exact present situation.</span>
+            <div class="grid-2" id="grid-relation">
+                <div class="card-btn" onclick="selectCard('relation', 'Single')">Single</div>
+                <div class="card-btn" onclick="selectCard('relation', 'In a Relationship')">In a Relationship</div>
+                <div class="card-btn" onclick="selectCard('relation', 'Married')">Married</div>
+                <div class="card-btn" onclick="selectCard('relation', 'Divorced')">Divorced</div>
+                <div class="card-btn" style="grid-column: span 2;" onclick="selectCard('relation', 'Widowed')">Widowed</div>
+            </div>
+            <div id="motivationMsg" class="motivation-msg"></div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'parents_registration.html';
+
+            const s = brain.settings || {};
+            if (s.bloodGroup) selectCard('blood', s.bloodGroup, true);
+            if (s.relationshipStatus) selectCard('relation', s.relationshipStatus, true);
+
+            validateForm();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && s.bloodGroup) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        let selectedBlood = '';
+        let selectedRelation = '';
+
+        const bloodDescriptions = {
+            'A+': '"System compatible with A+, AB+ recipient nodes. High population prevalence."',
+            'B+': '"System compatible with B+, AB+ recipient nodes. Stable biological marker."',
+            'O+': '"High compatibility. Primary donor for all positive polarity nodes."',
+            'AB+': '"Universal Recipient. System accepts all biological blood configurations."',
+            'A-': '"Rare biological marker. Donor compatible with A and AB variant nodes."',
+            'B-': '"Rare biological configuration. Strict recipient parameters required."',
+            'O-': '"Universal Donor. Critical priority node for emergency biological transfers."',
+            'AB-': '"Extreme biological rarity. Less than 1% system prevalence."'
+        };
+
+        const motivationQuotes = {
+            'Single': '"Embrace your independence. Focus on self-growth and building your empire."',
+            'In a Relationship': '"A strong partnership fuels growth. Build your future together with trust."',
+            'Married': '"A lifelong bond. Nurture your foundation with love, patience, and unity."',
+            'Divorced': '"A new chapter begins. Use your strength and experience to rebuild your path."',
+            'Widowed': '"Your resilience is profound. Honor the past while finding strength for tomorrow."'
+        };
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function selectCard(type, value, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            const gridId = type === 'blood' ? 'grid-blood' : 'grid-relation';
+            const cards = document.getElementById(gridId).querySelectorAll('.card-btn');
+            
+            cards.forEach(card => {
+                if (card.innerText.trim() === value) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+
+            if (type === 'blood') {
+                selectedBlood = value;
+                const msgBox = document.getElementById('bloodDescMsg');
+                msgBox.innerText = bloodDescriptions[value] || "";
+                msgBox.classList.add('show');
+            } else {
+                selectedRelation = value;
+                const msgBox = document.getElementById('motivationMsg');
+                msgBox.innerText = motivationQuotes[value] || "";
+                msgBox.classList.add('show');
+            }
+
+            validateForm();
+        }
+
+        function validateForm() {
+            const btn = document.getElementById('btnNext');
+            if (selectedBlood !== '' && selectedRelation !== '') {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function saveAndProceed() {
+            const btn = document.getElementById('btnNext');
+            btn.classList.add('saved');
+            btn.innerHTML = 'SAVED ✔';
+
+            const userSettings = brain.settings || {};
+            userSettings.bloodGroup = selectedBlood;
+            userSettings.relationshipStatus = selectedRelation;
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'faith_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity - System Actions</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            background-color: var(--bg) !important; 
+            background-image: linear-gradient(rgba(128, 128, 128, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            color: var(--fg) !important; 
+            display: flex; flex-direction: column; align-items: center; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            padding: 50px 0;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 26px); height: clamp(20px, 6vw, 26px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 550px; max-height: 80vh; overflow-y: auto; animation: fadeIn 0.5s; padding: 30px 20px; box-sizing: border-box; z-index: 10; border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); pointer-events: auto; }
+        .container::-webkit-scrollbar { display: none; }
+
+        .brand-title { font-size: clamp(9px, 2.5vw, 11px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 5px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 5px; font-size: clamp(20px, 5vw, 26px); text-transform: uppercase; letter-spacing: 2px; color: var(--fg); text-align: center; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.6; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+
+        .accordion { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+        .acc-item { border: 1px solid rgba(128,128,128,0.3); border-radius: 12px; background: rgba(0,0,0,0.2); overflow: hidden; transition: border-color 0.3s; }
+        .acc-header { width: 100%; text-align: left; padding: 18px 15px; background: transparent; border: none; color: var(--fg); font-size: clamp(13px, 3.5vw, 15px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: color 0.3s; }
+        .acc-header:hover { color: var(--c-blue); }
+        .acc-icon { font-size: 18px; font-weight: normal; transition: transform 0.3s; opacity: 0.6; }
+        
+        .acc-content { max-height: 0; padding: 0 15px; opacity: 0; transition: all 0.3s ease; font-size: clamp(12px, 3.5vw, 14px); line-height: 1.6; opacity: 0.8; }
+        .acc-content p { margin-top: 0; margin-bottom: 20px; }
+        .acc-content strong { color: var(--c-blue); opacity: 1; }
+        
+        .acc-item.active { border-color: var(--c-blue); background: rgba(255,255,255,0.05); }
+        .acc-item.active .acc-header { color: var(--c-blue); border-bottom: 1px dashed rgba(128,128,128,0.3); }
+        .acc-item.active .acc-icon { transform: rotate(45deg); opacity: 1; color: var(--c-blue); }
+        .acc-item.active .acc-content { max-height: 400px; padding: 20px 15px; opacity: 1; }
+
+        .btn-main { width: 100%; padding: clamp(12px, 3.5vw, 16px); border: 1px dashed rgba(255,255,255,0.4); background: transparent; color: var(--fg); border-radius: 10px; cursor: pointer; font-size: clamp(11px, 3vw, 13px); font-weight: bold; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; }
+        .btn-main:hover { background: rgba(255,255,255,0.05); border-color: var(--fg); }
+        .btn-main:active { transform: scale(0.95); }
+        
+        .btn-main.danger { color: var(--c-red); border-color: rgba(255,68,68,0.5); }
+        .btn-main.danger:hover { background: rgba(255,68,68,0.1); border-color: var(--c-red); }
+        
+        .btn-main.warning { color: var(--c-yellow); border-color: rgba(255,187,51,0.5); }
+        .btn-main.warning:hover { background: rgba(255,187,51,0.1); border-color: var(--c-yellow); }
+
+        .btn-main.info { color: var(--c-blue); border-color: rgba(0,123,255,0.5); }
+        .btn-main.info:hover { background: rgba(0,123,255,0.1); border-color: var(--c-blue); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .modal-desc { font-size: 13px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: rgba(255,255,255,0.1); }
+        .modal-btn:active { transform: scale(0.95); }
+        
+        .modal-btn.danger { color: var(--c-red); border-color: rgba(255,68,68,0.4); background: rgba(255,68,68,0.1); }
+        .modal-btn.danger:hover { background: rgba(255,68,68,0.2); }
+        
+        .modal-btn.primary { color: #fff; background: var(--c-blue); border-color: var(--c-blue); }
+        .modal-btn.primary:hover { background: #0056b3; border-color: #0056b3; }
+
+        .processing-box { display: none; flex-direction: column; align-items: center; gap: 15px; }
+        .pulse-ring { width: 50px; height: 50px; border: 3px solid var(--c-blue); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; }
+        .proc-text { font-size: 12px; font-weight: bold; letter-spacing: 2px; color: var(--c-blue); text-transform: uppercase; animation: fadePulse 1.5s infinite; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes fadePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        @media (max-width: 768px) { .container { border: none; background: transparent; backdrop-filter: none; padding: 0; } }
+    </style>
+</head>
+<body>
+
+    <a href="storage.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Control Panel</div>
+        <h2>System Actions</h2>
+        <p class="desc">Node Reset & Recovery Protocols</p>
+
+        <div class="accordion">
+            
+            <div class="acc-item">
+                <button class="acc-header">1. Clear Storage <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>This operation will <strong>permanently delete</strong> all your application data, biometric nodes, and stored settings. It completely wipes the local node storage and cannot be undone.</p>
+                    <button class="btn-main danger" onclick="triggerAction('Clear Storage', 'This will permanently delete all your app data, biometric nodes, and settings. Proceed?', 'danger')">EXECUTE: Clear Storage</button>
+                </div>
+            </div>
+            
+            <div class="acc-item">
+                <button class="acc-header">2. Clear Cache <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>This will clear <strong>temporary files</strong> and cached assets to free up device space. Your core data, encrypted settings, and identity nodes will remain secure and untouched.</p>
+                    <button class="btn-main warning" onclick="triggerAction('Clear Cache', 'This will clear temporary system cache. Your core data will remain safe.', 'warning')">EXECUTE: Clear Cache</button>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">3. Reset System <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>This initiates a <strong>complete factory reset</strong> of the Infinity node environment. It forcefully erases all local IndexedDB and Storage states, returning the system to its initial installation phase.</p>
+                    <button class="btn-main danger" onclick="triggerAction('Reset System', 'This will completely factory reset the Infinity node environment. Proceed?', 'danger')">EXECUTE: Reset System</button>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">4. Restart System <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>Securely reload the Infinity interface without data loss. This is recommended if you are experiencing <strong>UI glitches</strong> or minor synchronization delays.</p>
+                    <button class="btn-main info" onclick="triggerAction('Restart System', 'Are you sure you want to securely restart the Infinity node interface?', 'info')">EXECUTE: Restart System</button>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">5. System Reboot <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>A full core reboot will <strong>safely disconnect</strong> all active sessions, flush the runtime memory, and smoothly re-initialize the Infinity Brain engine for optimal performance.</p>
+                    <button class="btn-main info" onclick="triggerAction('System Reboot', 'A full core reboot will safely disconnect all active sessions. Continue?', 'info')">EXECUTE: System Reboot</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box" id="modalBox">
+            <div id="modalWarningView">
+                <div class="modal-title" id="modalTitle">Title</div>
+                <div class="modal-desc" id="modalDesc">Description goes here...</div>
+                <div class="modal-actions" id="modalActions"></div>
+            </div>
+            <div class="processing-box" id="modalProcessingView">
+                <div class="pulse-ring" id="procRing"></div>
+                <div class="proc-text" id="procText">Processing...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        document.querySelectorAll('.acc-header').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const isActive = item.classList.contains('active');
+                
+                document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('active'));
+                
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        function triggerAction(title, desc, type) {
+            document.getElementById('modalWarningView').style.display = 'block';
+            document.getElementById('modalProcessingView').style.display = 'none';
+            
+            const mTitle = document.getElementById('modalTitle');
+            const mDesc = document.getElementById('modalDesc');
+            const mActions = document.getElementById('modalActions');
+
+            mTitle.innerText = title;
+            if (type === 'danger') mTitle.style.color = 'var(--c-red)';
+            else if (type === 'warning') mTitle.style.color = 'var(--c-yellow)';
+            else mTitle.style.color = 'var(--c-blue)';
+
+            mDesc.innerText = desc;
+
+            let confirmBtnClass = type === 'danger' ? 'danger' : 'primary';
+            mActions.innerHTML = `
+                <button class=\"modal-btn\" onclick=\"closeModal()\">CANCEL</button>
+                <button class=\"modal-btn ${confirmBtnClass}\" id=\"confirmBtn\" style=\"${type !== 'danger' ? 'background: var(--c-blue); border-color: var(--c-blue); color: #fff;' : ''}\">PROCEED</button>
+            `;
+            
+            document.getElementById('confirmBtn').onclick = () => {
+                startProcessing(title);
+            };
+            
+            document.getElementById('customModal').classList.add('show');
+        }
+
+        function startProcessing(actionType) {
+            document.getElementById('modalWarningView').style.display = 'none';
+            document.getElementById('modalProcessingView').style.display = 'flex';
+            
+            const ring = document.getElementById('procRing');
+            const text = document.getElementById('procText');
+            
+            if (actionType.includes('Clear') || actionType.includes('Reset')) {
+                ring.style.borderColor = 'var(--c-red)';
+                ring.style.borderTopColor = 'transparent';
+                text.style.color = 'var(--c-red)';
+            } else {
+                ring.style.borderColor = 'var(--c-blue)';
+                ring.style.borderTopColor = 'transparent';
+                text.style.color = 'var(--c-blue)';
+            }
+
+            setTimeout(() => {
+                if (actionType === 'Clear Storage' || actionType === 'Reset System') {
+                    brain.resetSystem(); 
+                } else if (actionType === 'Clear Cache') {
+                    localStorage.setItem('inf_sys_cache', '0.00');
+                    window.location.href = 'storage.html';
+                } else if (actionType === 'Restart System' || actionType === 'System Reboot') {
+                    window.location.href = 'index.html'; 
+                } else {
+                    closeModal(); 
+                }
+            }, 2500);
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

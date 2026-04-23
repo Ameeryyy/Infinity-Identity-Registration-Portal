@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Secured Node Data</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            background-image: linear-gradient(rgba(128, 128, 128, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 128, 128, 0.1) 1px, transparent 1px);
+            background-size: 60px 60px;
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+        }
+        
+        .top-left { position: fixed; top: clamp(15px, 4vw, 25px); left: clamp(15px, 4vw, 25px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 100; background: var(--bg); padding: 5px; border-radius: 50%; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 5vw, 24px); height: clamp(20px, 5vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 600px; animation: fadeIn 0.5s; margin: clamp(60px, 10vh, 80px) auto clamp(40px, 8vh, 60px) auto; padding-bottom: 40px; text-align: left; position: relative; z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; text-align: center; text-transform: uppercase; letter-spacing: 1px; color: var(--fg); font-family: monospace; }
+        
+        #summaryList { display: flex; flex-direction: column; gap: clamp(15px, 4vw, 20px); pointer-events: none; } 
+        
+        .summary-card { border: 1px dashed rgba(255,255,255,0.3); border-radius: clamp(12px, 3vw, 16px); padding: clamp(15px, 4vw, 20px); background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); position: relative; transition: border-color 0.3s; }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px; }
+        .card-title { font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px; opacity: 0.9; color: var(--c-blue); }
+        .card-title svg { width: clamp(14px, 4vw, 16px); height: clamp(14px, 4vw, 16px); fill: currentColor; }
+        
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(10px, 3vw, 15px); }
+        .data-item { display: flex; flex-direction: column; gap: 4px; }
+        .data-item.full { grid-column: span 2; }
+        .data-label { font-size: clamp(9px, 2.5vw, 10px); opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; color: var(--c-blue); }
+        .data-value { font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; word-break: break-word; color: var(--fg); text-transform: uppercase; }
+        .data-value.empty { color: var(--c-red); opacity: 0.8; font-style: italic; font-weight: normal; }
+        
+        .img-grid { display: flex; gap: 10px; margin-top: 10px; }
+        .img-box { width: clamp(60px, 15vw, 80px); height: clamp(60px, 15vw, 80px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; background: rgba(255,255,255,0.05); }
+        .empty-img { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; opacity: 0.6; color: var(--c-red); font-weight: bold; text-align: center; border: 1px dashed rgba(255,68,68,0.3); background: rgba(255,68,68,0.05); letter-spacing: 1px; line-height: 1.2; font-style: italic; }
+        .sig-box { width: 100%; height: clamp(60px, 15vw, 80px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: contain; background: rgba(255,255,255,0.05); }
+        
+        .btn-exit { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--c-blue); border-radius: 12px; font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; cursor: pointer; transition: all 0.3s; margin-top: clamp(20px, 5vw, 30px); letter-spacing: 2px; text-transform: uppercase; pointer-events: auto; }
+        .btn-exit:hover { background: var(--c-blue); color: #ffffff; }
+        .btn-exit:active { transform: scale(0.97); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 768px) {
+            .data-grid { grid-template-columns: 1fr; } 
+            .data-item.full { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="save.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Decrypted Node Data</strong></h2>
+        <p class="desc" id="nodeIdDisplay">LOCAL SAVED DATA • READ ONLY</p>
+        
+        <div id="summaryList"></div>
+        
+        <button class="btn-exit" onclick="window.location.href='save.html'">Close & Lock Node</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const activeNodeId = localStorage.getItem('inf_view_node_id');
+        let s = brain.settings || {};
+        let dispId = "LOCAL SAVED DATA • READ ONLY";
+
+        if (activeNodeId === 'ex1') {
+            dispId = "EXAMPLE PROFILE 01 • READ ONLY";
+            s = {
+                birthName: "AL AMEER", currentName: "AL AMEER",
+                dateOfBirth: "19 SEP 2007", bloodGroup: "O+ve", relationshipStatus: "SINGLE",
+                birthGender: "MALE", currentGender: "MALE",
+                fatherName: "EXAMPLE FATHER", motherName: "EXAMPLE MOTHER", fatherFatherName: "EXAMPLE GRANDFATHER", fatherMotherName: "EXAMPLE GRANDMOTHER", motherFatherName: "EXAMPLE GRANDFATHER", motherMotherName: "EXAMPLE GRANDMOTHER",
+                religion: "ISLAM", denomination: "SUNNI", practiceLevel: "DEVOUT",
+                education: { level: "PLUS TWO", customTitle: "GAME DEVELOPMENT" }, occupation: "STUDENT", profession: "FRONTEND DEVELOPER", annualIncome: "BELOW 1L",
+                politics: { party: "NONE", role: "CITIZEN" }, languages: { standard: ["MALAYALAM", "ENGLISH"] }, skills: { standardSkills: ["IT / TECH", "CODING"] },
+                health: { standardDiseases: ["NONE"] }, disabilityStatus: "NO", organRegistry: { needsTransplant: "NO", hasReceivedTransplant: "NO", willingToDonate: "YES" },
+                contactPhone: "+91 9876543210", phone: "+91 9876543210", contactEmail: "alameer@example.com", email: "alameer@example.com", contactWhatsApp: "+91 9876543210", wa: "+91 9876543210", guardianRole: "FATHER", guardianPhone: "+91 9876543200", emergencyPhone: "+91 9876543200",
+                preciseLocation: { house: "EXAMPLE HOUSE", houseName: "EXAMPLE HOUSE", houseNumber: "123", street: "MAIN STREET", pincode: "688001", coordinates: "9.4981° N, 76.3388° E" },
+                location: { taluk: "AMBALAPPUZHA", type: "MUNICIPALITY", place: "ALAPPUZHA" },
+                memberDetails: { name: "EXAMPLE MEMBER", ward: "WARD 10", wardName: "WARD 10", phone: "+91 9876500000", gender: "MALE" },
+                profilePicturePrimary: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='%23007bff'/><text x='50%' y='50%' fill='white' font-size='10' text-anchor='middle' alignment-baseline='middle'>FACE 1</text></svg>",
+                profilePictureSecondary: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='%23007bff'/><text x='50%' y='50%' fill='white' font-size='10' text-anchor='middle' alignment-baseline='middle'>FACE 2</text></svg>",
+                signatures: { userSigData: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='80'><rect width='200' height='80' fill='%23007bff'/><text x='50%' y='50%' fill='white' font-size='12' text-anchor='middle' alignment-baseline='middle'>USER SIGNATURE</text></svg>", guardSigData: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='80'><rect width='200' height='80' fill='%23007bff'/><text x='50%' y='50%' fill='white' font-size='12' text-anchor='middle' alignment-baseline='middle'>GUARDIAN SIGNATURE</text></svg>" },
+                masterPassword: "yes", recoveryHints: ["1", "2"]
+            };
+        } else if (activeNodeId === 'ex2') {
+            dispId = "EXAMPLE PROFILE 02 • READ ONLY";
+            s = {
+                birthName: "SAFA FATHIMA", currentName: "SAFA FATHIMA",
+                dateOfBirth: "04 DEC 2007", bloodGroup: "O+ve", relationshipStatus: "SINGLE",
+                birthGender: "FEMALE", currentGender: "FEMALE",
+                fatherName: "EXAMPLE FATHER", motherName: "EXAMPLE MOTHER", fatherFatherName: "EXAMPLE GRANDFATHER", fatherMotherName: "EXAMPLE GRANDMOTHER", motherFatherName: "EXAMPLE GRANDFATHER", motherMotherName: "EXAMPLE GRANDMOTHER",
+                religion: "ISLAM", denomination: "SUNNI", practiceLevel: "DEVOUT",
+                education: { level: "PLUS TWO" }, occupation: "STUDENT", profession: "N/A", annualIncome: "BELOW 1L",
+                politics: { party: "NONE", role: "CITIZEN" }, languages: { standard: ["MALAYALAM", "ENGLISH"] }, skills: { standardSkills: ["IT / TECH"] },
+                health: { standardDiseases: ["NONE"] }, disabilityStatus: "NO", organRegistry: { needsTransplant: "NO", hasReceivedTransplant: "NO", willingToDonate: "YES" },
+                contactPhone: "+91 9876543211", phone: "+91 9876543211", contactEmail: "safa@example.com", email: "safa@example.com", contactWhatsApp: "+91 9876543211", wa: "+91 9876543211", guardianRole: "FATHER", guardianPhone: "+91 9876543201", emergencyPhone: "+91 9876543201",
+                preciseLocation: { house: "EXAMPLE HOUSE", houseName: "EXAMPLE HOUSE", houseNumber: "124", street: "MAIN STREET", pincode: "688002", coordinates: "9.4981° N, 76.3388° E" },
+                location: { taluk: "AMBALAPPUZHA", type: "MUNICIPALITY", place: "ALAPPUZHA" },
+                memberDetails: { name: "EXAMPLE MEMBER", ward: "WARD 11", wardName: "WARD 11", phone: "+91 9876500001", gender: "FEMALE" },
+                profilePicturePrimary: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='%23007bff'/><text x='50%' y='50%' fill='white' font-size='10' text-anchor='middle' alignment-baseline='middle'>FACE 1</text></svg>",
+                profilePictureSecondary: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='%23007bff'/><text x='50%' y='50%' fill='white' font-size='10' text-anchor='middle' alignment-baseline='middle'>FACE 2</text></svg>",
+                signatures: { userSigData: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='80'><rect width='200' height='80' fill='%23007bff'/><text x='50%' y='50%' fill='white' font-size='12' text-anchor='middle' alignment-baseline='middle'>USER SIGNATURE</text></svg>", guardSigData: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='80'><rect width='200' height='80' fill='%23007bff'/><text x='50%' y='50%' fill='white' font-size='12' text-anchor='middle' alignment-baseline='middle'>GUARDIAN SIGNATURE</text></svg>" },
+                masterPassword: "yes", recoveryHints: ["1", "2"]
+            };
+        } else if (activeNodeId) {
+            const accounts = JSON.parse(localStorage.getItem('inf_finalized_accounts')) || [];
+            const acc = accounts.find(a => a.id === activeNodeId);
+            if(acc) {
+                dispId = "LOCAL SAVED DATA • READ ONLY";
+            }
+        }
+        
+        document.getElementById('nodeIdDisplay').innerText = dispId;
+
+        const list = document.getElementById('summaryList');
+        
+        // This function handles undefined/empty safely, like the edit page
+        const val = (v) => (v !== undefined && v !== null && String(v).trim() !== '' && String(v) !== 'undefined') ? String(v) : '<span class="data-value empty">NOT PROVIDED</span>';
+
+        const sections = [
+            {
+                title: "Nomenclature", icon: "M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z",
+                data: [ ["Birth Name", val(s.birthName)], ["Current Legal Name", val(s.currentName)] ]
+            },
+            {
+                title: "Temporal & Vital Metrics", icon: "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z",
+                data: [ ["Date of Birth", val(s.dateOfBirth)], ["Blood Group", val(s.bloodGroup)], ["Relationship", val(s.relationshipStatus)] ]
+            },
+            {
+                title: "Gender Designation", icon: "M12,4A6,6 0 0,1 18,10C18,12.97 15.84,15.44 13,15.92V18H15V20H13V22H11V20H9V18H11V15.92C8.16,15.44 6,12.97 6,10A6,6 0 0,1 12,4M12,6A4,4 0 0,0 8,10A4,4 0 0,0 12,14A4,4 0 0,0 16,10A4,4 0 0,0 12,6Z",
+                data: [ ["Biological Sex", val(s.birthGender)], ["Identified Gender", val(s.currentGender)] ]
+            },
+            {
+                title: "Lineage", icon: "M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z",
+                data: [ ["Father", val(s.fatherName)], ["Mother", val(s.motherName)], ["Paternal Grandfather", val(s.fatherFatherName)], ["Paternal Grandmother", val(s.fatherMotherName)], ["Maternal Grandfather", val(s.motherFatherName)], ["Maternal Grandmother", val(s.motherMotherName)] ]
+            },
+            {
+                title: "Spiritual Alignment", icon: "M12,2L14.8,8.6L22,9.3L16.6,14.2L18.2,21L12,17.3L5.8,21L7.4,14.2L2,9.3L9.2,8.6L12,2Z",
+                data: [ ["Primary Belief", val(s.religion)], ["Denomination / Sect", val(s.denomination)], ["Level of Practice", val(s.practiceLevel)] ]
+            },
+            {
+                title: "Education Profile", icon: "M12,3L1,9L4,10.64V17.5C4,18.88 7.58,20 12,20C16.42,20 20,18.88 20,17.5V10.64L23,9L12,3M12,5.28L18.4,8.6L12,12L5.6,8.6L12,5.28M18,17.5C18,18.06 15.31,18.5 12,18.5C8.69,18.5 6,18.06 6,17.5V11.72L12,15.15L18,11.72V17.5Z",
+                data: [ ["Qualification", val(s.education?.level)], ["Title/Details", val(s.education?.customTitle || s.education?.customDesc)] ]
+            },
+            {
+                title: "Economic Status", icon: "M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C8.96,12.25 7,11.08 7,9C7,6.86 9.15,5.13 12,5.13C14.85,5.13 17,6.86 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C15.04,11.75 17,12.92 17,15C17,17.14 14.85,18.87 12,18.87C9.15,18.87 7,17.14 7,15M2,11H4V13H2V11M20,11H22V13H20V11M11,2H13V4H11V2M11,20H13V22H11V20M17,17.5L18.4,19L19.8,17.5L18.4,16L17,17.5M5.6,5L7,6.4L5.6,7.8L4.2,6.4L5.6,5M18.4,5L19.8,6.4L18.4,7.8L17,6.4L18.4,5M5.6,19L7,17.5L5.6,16L4.2,17.5L5.6,19Z",
+                data: [ ["Occupation", val(s.occupation)], ["Profession", val(s.profession)], ["Income", val(s.annualIncome)] ]
+            },
+            {
+                title: "Political Affiliation", icon: "M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z",
+                data: [ ["Party", val(s.politics?.party)], ["Role", val(s.politics?.role)] ]
+            },
+            {
+                title: "Languages & Skills", icon: "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z",
+                data: [ 
+                    ["Known Languages", val( (s.languages?.standard || []).concat(s.languages?.custom || []).join(", ") )], 
+                    ["Practical Skills", val( (s.skills?.standardSkills || []).concat((s.skills?.customSkills || []).map(sk=>sk.title)).join(", ") )] 
+                ]
+            },
+            {
+                title: "Health & Disability", icon: "M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M17,13H13V17H11V13H7V11H11V7H13V11H17V13Z",
+                data: [ 
+                    ["Medical Conditions", val( (s.health?.standardDiseases || []).concat((s.health?.customDiseases || []).map(d=>d.title)).join(", ") )],
+                    ["Differently Abled", val(s.disabilityStatus)],
+                    ["Disability Records", val( (s.disabilityRecords || []).map(d=>d.title).join(", ") )]
+                ]
+            },
+            {
+                title: "Organ Registry", icon: "M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z",
+                data: [ 
+                    ["Needs Transplant", val(s.organRegistry?.needsTransplant)], 
+                    ["Received Transplant", val(s.organRegistry?.hasReceivedTransplant)], 
+                    ["Willing to Donate", val(s.organRegistry?.willingToDonate)] 
+                ]
+            },
+            {
+                title: "Communication Nodes", icon: "M20,15.5C18.8,15.5 17.5,15.3 16.4,14.9C16.3,14.9 16.2,14.9 16.1,14.9C15.8,14.9 15.6,15 15.4,15.2L13.2,17.4C10.4,15.9 8,13.6 6.6,10.8L8.8,8.6C9.1,8.3 9.2,7.9 9,7.6C8.7,6.5 8.5,5.2 8.5,4C8.5,3.5 8,3 7.5,3H4C3.5,3 3,3.5 3,4C3,13.4 10.6,21 20,21C20.5,21 21,20.5 21,20V16.5C21,16 20.5,15.5 20,15.5Z",
+                data: [ ["Primary Phone", val(s.contactPhone || s.phone)], ["Email Address", val(s.contactEmail || s.email)], ["WhatsApp", val(s.contactWhatsApp || s.wa)], ["Guardian Phone" + (s.guardianRole ? " ("+s.guardianRole+")" : ""), val(s.guardianPhone)], ["Emergency Contact", val(s.emergencyPhone)] ]
+            },
+            {
+                title: "Geospatial & Localization", icon: "M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z",
+                data: [ 
+                    ["Taluk", val(s.location?.taluk)], 
+                    ["Local Body", (s.location?.type && s.location?.place) ? (s.location.type + " - " + s.location.place) : val('')], 
+                    ["House Name", val(s.preciseLocation?.houseName || s.preciseLocation?.house)], 
+                    ["House Number", val(s.preciseLocation?.houseNumber)], 
+                    ["Street / Landmark", (s.preciseLocation?.street || s.preciseLocation?.landmark) ? [s.preciseLocation?.street, s.preciseLocation?.landmark].filter(Boolean).join(" / ") : val('')], 
+                    ["Pincode", val(s.preciseLocation?.pincode)], 
+                    ["Coordinates", val(s.preciseLocation?.coordinates)],
+                    ["Full Address", val(s.preciseLocation?.fullAddress)] 
+                ]
+            },
+            {
+                title: "Local Member Data", icon: "M12,12C9.97,12 8.1,11.13 6.8,9.8C5.5,8.5 4.63,6.63 4.63,4.6C4.63,2.57 5.5,0.7 6.8,-0.6C8.1,-1.9 9.97,-2.77 12,-2.77C14.03,-2.77 15.9,-1.9 17.2,-0.6C18.5,0.7 19.37,2.57 19.37,4.6C19.37,6.63 18.5,8.5 17.2,9.8C15.9,11.13 14.03,12 12,12M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z",
+                data: [ ["Member Name", val(s.memberDetails?.name)], ["Ward Name", val(s.memberDetails?.wardName || s.memberDetails?.ward)], ["Ward Number", val(s.memberDetails?.wardNumber)], ["Member Phone", val(s.memberDetails?.phone)], ["Member Gender", val(s.memberDetails?.gender)] ]
+            }
+        ];
+
+        sections.forEach(sec => {
+            let itemsHtml = '';
+            sec.data.forEach((d, i) => {
+                itemsHtml += `
+                    <div class="data-item ${sec.data.length % 2 !== 0 && i === sec.data.length - 1 ? 'full' : ''}">
+                        <span class="data-label">${d[0]}</span>
+                        <div class="data-value">${d[1]}</div>
+                    </div>
+                `;
+            });
+            list.innerHTML += `
+                <div class="summary-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><svg viewBox="0 0 24 24"><path d="${sec.icon}"/></svg> ${sec.title}</h3>
+                    </div>
+                    <div class="data-grid">${itemsHtml}</div>
+                </div>
+            `;
+        });
+
+        let mediaHtml = `
+            <div class="summary-card">
+                <div class="card-header">
+                    <h3 class="card-title"><svg viewBox="0 0 24 24"><path d="M4,4H10V10H4V4M20,4V10H14V4H20M14,15H16V13H14V11H16V13H18V11H20V13H18V15H20V18H18V20H16V18H13V20H11V16H14V15M16,15V18H18V15H16M4,20V14H10V20H4M6,6V8H8V6H6M16,6V8H18V6H16M6,16V18H8V16H6Z"/></svg> Biometric & Security</h3>
+                </div>
+                <div class="data-item full" style="margin-bottom:15px;">
+                    <span class="data-label">Facial Scans</span>
+                    <div class="img-grid">
+                        ${s.profilePicturePrimary ? `<img src="${s.profilePicturePrimary}" class="img-box">` : '<div class="img-box empty-img"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor;margin-bottom:2px;"><path d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"/></svg>NOT<br>PROVIDED</div>'}
+                        ${s.profilePictureSecondary ? `<img src="${s.profilePictureSecondary}" class="img-box">` : '<div class="img-box empty-img"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor;margin-bottom:2px;"><path d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"/></svg>NOT<br>PROVIDED</div>'}
+                    </div>
+                </div>
+                <div class="data-item full" style="margin-bottom:15px;">
+                    <span class="data-label">User Signature</span>
+                    ${s.signatures && s.signatures.userSigData ? `<img src="${s.signatures.userSigData}" class="sig-box">` : '<span class="data-value empty">NOT PROVIDED</span>'}
+                </div>
+                <div class="data-item full" style="margin-bottom:15px;">
+                    <span class="data-label">Guardian Signature</span>
+                    ${s.signatures && s.signatures.guardSigData ? `<img src="${s.signatures.guardSigData}" class="sig-box">` : '<span class="data-value empty">NOT PROVIDED</span>'}
+                </div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <span class="data-label">Master Key</span>
+                        <div class="data-value" style="color:var(--c-green);">${s.masterPassword ? 'SECURED ✔' : '<span class="data-value empty">PENDING</span>'}</div>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Recovery Nodes</span>
+                        <div class="data-value">${s.recoveryHints && s.recoveryHints.length > 0 ? s.recoveryHints.length + ' SET' : '<span class="data-value empty">NOT PROVIDED</span>'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        list.innerHTML += mediaHtml;
+    </script>
+</body>
+</html>

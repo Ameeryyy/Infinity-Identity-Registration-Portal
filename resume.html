@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Resume Setup</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+        }
+        
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 500px; min-height: 100vh; padding: clamp(60px, 10vh, 80px) 0 clamp(40px, 8vh, 60px) 0; animation: fadeIn 0.5s; box-sizing: border-box; margin: 0 auto; position: relative; z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 5px; text-align: center; color: var(--c-blue); }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 5px; text-align: center; font-size: clamp(20px, 6vw, 26px); text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        .subtitle { font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; margin-bottom: clamp(20px, 5vh, 30px); text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .input-wrapper { display: flex; align-items: stretch; border: 1px dashed rgba(255,255,255,0.3); border-radius: 12px; margin-bottom: 20px; overflow: visible; background: rgba(255,255,255,0.02); transition: 0.3s; width: 100%; backdrop-filter: blur(5px); z-index: 20; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); background: rgba(255,255,255,0.05); }
+        
+        .search-select-wrapper { position: relative; border-right: 1px dashed rgba(255,255,255,0.2); }
+        .search-select-trigger { height: 100%; padding: 0 clamp(10px, 3vw, 15px); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--c-blue); font-weight: bold; font-size: clamp(10px, 2.5vw, 12px); text-transform: uppercase; letter-spacing: 1px; background: rgba(0, 123, 255, 0.1); min-width: 60px; border-radius: 12px 0 0 12px; }
+        .search-select-options { position: absolute; top: calc(100% + 5px); left: 0; background: #111; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.9); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; width: 120px; }
+        .search-select-options.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .search-option { padding: 12px; font-size: 11px; text-align: center; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--fg); font-weight: bold; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+        .search-option:last-child { border-bottom: none; }
+        .search-option:hover { color: var(--c-blue); background: rgba(255,255,255,0.05); }
+
+        .search-icon { padding-left: 15px; opacity: 0.5; display: flex; align-items: center; }
+        .search-icon svg { width: 18px; height: 18px; fill: currentColor; }
+        .input-wrapper input { flex: 1; width: 100%; padding: clamp(12px, 3vw, 14px) 15px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3.5vw, 14px); outline: none; font-weight: bold; letter-spacing: 1px; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: 1px; }
+
+        #sessionList, #exampleList { width: 100%; display: flex; flex-direction: column; gap: clamp(10px, 3vw, 15px); }
+        
+        .session-card { border: 1px dashed rgba(255,255,255,0.3); border-radius: clamp(12px, 3vw, 16px); padding: clamp(15px, 4vw, 20px); display: flex; flex-direction: column; gap: 10px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); transition: all 0.3s; position: relative; overflow: hidden; }
+        .session-card:hover { border-color: var(--c-blue); background: rgba(0,123,255,0.05); box-shadow: 0 5px 15px rgba(0, 123, 255, 0.1); }
+        .session-card.removing { transform: scale(0.9); opacity: 0; }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-title { font-size: clamp(14px, 4vw, 16px); font-weight: bold; margin: 0; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; color: var(--c-blue); }
+        .card-title svg { width: clamp(14px, 4vw, 16px); height: clamp(14px, 4vw, 16px); fill: currentColor; }
+        
+        .btn-delete { background: transparent; border: none; color: var(--fg); opacity: 0.4; cursor: pointer; padding: 5px; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; }
+        .btn-delete:hover { opacity: 1; color: var(--c-red); filter: drop-shadow(0 0 5px rgba(255,68,68,0.5)); }
+        .btn-delete svg { width: clamp(16px, 4.5vw, 18px); height: clamp(16px, 4.5vw, 18px); fill: currentColor; }
+        
+        .card-meta { font-size: clamp(9px, 2.5vw, 11px); opacity: 0.6; display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 1px; }
+        .time-left { color: var(--c-yellow); font-weight: bold; opacity: 1; text-shadow: 0 0 5px rgba(255,187,51,0.3); font-variant-numeric: tabular-nums; }
+        
+        .btn-resume { width: 100%; padding: clamp(10px, 3vw, 14px); background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: clamp(11px, 3vw, 13px); font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
+        .btn-resume:hover { background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
+        .btn-resume:active { transform: scale(0.97); }
+
+        .btn-accordion { background: transparent; border: 1px dashed var(--c-blue); color: var(--c-blue); padding: 8px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; margin-top: 5px; }
+        .btn-accordion:hover { background: rgba(0, 123, 255, 0.1); }
+        .accordion-content { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.4s ease-out; }
+        .accordion-content.open { max-height: 1000px; opacity: 1; margin-top: 10px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.15); }
+        
+        .acc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .acc-item { display: flex; flex-direction: column; gap: 3px; }
+        .acc-label { font-size: 9px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; color: var(--c-blue); font-weight: bold; }
+        .acc-value { font-size: 11px; font-weight: bold; text-transform: uppercase; word-break: break-word; }
+
+        .empty-state { padding: clamp(30px, 8vh, 50px) 20px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 16px; text-align: center; opacity: 0.5; width: 100%; box-sizing: border-box; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); }
+        .empty-state svg { width: clamp(30px, 8vw, 40px); height: clamp(30px, 8vw, 40px); margin-bottom: 10px; fill: currentColor; }
+        .empty-state h3 { font-size: clamp(14px, 4vw, 16px); margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: clamp(20px, 5vw, 25px); width: 85%; max-width: 320px; text-align: center; transform: scale(0.9); transition: transform 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-title { font-size: clamp(14px, 4vw, 16px); font-weight: bold; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px; color: var(--c-red); }
+        .modal-text { font-size: clamp(11px, 3vw, 13px); opacity: 0.8; margin: 0 0 25px 0; line-height: 1.5; color: var(--fg); }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal { flex: 1; padding: clamp(10px, 3vw, 12px); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: var(--fg); border-radius: 8px; font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; cursor: pointer; text-transform: uppercase; transition: all 0.2s; letter-spacing: 1px; }
+        .btn-modal:hover { background: rgba(255,255,255,0.1); }
+        .btn-modal:active { transform: scale(0.95); }
+        .btn-confirm-del { border-color: rgba(255,68,68,0.4); color: var(--c-red); background: rgba(255,68,68,0.1); }
+        .btn-confirm-del:hover { background: rgba(255,68,68,0.2); color: var(--c-red); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <a href="home.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Active Sessions</strong></h2>
+        <div class="subtitle">Max 3 Sessions • Auto-purge after 100 hrs</div>
+        
+        <div class="input-wrapper">
+            <div class="search-select-wrapper" id="searchDropdownWrapper">
+                <div class="search-select-trigger" onclick="toggleSearchSelect()">
+                    <span id="searchSelectText">NAME</span>
+                </div>
+                <div class="search-select-options" id="searchOptions">
+                    <div class="search-option" onclick="selectSearchType('name', 'NAME')">NAME</div>
+                    <div class="search-option" onclick="selectSearchType('dob', 'D.O.B')">D.O.B</div>
+                    <div class="search-option" onclick="selectSearchType('phone', 'PHONE')">PHONE</div>
+                </div>
+            </div>
+            <div class="search-icon">
+                <svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+            </div>
+            <input type="text" id="searchInput" placeholder="SEARCH BY NAME..." onkeyup="filterSessions()">
+        </div>
+        
+        <div id="sessionList"></div>
+
+        <div class="subtitle" style="margin-top: 40px; margin-bottom: 15px; color: var(--c-blue); opacity: 0.8;">--- Reference Examples ---</div>
+        <div id="exampleList"></div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-box">
+            <h3 class="modal-title">Confirm Deletion</h3>
+            <p class="modal-text">Are you sure you want to delete this session? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn-modal" onclick="cancelDelete()">Cancel</button>
+                <button class="btn-modal btn-confirm-del" onclick="executeDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const MAX_SESSIONS = 3;
+        const MAX_HOURS = 100;
+        const MS_PER_HOUR = 3600000;
+        let pendingDeleteId = null;
+        let liveTimerInterval;
+        let currentSearchType = 'name';
+        
+        function toggleSearchSelect() {
+            document.getElementById('searchOptions').classList.toggle('show');
+        }
+
+        function selectSearchType(type, text) {
+            currentSearchType = type;
+            document.getElementById('searchSelectText').innerText = text;
+            document.getElementById('searchOptions').classList.remove('show');
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            
+            if (type === 'name') {
+                input.type = 'text';
+                input.placeholder = 'SEARCH BY NAME...';
+            } else if (type === 'dob') {
+                input.type = 'tel'; 
+                input.placeholder = 'SEARCH BY D.O.B...';
+            } else if (type === 'phone') {
+                input.type = 'tel';
+                input.placeholder = 'SEARCH BY PHONE...';
+            }
+            filterSessions();
+        }
+
+        document.addEventListener('click', (e) => {
+            const trigger = document.querySelector('.search-select-trigger');
+            const list = document.getElementById('searchOptions');
+            if (trigger && list && !trigger.contains(e.target) && !list.contains(e.target)) {
+                list.classList.remove('show');
+            }
+        });
+
+        function filterSessions() {
+            const queryRaw = document.getElementById('searchInput').value.toLowerCase();
+            const queryNumeric = queryRaw.replace(/[^0-9]/g, ''); 
+            const type = currentSearchType;
+            const cards = document.querySelectorAll('.session-card');
+            
+            cards.forEach(card => {
+                let match = false;
+                
+                if (type === 'name') {
+                    const el = card.querySelector('.card-title');
+                    if (el && el.innerText.toLowerCase().includes(queryRaw)) {
+                        match = true;
+                    }
+                } else if (type === 'dob') {
+                    const items = card.querySelectorAll('.acc-item');
+                    items.forEach(item => {
+                        if(item.querySelector('.acc-label').innerText.includes('D.O.B')) {
+                            const val = item.querySelector('.acc-value').innerText.toLowerCase().replace(/[^0-9]/g, '');
+                            if (val.includes(queryNumeric)) match = true;
+                        }
+                    });
+                } else if (type === 'phone') {
+                    const items = card.querySelectorAll('.acc-item');
+                    items.forEach(item => {
+                        if(item.querySelector('.acc-label').innerText.includes('Phone')) {
+                            const val = item.querySelector('.acc-value').innerText.toLowerCase().replace(/[^0-9]/g, '');
+                            if (val.includes(queryNumeric)) match = true;
+                        }
+                    });
+                }
+
+                if (match) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleAcc(btn) {
+            const content = btn.nextElementSibling;
+            if(content.classList.contains('open')) {
+                content.classList.remove('open');
+                btn.innerHTML = 'VIEW DETAILS ▼';
+            } else {
+                content.classList.add('open');
+                btn.innerHTML = 'HIDE DETAILS ▲';
+            }
+        }
+
+        function getSessionName(url) {
+            try {
+                const stateData = JSON.parse(localStorage.getItem('inf_state_/name_registration.html'));
+                if(stateData && stateData['identityName'] && stateData['identityName'].trim() !== '') {
+                    return stateData['identityName'];
+                }
+            } catch(e) {}
+            return "Pending Registration";
+        }
+
+        function resumeSession(id) {
+            localStorage.setItem('inf_resume_demo', id);
+            window.location.href = 'edit.html';
+        }
+
+        const v = (val) => (val && typeof val === 'string' && val.trim() !== '') ? val : '<span style="color:var(--c-red);opacity:0.6;font-style:italic;font-weight:normal;">NOT SAVED</span>';
+        const vBool = (cond) => cond ? '<span style="color:var(--c-green);">SAVED ✔</span>' : '<span style="color:var(--c-red);opacity:0.6;font-style:italic;font-weight:normal;">NOT SAVED</span>';
+        const vLen = (arr) => (arr && arr.length > 0) ? `<span style="color:var(--c-green);">${arr.length} SET ✔</span>` : '<span style="color:var(--c-red);opacity:0.6;font-style:italic;font-weight:normal;">NOT SAVED</span>';
+
+        const genAcc = (data) => `
+            <div class="acc-grid">
+                <div class="acc-item"><span class="acc-label">Legal Name</span><span class="acc-value">${v(data.cName)}</span></div>
+                <div class="acc-item"><span class="acc-label">Birth Name</span><span class="acc-value">${v(data.bName)}</span></div>
+                <div class="acc-item"><span class="acc-label">D.O.B</span><span class="acc-value">${v(data.dob)}</span></div>
+                <div class="acc-item"><span class="acc-label">Blood Group</span><span class="acc-value">${v(data.blood)}</span></div>
+                <div class="acc-item"><span class="acc-label">Bio Sex</span><span class="acc-value">${v(data.bGen)}</span></div>
+                <div class="acc-item"><span class="acc-label">Identified Gen</span><span class="acc-value">${v(data.cGen)}</span></div>
+                <div class="acc-item"><span class="acc-label">Father</span><span class="acc-value">${v(data.fName)}</span></div>
+                <div class="acc-item"><span class="acc-label">Mother</span><span class="acc-value">${v(data.mName)}</span></div>
+                <div class="acc-item"><span class="acc-label">Phone</span><span class="acc-value">${v(data.phone)}</span></div>
+                <div class="acc-item"><span class="acc-label">Email</span><span class="acc-value">${v(data.email)}</span></div>
+                <div class="acc-item" style="grid-column: span 2;"><span class="acc-label">Location / Local Body</span><span class="acc-value">${v(data.loc)}</span></div>
+                <div class="acc-item"><span class="acc-label">Member Name</span><span class="acc-value">${v(data.memName)}</span></div>
+                <div class="acc-item"><span class="acc-label">Ward</span><span class="acc-value">${v(data.ward)}</span></div>
+                <div class="acc-item"><span class="acc-label">Facial Scans</span><span class="acc-value">${vBool(data.face)}</span></div>
+                <div class="acc-item"><span class="acc-label">Signatures</span><span class="acc-value">${vBool(data.sig)}</span></div>
+                <div class="acc-item"><span class="acc-label">Master Key</span><span class="acc-value">${vBool(data.key)}</span></div>
+                <div class="acc-item"><span class="acc-label">Recovery Nodes</span><span class="acc-value">${vLen(data.rec)}</span></div>
+            </div>
+        `;
+
+        function initSessions() {
+            clearInterval(liveTimerInterval);
+            let sessions = JSON.parse(localStorage.getItem('inf_saved_sessions')) || [];
+            const oldSave = localStorage.getItem('inf_last_reg_page');
+            
+            if (oldSave && sessions.length === 0) {
+                sessions.push({
+                    id: Date.now().toString(),
+                    url: oldSave,
+                    title: getSessionName(oldSave),
+                    timestamp: Date.now()
+                });
+                localStorage.removeItem('inf_last_reg_page');
+            }
+            
+            const now = Date.now();
+            sessions = sessions.filter(s => (now - s.timestamp) < (MAX_HOURS * MS_PER_HOUR));
+            
+            sessions = sessions.map(s => {
+                s.title = getSessionName(s.url);
+                return s;
+            });
+            
+            sessions.sort((a, b) => b.timestamp - a.timestamp);
+            sessions = sessions.slice(0, MAX_SESSIONS);
+            
+            localStorage.setItem('inf_saved_sessions', JSON.stringify(sessions));
+            renderSessions(sessions);
+        }
+
+        function updateTimers() {
+            const timers = document.querySelectorAll('.time-left');
+            timers.forEach(timer => {
+                const timestamp = parseInt(timer.getAttribute('data-timestamp'));
+                if(!timestamp) return;
+
+                const now = Date.now();
+                const elapsed = now - timestamp;
+                const remainingMs = (MAX_HOURS * MS_PER_HOUR) - elapsed;
+                
+                if(remainingMs <= 0) {
+                    timer.innerText = "EXPIRED";
+                    timer.style.color = "var(--c-red)";
+                    timer.style.textShadow = "0 0 5px rgba(255,68,68,0.3)";
+                } else {
+                    const h = Math.floor(remainingMs / MS_PER_HOUR);
+                    const m = Math.floor((remainingMs % MS_PER_HOUR) / 60000);
+                    const s = Math.floor((remainingMs % 60000) / 1000);
+                    let timeStr = "";
+                    if (h > 0) timeStr += `${h}h `;
+                    timeStr += `${m}m ${s}s left`;
+                    timer.innerText = timeStr;
+                }
+            });
+        }
+
+        function confirmDelete(id) {
+            pendingDeleteId = id;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function cancelDelete() {
+            pendingDeleteId = null;
+            document.getElementById('deleteModal').classList.remove('show');
+        }
+
+        function executeDelete() {
+            if (!pendingDeleteId) return;
+            
+            let sessions = JSON.parse(localStorage.getItem('inf_saved_sessions')) || [];
+            sessions = sessions.filter(s => s.id !== pendingDeleteId);
+            localStorage.setItem('inf_saved_sessions', JSON.stringify(sessions));
+            
+            const card = document.getElementById('session-' + pendingDeleteId);
+            if(card) {
+                card.classList.add('removing');
+                setTimeout(() => {
+                    initSessions();
+                    filterSessions();
+                }, 300);
+            } else {
+                initSessions();
+            }
+            
+            cancelDelete();
+        }
+
+        function renderSessions(sessions) {
+            const list = document.getElementById('sessionList');
+            const exList = document.getElementById('exampleList');
+            list.innerHTML = '';
+            
+            if (sessions.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7Z"/></svg>
+                        <h3>No Pending Setup</h3>
+                        <p>You have no active or incomplete sessions.</p>
+                    </div>
+                `;
+            } else {
+                const s = brain.settings || {};
+                sessions.forEach(session => {
+                    const dateStr = new Date(session.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+                    const accHtml = genAcc({
+                        cName: s.currentName, bName: s.birthName, dob: s.dateOfBirth, cGen: s.currentGender, bGen: s.birthGender,
+                        phone: s.phone, blood: s.bloodGroup, fName: s.fatherName, mName: s.motherName, email: s.email,
+                        loc: s.location?.place, memName: s.memberDetails?.name, ward: s.memberDetails?.wardName,
+                        face: s.profilePicturePrimary, sig: (s.signatures && s.signatures.userSigData), key: s.masterPassword, rec: s.recoveryHints
+                    });
+                    
+                    list.innerHTML += `
+                        <div class="session-card" id="session-${session.id}">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M12,18L8,14H11V9H13V14H16L12,18M13,9V3.5L18.5,9H13Z"/></svg>
+                                    ${session.title}
+                                </h3>
+                                <button class="btn-delete" onclick="confirmDelete('${session.id}')">
+                                    <svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                                </button>
+                            </div>
+                            <div class="card-meta">
+                                <span>Saved: ${dateStr}</span>
+                                <span class="time-left" data-timestamp="${session.timestamp}">CALCULATING...</span>
+                            </div>
+                            <button class="btn-resume" onclick="resumeSession('${session.id}')">Resume Registration ➔</button>
+                            <button class="btn-accordion" onclick="toggleAcc(this)">VIEW DETAILS ▼</button>
+                            <div class="accordion-content">${accHtml}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Render Dynamic Reference Examples
+            const now = Date.now();
+            const ex1Time = now - (10 * 3600000); // 90h left
+            const ex2Time = now - (48 * 3600000); // 52h left
+
+            const ex1Acc = genAcc({ cName: 'AL AMEER', dob: '19 SEP 2007', cGen: 'MALE', phone: '+91 9876543210', loc: 'ALAPPUZHA, KERALA, INDIA' });
+            const ex2Acc = genAcc({ cName: 'SAFA FATHIMA', dob: '04 DEC 2007', cGen: 'FEMALE', phone: '+91 9876543211', loc: 'KERALA, INDIA' });
+
+            exList.innerHTML = `
+                <div class="session-card example-card" style="border-color: rgba(255,255,255,0.1);">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M12,18L8,14H11V9H13V14H16L12,18M13,9V3.5L18.5,9H13Z"/></svg>
+                            AL AMEER
+                        </h3>
+                    </div>
+                    <div class="card-meta">
+                        <span>DOB: 19 SEP 2007 | MALE</span>
+                        <span class="time-left" data-timestamp="${ex1Time}">CALCULATING...</span>
+                    </div>
+                    <button class="btn-resume" onclick="resumeSession('ex1')">Resume Registration ➔</button>
+                    <button class="btn-accordion" onclick="toggleAcc(this)">VIEW DETAILS ▼</button>
+                    <div class="accordion-content">${ex1Acc}</div>
+                </div>
+
+                <div class="session-card example-card" style="border-color: rgba(255,255,255,0.1);">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M12,18L8,14H11V9H13V14H16L12,18M13,9V3.5L18.5,9H13Z"/></svg>
+                            SAFA FATHIMA
+                        </h3>
+                    </div>
+                    <div class="card-meta">
+                        <span>DOB: 04 DEC 2007 | FEMALE</span>
+                        <span class="time-left" data-timestamp="${ex2Time}">CALCULATING...</span>
+                    </div>
+                    <button class="btn-resume" onclick="resumeSession('ex2')">Resume Registration ➔</button>
+                    <button class="btn-accordion" onclick="toggleAcc(this)">VIEW DETAILS ▼</button>
+                    <div class="accordion-content">${ex2Acc}</div>
+                </div>
+            `;
+            
+            updateTimers();
+            filterSessions(); 
+            liveTimerInterval = setInterval(updateTimers, 1000); 
+        }
+
+        initSessions();
+    </script>
+</body>
+</html>

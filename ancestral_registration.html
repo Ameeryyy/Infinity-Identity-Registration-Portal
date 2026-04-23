@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Ancestral Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { position: relative; z-index: 1; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; background: rgba(255,255,255,0.01); }
+        .input-group label { display: block; font-size: clamp(11px, 3vw, 13px); opacity: 0.9; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--c-blue); border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 8px; }
+        
+        .status-grid { display: flex; gap: 10px; margin-bottom: 15px; }
+        .status-btn { flex: 1; padding: clamp(8px, 2vw, 10px); border: 1px dashed rgba(255,255,255,0.3); border-radius: 8px; text-align: center; font-size: clamp(10px, 2.5vw, 11px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; opacity: 0.5; transition: all 0.3s; background: transparent; color: var(--fg); }
+        .status-btn:hover { opacity: 0.8; }
+        .status-btn.active { opacity: 1; border-style: solid; border-color: var(--c-blue); background: rgba(0, 123, 255, 0.1); color: var(--c-blue); }
+        .status-btn.active.deceased { border-color: var(--c-red); background: rgba(255, 68, 68, 0.1); color: var(--c-red); }
+
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; transition: 0.3s; background: transparent; overflow: hidden; height: 45px; position: relative; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { width: 100%; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3vw, 13px); outline: none; font-family: inherit; font-weight: bold; letter-spacing: 1px; height: 100%; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.3; letter-spacing: normal; }
+
+        .char-count { position: absolute; right: 5px; bottom: -18px; font-size: 10px; font-weight: bold; opacity: 0.5; letter-spacing: 1px; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+
+        .btn-skip { width: 100%; padding: clamp(12px, 3.5vw, 14px); background: transparent; color: var(--fg); border: 1px dashed rgba(255,255,255,0.3); border-radius: 12px; font-size: clamp(12px, 3.5vw, 13px); font-weight: bold; cursor: pointer; transition: all 0.3s; margin-top: 15px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; }
+        .btn-skip:hover { opacity: 1; border-color: var(--fg); background: rgba(255,255,255,0.05); }
+        .btn-skip:active { transform: scale(0.97); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: var(--c-yellow); }
+        .modal-desc { font-size: 12px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: rgba(255,255,255,0.1); }
+        .modal-btn:active { transform: scale(0.95); }
+        .modal-btn.primary { color: var(--bg); background: var(--fg); border-color: var(--fg); }
+        .modal-btn.primary:hover { opacity: 0.9; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="organ_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Ancestral Lineage</strong></h2>
+        <p class="desc">Provide the legal designations of your <strong>grandparents</strong> for deeper ancestral mapping.</p>
+
+        <div class="input-group">
+            <label>Father's Father (Paternal Grandfather)</label>
+            <div class="status-grid" id="ffName-status">
+                <div class="status-btn" data-val="Alive" onclick="setStatus('ffName', 'Alive')">Alive</div>
+                <div class="status-btn" data-val="Deceased" onclick="setStatus('ffName', 'Deceased')">Deceased</div>
+            </div>
+            <div style="position: relative;">
+                <div class="input-wrapper">
+                    <input type="text" id="ffName" maxlength="50" placeholder="ENTER NAME" oninput="formatName(this, 'count-ffName')" autocomplete="off">
+                </div>
+                <span class="char-count" id="count-ffName">0/50</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Father's Mother (Paternal Grandmother)</label>
+            <div class="status-grid" id="fmName-status">
+                <div class="status-btn" data-val="Alive" onclick="setStatus('fmName', 'Alive')">Alive</div>
+                <div class="status-btn" data-val="Deceased" onclick="setStatus('fmName', 'Deceased')">Deceased</div>
+            </div>
+            <div style="position: relative;">
+                <div class="input-wrapper">
+                    <input type="text" id="fmName" maxlength="50" placeholder="ENTER NAME" oninput="formatName(this, 'count-fmName')" autocomplete="off">
+                </div>
+                <span class="char-count" id="count-fmName">0/50</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Mother's Father (Maternal Grandfather)</label>
+            <div class="status-grid" id="mfName-status">
+                <div class="status-btn" data-val="Alive" onclick="setStatus('mfName', 'Alive')">Alive</div>
+                <div class="status-btn" data-val="Deceased" onclick="setStatus('mfName', 'Deceased')">Deceased</div>
+            </div>
+            <div style="position: relative;">
+                <div class="input-wrapper">
+                    <input type="text" id="mfName" maxlength="50" placeholder="ENTER NAME" oninput="formatName(this, 'count-mfName')" autocomplete="off">
+                </div>
+                <span class="char-count" id="count-mfName">0/50</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Mother's Mother (Maternal Grandmother)</label>
+            <div class="status-grid" id="mmName-status">
+                <div class="status-btn" data-val="Alive" onclick="setStatus('mmName', 'Alive')">Alive</div>
+                <div class="status-btn" data-val="Deceased" onclick="setStatus('mmName', 'Deceased')">Deceased</div>
+            </div>
+            <div style="position: relative;">
+                <div class="input-wrapper">
+                    <input type="text" id="mmName" maxlength="50" placeholder="ENTER NAME" oninput="formatName(this, 'count-mmName')" autocomplete="off">
+                </div>
+                <span class="char-count" id="count-mmName">0/50</span>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+        <button class="btn-skip" onclick="skipStep()">Skip This Step</button>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-title">Skip Step?</div>
+            <div class="modal-desc">Ancestral mapping adds value to your node configuration, but it is not mandatory. Do you want to skip?</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="confirmSkip()">Skip Step</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let statuses = {
+            'ffName': '',
+            'fmName': '',
+            'mfName': '',
+            'mmName': ''
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'organ_registration.html';
+
+            const s = brain.settings || {};
+            if (s.fatherFatherName) {
+                document.getElementById('ffName').value = s.fatherFatherName;
+                updateCountDisplay('count-ffName', s.fatherFatherName.length, 50);
+                if (s.fatherFatherStatus) setStatus('ffName', s.fatherFatherStatus, true);
+            }
+            if (s.fatherMotherName) {
+                document.getElementById('fmName').value = s.fatherMotherName;
+                updateCountDisplay('count-fmName', s.fatherMotherName.length, 50);
+                if (s.fatherMotherStatus) setStatus('fmName', s.fatherMotherStatus, true);
+            }
+            if (s.motherFatherName) {
+                document.getElementById('mfName').value = s.motherFatherName;
+                updateCountDisplay('count-mfName', s.motherFatherName.length, 50);
+                if (s.motherFatherStatus) setStatus('mfName', s.motherFatherStatus, true);
+            }
+            if (s.motherMotherName) {
+                document.getElementById('mmName').value = s.motherMotherName;
+                updateCountDisplay('count-mmName', s.motherMotherName.length, 50);
+                if (s.motherMotherStatus) setStatus('mmName', s.motherMotherStatus, true);
+            }
+
+            validateForm();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && (s.fatherFatherName || s.fatherMotherName || s.motherFatherName || s.motherMotherName)) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function updateCountDisplay(id, current, max) {
+            const countEl = document.getElementById(id);
+            if (countEl) {
+                if (current >= max) {
+                    countEl.innerHTML = `<span style="color: var(--c-red); margin-right: 4px;">MAX</span>${current}/${max}`;
+                } else {
+                    countEl.innerText = `${current}/${max}`;
+                }
+            }
+        }
+
+        function formatName(el, countId) {
+            markUnsaved();
+            let val = el.value;
+            val = val.replace(/\d/g, ' ');
+            val = val.toUpperCase();
+            val = val.replace(/[^A-Z\s]/g, '');
+            val = val.replace(/\s{2,}/g, ' ');
+            if (val.startsWith(' ')) val = val.trimStart();
+            if (val.length > 50) val = val.substring(0, 50);
+            
+            el.value = val;
+            updateCountDisplay(countId, el.value.length, 50);
+            validateForm();
+        }
+
+        function setStatus(person, status, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            const grid = document.getElementById(person + '-status');
+            const btns = grid.querySelectorAll('.status-btn');
+            btns.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('deceased');
+            });
+            
+            const selectedBtn = Array.from(btns).find(b => b.getAttribute('data-val') === status);
+            if (selectedBtn) {
+                selectedBtn.classList.add('active');
+                if (status === 'Deceased') {
+                    selectedBtn.classList.add('deceased');
+                }
+            }
+            
+            statuses[person] = status;
+            validateForm();
+        }
+
+        function validateForm() {
+            const btn = document.getElementById('btnNext');
+            
+            const ff = document.getElementById('ffName').value.trim();
+            const fm = document.getElementById('fmName').value.trim();
+            const mf = document.getElementById('mfName').value.trim();
+            const mm = document.getElementById('mmName').value.trim();
+
+            let valid = false;
+
+            if (ff.length >= 3 && statuses['ffName'] !== '') valid = true;
+            if (fm.length >= 3 && statuses['fmName'] !== '') valid = true;
+            if (mf.length >= 3 && statuses['mfName'] !== '') valid = true;
+            if (mm.length >= 3 && statuses['mmName'] !== '') valid = true;
+
+            // If a name is partially filled, make it invalid until complete
+            if ((ff.length > 0 && ff.length < 3) || (ff.length >= 3 && statuses['ffName'] === '')) valid = false;
+            if ((fm.length > 0 && fm.length < 3) || (fm.length >= 3 && statuses['fmName'] === '')) valid = false;
+            if ((mf.length > 0 && mf.length < 3) || (mf.length >= 3 && statuses['mfName'] === '')) valid = false;
+            if ((mm.length > 0 && mm.length < 3) || (mm.length >= 3 && statuses['mmName'] === '')) valid = false;
+
+            btn.classList.toggle('active', valid);
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+
+            const btn = document.getElementById('btnNext');
+            btn.classList.add('saved');
+            btn.innerHTML = 'SAVED ✔';
+
+            const userSettings = brain.settings || {};
+            
+            const ff = document.getElementById('ffName').value.trim();
+            if(ff) { userSettings.fatherFatherName = ff; userSettings.fatherFatherStatus = statuses['ffName']; }
+            const fm = document.getElementById('fmName').value.trim();
+            if(fm) { userSettings.fatherMotherName = fm; userSettings.fatherMotherStatus = statuses['fmName']; }
+            const mf = document.getElementById('mfName').value.trim();
+            if(mf) { userSettings.motherFatherName = mf; userSettings.motherFatherStatus = statuses['mfName']; }
+            const mm = document.getElementById('mmName').value.trim();
+            if(mm) { userSettings.motherMotherName = mm; userSettings.motherMotherStatus = statuses['mmName']; }
+            
+            brain.saveSettings(userSettings);
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'allergy_registration.html';
+            }, 800);
+        }
+
+        function skipStep() {
+            document.getElementById('customModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('show');
+        }
+
+        function confirmSkip() {
+            closeModal();
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            window.location.href = isEdit ? 'edit.html' : 'allergy_registration.html';
+        }
+    </script>
+</body>
+</html>

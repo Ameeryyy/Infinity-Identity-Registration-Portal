@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity Identity - Home</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; 
+        }
+
+        .top-header { position: fixed; top: clamp(20px, 5vw, 40px); left: clamp(5%, 5vw, 40px); right: clamp(5%, 5vw, 40px); z-index: 200; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+        .header-left { display: flex; flex-direction: column; gap: clamp(4px, 1vw, 8px); }
+        
+        .brand-name { font-size: clamp(14px, 4vw, 20px); font-weight: bold; text-transform: uppercase; letter-spacing: clamp(2px, 1vw, 4px); opacity: 0.9; }
+        .info-row { display: flex; align-items: center; gap: clamp(6px, 2vw, 12px); }
+        .live-time { font-size: clamp(12px, 3.5vw, 16px); font-weight: bold; letter-spacing: clamp(1px, 0.5vw, 2px); font-variant-numeric: tabular-nums; color: var(--c-blue); }
+        .separator { font-size: clamp(10px, 3vw, 14px); opacity: 0.4; }
+        .live-date { font-size: clamp(10px, 3vw, 14px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
+        .weather-info { font-size: clamp(10px, 3vw, 14px); font-weight: bold; opacity: 0.6; letter-spacing: clamp(1px, 0.5vw, 2px); text-transform: uppercase; display: flex; align-items: center; gap: clamp(4px, 1vw, 8px); margin-top: 2px; }
+        .weather-info svg { width: clamp(12px, 3.5vw, 16px); height: clamp(12px, 3.5vw, 16px); fill: currentColor; }
+        
+        .header-right { pointer-events: auto; }
+        .notification-btn { display: flex; align-items: center; justify-content: center; width: clamp(35px, 10vw, 45px); height: clamp(35px, 10vw, 45px); border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); cursor: pointer; transition: all 0.3s; color: var(--fg); text-decoration: none; position: relative; }
+        .notification-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--c-blue); color: var(--c-blue); transform: scale(1.05); }
+        .notification-btn:active { transform: scale(0.95); }
+        .notification-btn svg { width: clamp(18px, 5vw, 22px); height: clamp(18px, 5vw, 22px); fill: currentColor; }
+        .notification-badge { position: absolute; top: 8px; right: 10px; width: 6px; height: 6px; background: var(--c-red); border-radius: 50%; box-shadow: 0 0 5px var(--c-red); display: none; }
+
+        @keyframes ring {
+            0% { transform: rotate(0); }
+            15% { transform: rotate(15deg); }
+            30% { transform: rotate(-10deg); }
+            45% { transform: rotate(5deg); }
+            60% { transform: rotate(-5deg); }
+            75% { transform: rotate(2deg); }
+            100% { transform: rotate(0); }
+        }
+        .notification-btn.ringing svg { animation: ring 0.5s ease; fill: var(--c-blue); }
+
+        .main-container { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: clamp(120px, 20vh, 150px) 5% clamp(80px, 15vh, 100px) 5%; box-sizing: border-box; }
+        .tab-content { width: 100%; max-width: 900px; display: none; animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        .tab-content.active { display: block; }
+        
+        .section-head { margin-bottom: clamp(20px, 5vh, 40px); }
+        .section-head h2 { font-size: clamp(28px, 8vw, 42px); font-weight: bold; margin: 0; letter-spacing: 1px; line-height: 1.1; }
+        .section-head p { font-size: clamp(12px, 3.5vw, 16px); opacity: 0.5; margin: clamp(10px, 2vh, 15px) 0 0 0; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .big-card { border: 1px solid rgba(255,255,255,0.2); border-radius: clamp(16px, 4vw, 24px); padding: clamp(30px, 6vw, 50px); cursor: pointer; transition: all 0.4s ease; position: relative; overflow: hidden; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); display: flex; align-items: center; gap: clamp(20px, 5vw, 40px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .big-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); transition: all 0.4s; }
+        .big-card:hover { border-color: var(--c-blue); background: rgba(255,255,255,0.03); transform: translateY(-5px); box-shadow: 0 20px 50px rgba(255,255,255,0.05); }
+        .big-card:hover::before { left: 200%; transition: all 1.5s ease; }
+        .big-card:active { transform: scale(0.98); }
+        .card-icon { width: clamp(50px, 12vw, 80px); height: clamp(50px, 12vw, 80px); fill: var(--c-blue); flex-shrink: 0; opacity: 0.8; transition: opacity 0.3s; }
+        .big-card:hover .card-icon { opacity: 1; }
+        .card-text { text-align: left; }
+        .card-text h3 { font-size: clamp(20px, 5.5vw, 32px); font-weight: bold; margin: 0 0 clamp(8px, 2vh, 15px) 0; letter-spacing: 1px; }
+        .card-text p { font-size: clamp(12px, 3.5vw, 15px); opacity: 0.6; margin: 0; line-height: 1.6; }
+        
+        .terminal-log { font-family: monospace; font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; margin-top: clamp(25px, 5vh, 40px); text-transform: uppercase; letter-spacing: 1px; height: 15px; color: var(--c-blue); }
+        
+        .resume-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(clamp(240px, 40vw, 280px), 1fr)); gap: clamp(15px, 3vw, 20px); width: 100%; }
+        .resume-card { border: 1px solid rgba(255,255,255,0.2); border-radius: clamp(16px, 4vw, 20px); padding: clamp(20px, 5vw, 30px); background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); cursor: pointer; transition: all 0.3s; position: relative; display: flex; flex-direction: column; gap: clamp(10px, 2.5vw, 15px); }
+        .resume-card:hover { border-color: var(--c-blue); transform: translateY(-5px); background: rgba(255,255,255,0.05); }
+        .rc-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .rc-title { font-size: clamp(16px, 4.5vw, 20px); font-weight: bold; margin: 0; display: flex; align-items: center; gap: clamp(6px, 1.5vw, 10px); text-transform: capitalize; color: var(--c-blue); }
+        .rc-title svg { width: clamp(20px, 5vw, 24px); height: clamp(20px, 5vw, 24px); fill: currentColor; opacity: 0.8; }
+        .rc-meta { font-size: clamp(10px, 2.5vw, 12px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+        .rc-timer { font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; opacity: 0.8; letter-spacing: 1px; margin-top: clamp(3px, 1vh, 5px); }
+        
+        .btn-discard { 
+            width: 100%; 
+            margin-top: clamp(20px, 4vh, 30px); 
+            padding: clamp(16px, 4vw, 20px); 
+            background: var(--c-blue); 
+            color: var(--bg); 
+            border: none; 
+            border-radius: clamp(12px, 3vw, 16px); 
+            font-weight: bold; 
+            font-size: clamp(13px, 3.5vw, 16px); 
+            text-transform: uppercase; 
+            letter-spacing: clamp(1px, 0.5vw, 2px); 
+            cursor: pointer; 
+            opacity: 1; 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        .btn-discard:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 25px rgba(255,255,255,0.15); 
+        }
+        .btn-discard:active { 
+            transform: scale(0.97); 
+            box-shadow: 0 5px 10px rgba(255,255,255,0.1); 
+        }
+
+        .saved-account-card { border: 1px dashed rgba(255,255,255,0.3); border-radius: clamp(16px, 4vw, 20px); padding: clamp(25px, 6vw, 30px); background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: clamp(15px, 4vw, 20px); transition: all 0.3s; }
+        .saved-account-card:hover { border-color: var(--c-blue); background: rgba(255,255,255,0.05); transform: translateY(-5px); }
+        .sa-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .sa-title { font-size: clamp(16px, 4.5vw, 20px); font-weight: bold; margin: 0; display: flex; align-items: center; gap: clamp(6px, 1.5vw, 10px); text-transform: uppercase; letter-spacing: 1px; color: var(--c-blue); }
+        .sa-title svg { width: clamp(20px, 5vw, 24px); height: clamp(20px, 5vw, 24px); fill: currentColor; opacity: 0.8; }
+        .sa-meta { font-size: clamp(10px, 2.5vw, 12px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 clamp(3px, 1vh, 5px) 0; }
+        .sa-count { font-size: clamp(24px, 7vw, 32px); font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
+        
+        .bottom-nav { position: fixed; bottom: clamp(15px, 4vh, 30px); left: 50%; transform: translateX(-50%); width: clamp(280px, 90%, 400px); background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); border-radius: clamp(25px, 6vw, 40px); display: flex; padding: clamp(4px, 1vw, 8px); z-index: 100; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .nav-btn { flex: 1; padding: clamp(10px, 3vh, 15px) 0; border-radius: clamp(20px, 5vw, 32px); display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1.5vw, 10px); color: var(--fg); opacity: 0.4; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; }
+        .nav-btn:hover { opacity: 0.8; }
+        .nav-btn.active { opacity: 1; background: rgba(128,128,128,0.1); color: var(--c-blue); }
+        .nav-btn svg { width: clamp(18px, 5vw, 22px); height: clamp(18px, 5vw, 22px); fill: currentColor; transition: transform 0.3s; }
+        .nav-btn.active svg { transform: translateY(-2px); fill: var(--c-blue); }
+        .nav-btn span { font-size: clamp(9px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: clamp(1px, 0.3vw, 1.5px); }
+        
+        @media (max-width: 768px) {
+            .big-card { flex-direction: column; align-items: flex-start; text-align: left; }
+            .nav-btn { flex-direction: column; gap: 4px; }
+            .nav-btn.active svg { transform: translateY(0); }
+        }
+
+        @media (max-width: 320px) {
+            .bottom-nav { border-radius: 20px; }
+            .nav-btn { padding: 8px 0; }
+        }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="top-header">
+        <div class="header-left">
+            <div class="brand-name">Infinity Identity</div>
+            <div class="info-row">
+                <div class="live-time" id="liveTime">00:00:00</div>
+                <div class="separator">|</div>
+                <div class="live-date" id="liveDate">SYNCING...</div>
+            </div>
+            <div class="weather-info" id="liveWeather">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg>
+                <span>SYNCING...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="notification-btn" title="Notifications" onclick="openNotifications()">
+                <svg viewBox="0 0 24 24"><path d="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21M19.75,3.19L18.33,4.61C20.04,6.3 21,8.6 21,11H23C23,8.07 21.84,5.25 19.75,3.19M1,11H3C3,8.6 3.96,6.3 5.67,4.61L4.25,3.19C2.16,5.25 1,8.07 1,11Z"/></svg>
+                <div class="notification-badge"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        
+        <div id="tab-register" class="tab-content active">
+            <div class="section-head">
+                <h2>Registration Portal</h2>
+                <p>Establish a secure cryptographic presence</p>
+            </div>
+            <div class="big-card" onclick="startRegistration()">
+                <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                <div class="card-text">
+                    <h3>Create New Identity</h3>
+                    <p>Initialize personal node configuration, setup biometric anchors, and secure your presence on the Infinity Network.</p>
+                </div>
+            </div>
+            <div class="terminal-log" id="termLog">> WAITING FOR USER INPUT...</div>
+        </div>
+        
+        <div id="tab-resume" class="tab-content">
+            <div class="section-head">
+                <h2>Resume Setup</h2>
+                <p>Continue your pending initialization</p>
+            </div>
+            <div id="resumeContainer"></div>
+        </div>
+
+        <div id="tab-saved" class="tab-content">
+            <div class="section-head">
+                <h2>Saved Identities</h2>
+                <p>Access your verified network nodes</p>
+            </div>
+            <div id="savedContainer"></div>
+        </div>
+        
+        <div id="tab-profile" class="tab-content">
+            <div class="section-head">
+                <h2>Profile</h2>
+                <p>Manage your identity node details</p>
+            </div>
+            <div class="big-card" onclick="window.location.href = 'profile_agreement.html'">
+                <svg class="card-icon" viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+                <div class="card-text">
+                    <h3>My Identity Node</h3>
+                    <p>View and manage your personal node parameters, biometric data, and recovery information.</p>
+                </div>
+            </div>
+            <button class="btn-discard" onclick="window.location.href = 'profile_agreement.html'">Go to Profile</button>
+        </div>
+        
+    </div>
+    
+    <div class="bottom-nav">
+        <div id="nav-register" class="nav-btn active" onclick="switchTab('register')">
+            <svg viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+            <span>Register</span>
+        </div>
+        <div id="nav-resume" class="nav-btn" onclick="switchTab('resume')">
+            <svg viewBox="0 0 24 24"><path d="M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/></svg>
+            <span>Resume</span>
+        </div>
+        <div id="nav-saved" class="nav-btn" onclick="switchTab('saved')">
+            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,19.93A8,8 0 0,1 4.06,13H11V19.93M13,19.93V13H19.94A8,8 0 0,1 13,19.93M19.94,11H13V4.06A8,8 0 0,1 19.94,11M11,4.06V11H4.06A8,8 0 0,1 11,4.06Z"/></svg>
+            <span>Saved</span>
+        </div>
+        <div id="nav-profile" class="nav-btn" onclick="switchTab('profile')">
+            <svg viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+            <span>Profile</span>
+        </div>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        function updateDateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12; hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            document.getElementById('liveTime').innerText = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=9.4981&longitude=76.3388&current_weather=true');
+                const data = await res.json();
+                const temp = Math.round(data.current_weather.temperature);
+                document.getElementById('liveWeather').innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg><span>${temp}°C ALAPPUZHA</span>`;
+            } catch (error) {
+                document.getElementById('liveWeather').innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg><span>WEATHER OFFLINE</span>`;
+            }
+        }
+        fetchWeather();
+
+        const logs = ["> SYSTEM ONLINE.", "> READY TO INITIALIZE NEW NODE.", "> ENCRYPTION MODULES STANDBY...", "> WAITING FOR USER INPUT..."];
+        let logIndex = 0;
+        setInterval(() => {
+            const term = document.getElementById('termLog');
+            if(term) {
+                term.style.opacity = '0';
+                setTimeout(() => { term.innerText = logs[logIndex]; term.style.opacity = '0.5'; logIndex = (logIndex + 1) % logs.length; }, 400);
+            }
+        }, 4000);
+
+        function checkUnreadNotifs() {
+            const TOTAL_NOTIFS = 6;
+            const readList = JSON.parse(localStorage.getItem('inf_read_notifs') || '[]');
+            const badge = document.querySelector('.notification-badge');
+            if (readList.length < TOTAL_NOTIFS) {
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', checkUnreadNotifs);
+
+        function openNotifications() {
+            const btn = document.querySelector('.notification-btn');
+            btn.classList.add('ringing');
+            setTimeout(() => {
+                window.location.href = 'notification.html';
+            }, 600);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('nav-' + tabId).classList.add('active');
+            if(tabId === 'resume') checkResumeData();
+            if(tabId === 'saved') checkSavedData();
+        }
+
+        function startRegistration() { window.location.href = 'registration_agreement.html'; }
+
+        function routeToAgreement(targetUrl) {
+            localStorage.setItem('inf_resume_target', targetUrl);
+            window.location.href = 'resume_agreement.html';
+        }
+
+        let sessionTimerInterval;
+        const MAX_SESSIONS = 3;
+        const MAX_HOURS = 100;
+        const MS_PER_HOUR = 3600000;
+
+        function getSessionName(url) {
+            try {
+                const stateData = JSON.parse(localStorage.getItem('inf_st_/name_registration.html'));
+                if(stateData && stateData['identityName'] && stateData['identityName'].trim() !== '') return stateData['identityName'];
+            } catch(e) {}
+            return "Pending Registration";
+        }
+
+        function updateTimers() {
+            const timers = document.querySelectorAll('.rc-timer');
+            timers.forEach(timer => {
+                const timestamp = parseInt(timer.getAttribute('data-timestamp'));
+                const elapsed = Date.now() - timestamp;
+                const remainingMs = (MAX_HOURS * MS_PER_HOUR) - elapsed;
+                if(remainingMs <= 0) {
+                    timer.innerText = "EXPIRED"; 
+                    timer.style.opacity = "0.5";
+                } else {
+                    const h = Math.floor(remainingMs / MS_PER_HOUR);
+                    const m = Math.floor((remainingMs % MS_PER_HOUR) / 60000);
+                    timer.innerText = (h > 0 ? `${h}h ` : '') + `${m}m left`;
+                }
+            });
+        }
+
+        function checkResumeData() {
+            const container = document.getElementById('resumeContainer');
+            clearInterval(sessionTimerInterval);
+            let sessions = JSON.parse(localStorage.getItem('inf_saved_sessions')) || [];
+            const oldSave = localStorage.getItem('inf_last_reg_page');
+            if (oldSave && sessions.length === 0) {
+                sessions.push({ id: Date.now().toString(), url: oldSave, title: getSessionName(oldSave), timestamp: Date.now() });
+                localStorage.removeItem('inf_last_reg_page');
+            }
+            sessions = sessions.filter(s => (Date.now() - s.timestamp) < (MAX_HOURS * MS_PER_HOUR));
+            sessions = sessions.map(s => { s.title = getSessionName(s.url); return s; });
+            sessions.sort((a, b) => b.timestamp - a.timestamp).slice(0, MAX_SESSIONS);
+            localStorage.setItem('inf_saved_sessions', JSON.stringify(sessions)); 
+
+            if (sessions.length > 0) {
+                let htmlStr = `<div class="resume-grid">`;
+                sessions.forEach((session, index) => {
+                    const dateStr = new Date(session.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+                    htmlStr += `<div class="resume-card" onclick="routeToAgreement('${session.url}')">
+                        <div class="rc-header"><h3 class="rc-title"><svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,12H11V9H13V14H16L12,18M13,9V3.5L18.5,9H13Z"/></svg>${session.title}</h3></div>
+                        <div><p class="rc-meta">SAVED: ${dateStr}</p><div class="rc-timer" data-timestamp="${session.timestamp}">CALCULATING...</div></div>
+                    </div>`;
+                });
+                htmlStr += `</div><button class="btn-discard" onclick="routeToAgreement('resume.html')">Manage Active Sessions</button>`;
+                container.innerHTML = htmlStr;
+                updateTimers(); sessionTimerInterval = setInterval(updateTimers, 60000);
+            } else {
+                container.innerHTML = `<div style="opacity:0.4; padding: clamp(30px, 8vw, 60px) clamp(20px, 5vw, 40px); border: 1px dashed rgba(255,255,255,0.2); border-radius: clamp(16px, 4vw, 24px); display:flex; flex-direction:column; align-items:flex-start; text-align:left; width:100%; box-sizing:border-box; background: rgba(255,255,255,0.02);"><svg viewBox="0 0 24 24" style="width:clamp(36px, 10vw, 48px); height:clamp(36px, 10vw, 48px); margin-bottom:15px; fill:currentColor;"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7Z"/></svg><h3 style="margin:0; font-size:clamp(16px, 4.5vw, 20px); letter-spacing:1px; text-transform:uppercase;">No Pending Setup</h3><p style="margin: 10px 0 0 0; font-size: clamp(11px, 3vw, 13px);">There are no active sessions found in the local node cache.</p></div><button class="btn-discard" onclick="routeToAgreement('resume.html')">Manual Override Recovery</button>`;
+            }
+        }
+
+        function formatTimeAgo(timestamp) {
+            const diff = Date.now() - timestamp;
+            const m = Math.floor(diff / 60000);
+            const h = Math.floor(diff / 3600000);
+            const d = Math.floor(diff / 86400000);
+            if (m < 1) return "Just now";
+            if (m < 60) return `${m} min ago`;
+            if (h < 24) return `${h} hr ago`;
+            if (d === 1) return "Yesterday";
+            return `${d} days ago`;
+        }
+
+        function checkSavedData() {
+            const container = document.getElementById('savedContainer');
+            const accounts = JSON.parse(localStorage.getItem('inf_finalized_accounts')) || [];
+            
+            const s = brain.settings || {};
+            if(s.currentName && accounts.length === 0) {
+                const acc = {
+                    id: Date.now().toString(),
+                    name: s.currentName,
+                    date: Date.now()
+                };
+                accounts.push(acc);
+                localStorage.setItem('inf_finalized_accounts', JSON.stringify(accounts));
+            }
+
+            if(accounts.length > 0) {
+                let htmlStr = `
+                    <div class="saved-account-card">
+                        <div class="sa-header">
+                            <h3 class="sa-title">
+                                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,19.93A8,8 0 0,0 4.06,13H11V19.93M13,19.93V13H19.94A8,8 0 0,0 13,19.93M19.94,11H13V4.06A8,8 0 0,0 19.94,11M11,4.06V11H4.06A8,8 0 0,0 11,4.06Z"/></svg>
+                                Nodes Synced
+                            </h3>
+                        </div>
+                        <div>
+                            <p class="sa-meta">Total Active Profiles</p>
+                            <h2 class="sa-count">${accounts.length}</h2>
+                        </div>
+                        <div>
+                            <p class="sa-meta">Last Updated</p>
+                            <p style="margin:0; font-size:clamp(12px, 3.5vw, 14px); font-weight:bold; opacity:0.8;">${formatTimeAgo(accounts[accounts.length - 1].date)}</p>
+                        </div>
+                    </div>
+                    <button class="btn-discard" onclick="window.location.href='save_agreement.html'">Access Node Data</button>
+                `;
+                container.innerHTML = htmlStr;
+            } else {
+                container.innerHTML = `
+                    <div style="opacity:0.4; padding: clamp(30px, 8vw, 60px) clamp(20px, 5vw, 40px); border: 1px dashed rgba(255,255,255,0.2); border-radius: clamp(16px, 4vw, 24px); display:flex; flex-direction:column; align-items:flex-start; text-align:left; width:100%; box-sizing:border-box; background: rgba(255,255,255,0.02);"><svg viewBox="0 0 24 24" style="width:clamp(36px, 10vw, 48px); height:clamp(36px, 10vw, 48px); margin-bottom:15px; fill:currentColor;"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7Z"/></svg>
+                        <h3 style="margin:0; font-size:clamp(16px, 4.5vw, 20px); letter-spacing:1px; text-transform:uppercase;">No Saved Profiles</h3>
+                        <p style="margin: 10px 0 0 0; font-size: clamp(11px, 3vw, 13px);">Complete the registration process to establish a permanent identity node.</p>
+                    </div>
+                `;
+            }
+        }
+
+        if(window.location.search.includes('success')) {
+            setTimeout(() => switchTab('saved'), 100);
+        }
+    </script>
+</body>
+</html>

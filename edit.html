@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Profile Overview</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+        }
+
+        .top-left { position: fixed; top: clamp(15px, 4vw, 25px); left: clamp(15px, 4vw, 25px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 100; background: var(--bg); padding: 5px; border-radius: 50%; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 5vw, 24px); height: clamp(20px, 5vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 600px; animation: fadeIn 0.5s; margin: clamp(60px, 10vh, 80px) auto clamp(40px, 8vh, 60px) auto; padding-bottom: 40px; text-align: left; z-index: 10; position: relative; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; letter-spacing: 1px; color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; text-align: center; }
+        
+        #summaryList { display: flex; flex-direction: column; gap: clamp(15px, 4vw, 20px); }
+        
+        .summary-card { border: 1px dashed rgba(255,255,255,0.2); border-radius: clamp(12px, 3vw, 16px); padding: clamp(15px, 4vw, 20px); background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); position: relative; transition: border-color 0.3s; }
+        .summary-card:hover { border-color: rgba(255,255,255,0.5); }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px; }
+        .card-title { font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px; opacity: 0.9; color: var(--c-blue); }
+        .card-title svg { width: clamp(14px, 4vw, 16px); height: clamp(14px, 4vw, 16px); fill: currentColor; }
+        
+        .btn-edit { background: transparent; border: none; color: var(--fg); opacity: 0.4; cursor: pointer; padding: 5px; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .btn-edit:hover { opacity: 1; color: var(--c-blue); transform: scale(1.1); }
+        .btn-edit svg { width: clamp(16px, 4.5vw, 18px); height: clamp(16px, 4.5vw, 18px); fill: currentColor; }
+        
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(10px, 3vw, 15px); }
+        .data-item { display: flex; flex-direction: column; gap: 4px; padding: 5px; border-radius: 8px; transition: background 0.2s; }
+        .data-item:hover { background: rgba(255,255,255,0.05); }
+        .data-item.full { grid-column: span 2; }
+        
+        .data-label { font-size: clamp(9px, 2.5vw, 10px); opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+        .data-value { font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; word-break: break-word; color: var(--fg); text-transform: uppercase; }
+        .data-value.empty { opacity: 0.6; font-style: italic; font-weight: normal; color: var(--c-red); }
+        
+        .img-grid { display: flex; gap: 10px; margin-top: 10px; }
+        .img-box { width: clamp(60px, 15vw, 80px); height: clamp(60px, 15vw, 80px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; background: rgba(255,255,255,0.05); transition: 0.3s; }
+        .img-box:active { transform: scale(0.95); }
+        
+        .empty-img { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; opacity: 0.6; color: var(--c-red); font-weight: bold; text-align: center; border: 1px dashed rgba(255,68,68,0.3); background: rgba(255,68,68,0.05); letter-spacing: 1px; line-height: 1.2; font-style: italic; border-radius: 8px; }
+        .sig-box { width: 100%; height: clamp(60px, 15vw, 80px); border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: contain; background: rgba(255,255,255,0.05); }
+        
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; transition: all 0.3s; margin-top: clamp(20px, 5vw, 30px); letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next:hover { background: var(--c-blue); border-color: var(--c-blue); color: #fff; }
+        .btn-next:active { transform: scale(0.97); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-overlay.show { display: flex; }
+        .modal-img { max-width: 90%; max-height: 80%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .modal-close { position: absolute; bottom: 40px; font-size: 11px; font-weight: bold; letter-spacing: 2px; color: var(--fg); opacity: 0.5; text-transform: uppercase; }
+        
+        /* Confirmation Modal Styles */
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: clamp(20px, 5vw, 25px); width: 85%; max-width: 320px; text-align: center; transform: scale(0.9); transition: transform 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-title { font-size: clamp(14px, 4vw, 16px); font-weight: bold; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px; color: var(--c-blue); }
+        .modal-title.danger { color: var(--c-red); }
+        .modal-text { font-size: clamp(11px, 3vw, 13px); opacity: 0.8; margin: 0 0 25px 0; line-height: 1.5; color: var(--fg); }
+        
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal { flex: 1; padding: clamp(10px, 3vw, 12px); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: var(--fg); border-radius: 8px; font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; cursor: pointer; text-transform: uppercase; transition: all 0.2s; letter-spacing: 1px; }
+        .btn-modal:hover { background: rgba(255,255,255,0.1); }
+        .btn-modal:active { transform: scale(0.95); }
+        .btn-confirm { border-color: rgba(0, 200, 81, 0.4); color: var(--c-green); background: rgba(0, 200, 81, 0.1); }
+        .btn-confirm:hover { background: rgba(0, 200, 81, 0.2); color: var(--c-green); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 768px) {
+            .data-grid { grid-template-columns: 1fr; } 
+            .data-item.full { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="home.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Node Profile Overview</h2>
+        <p class="desc">Review all compiled biometric and cryptographic parameters before final synchronization.</p>
+        
+        <div id="summaryList"></div>
+        
+        <button class="btn-next" onclick="showFinalizeModal()">Sync & Finalize Registration</button>
+    </div>
+
+    <div class="modal-overlay" id="imageModal" onclick="this.classList.remove('show')">
+        <img class="modal-img" id="modalImg">
+        <div class="modal-close">Tap anywhere to close</div>
+    </div>
+
+    <div class="modal-overlay" id="finalizeModal">
+        <div class="modal-box">
+            <h3 class="modal-title danger">Final Warning</h3>
+            <p class="modal-text">Are you sure you want to finalize? Most core identity records cannot be modified or updated once synchronized to the node. Please review everything before proceeding.</p>
+            <div class="modal-actions">
+                <button class="btn-modal" onclick="closeFinalizeModal()">Review Again</button>
+                <button class="btn-modal btn-confirm" onclick="window.location.href='confirm.html'">Sync Now</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        let s = brain.settings || {};
+        const list = document.getElementById('summaryList');
+
+        function showFullImage(src) {
+            document.getElementById('modalImg').src = src;
+            document.getElementById('imageModal').classList.add('show');
+        }
+
+        function showFinalizeModal() {
+            document.getElementById('finalizeModal').classList.add('show');
+        }
+
+        function closeFinalizeModal() {
+            document.getElementById('finalizeModal').classList.remove('show');
+        }
+
+        const val = (v) => (v !== undefined && v !== null && String(v).trim() !== '' && String(v) !== 'undefined') ? String(v) : '<span class="data-value empty">NOT PROVIDED</span>';
+        
+        const getArrNames = (arr) => (Array.isArray(arr) && arr.length > 0) ? arr.map(x=>x.name).join(", ") : null;
+        
+        const getAllergies = () => {
+            let a = [];
+            if(s.allergies && Array.isArray(s.allergies.standardAllergies)) a.push(...s.allergies.standardAllergies);
+            if(s.allergies && Array.isArray(s.allergies.customAllergies)) a.push(...s.allergies.customAllergies.map(x=>x.title));
+            return a.length > 0 ? a.join(", ") : null;
+        };
+
+        const sections = [
+            {
+                title: "Nomenclature", icon: "M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z", link: "identity_registration.html",
+                data: [ ["Birth Name", val(s.birthName)], ["Current Legal Name", val(s.currentName)] ]
+            },
+            {
+                title: "Temporal & Vital Metrics", icon: "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z", link: "temporal_registration.html",
+                data: [ ["Date of Birth", val(s.dateOfBirth)], ["Blood Group", val(s.bloodGroup)], ["Relationship", val(s.relationshipStatus)] ],
+                altLink: { index: 1, url: "relation_registration.html" }
+            },
+            {
+                title: "Gender Designation", icon: "M12,4A6,6 0 0,1 18,10C18,12.97 15.84,15.44 13,15.92V18H15V20H13V22H11V20H9V18H11V15.92C8.16,15.44 6,12.97 6,10A6,6 0 0,1 12,4M12,6A4,4 0 0,0 8,10A4,4 0 0,0 12,14A4,4 0 0,0 16,10A4,4 0 0,0 12,6Z", link: "gender_registration.html",
+                data: [ ["Biological Sex", val(s.birthGender)], ["Identified Gender", val(s.currentGender)] ]
+            },
+            {
+                title: "Lineage", icon: "M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z", link: "family_registration.html",
+                data: [ ["Father", val(s.fatherName)], ["Mother", val(s.motherName)], ["Paternal Grandfather", val(s.fatherFatherName)], ["Paternal Grandmother", val(s.fatherMotherName)], ["Maternal Grandfather", val(s.motherFatherName)], ["Maternal Grandmother", val(s.motherMotherName)] ],
+                altLink: { index: 2, url: "ancestral_registration.html" }
+            },
+            {
+                title: "Spiritual Alignment", icon: "M12,2L14.8,8.6L22,9.3L16.6,14.2L18.2,21L12,17.3L5.8,21L7.4,14.2L2,9.3L9.2,8.6L12,2Z", link: "faith_registration.html",
+                data: [ 
+                    ["Primary Belief", val(s.religion)], 
+                    ["Denomination / Sect", val(s.denomination)], 
+                    ["Level of Practice", val(s.practiceLevel)],
+                    ["Followed Diff. Belief", s.previousReligion ? "YES" : "NO"]
+                ].concat(s.previousReligion ? [
+                    ["Former Belief", val(s.previousReligion)], 
+                    ["Former Sect", val(s.previousDenomination)], 
+                    ["Former Practice", val(s.previousPracticeLevel)]
+                ] : [])
+            },
+            {
+                title: "Education Profile", icon: "M12,3L1,9L4,10.64V17.5C4,18.88 7.58,20 12,20C16.42,20 20,18.88 20,17.5V10.64L23,9L12,3M12,5.28L18.4,8.6L12,12L5.6,8.6L12,5.28M18,17.5C18,18.06 15.31,18.5 12,18.5C8.69,18.5 6,18.06 6,17.5V11.72L12,15.15L18,11.72V17.5Z", link: "education_registration.html",
+                data: [ ["Qualification", val(s.education?.level)], ["Title/Details", val(s.education?.customTitle || s.education?.customDesc)] ]
+            },
+            {
+                title: "Economic Status", icon: "M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C8.96,12.25 7,11.08 7,9C7,6.86 9.15,5.13 12,5.13C14.85,5.13 17,6.86 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C15.04,11.75 17,12.92 17,15C17,17.14 14.85,18.87 12,18.87C9.15,18.87 7,17.14 7,15M2,11H4V13H2V11M20,11H22V13H20V11M11,2H13V4H11V2M11,20H13V22H11V20M17,17.5L18.4,19L19.8,17.5L18.4,16L17,17.5M5.6,5L7,6.4L5.6,7.8L4.2,6.4L5.6,5M18.4,5L19.8,6.4L18.4,7.8L17,6.4L18.4,5M5.6,19L7,17.5L5.6,16L4.2,17.5L5.6,19Z", link: "economic_registration.html",
+                data: [ ["Occupation", val(s.occupation)], ["Profession", val(s.profession)], ["Income", val(s.annualIncome)] ]
+            },
+            {
+                title: "Political Affiliation", icon: "M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z", link: "political_registration.html",
+                data: [ ["Party", val(s.politics?.party)], ["Role", val(s.politics?.role)] ]
+            },
+            {
+                title: "Languages & Skills", icon: "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z", link: "language_registration.html",
+                data: [ 
+                    ["Known Languages", val( (s.languages?.standard || []).concat(s.languages?.custom || []).join(", ") )], 
+                    ["Practical Skills", val( (s.skills?.standardSkills || []).concat((s.skills?.customSkills || []).map(sk=>sk.title)).join(", ") )] 
+                ],
+                altLink: { index: 1, url: "skills_registration.html" }
+            },
+            {
+                title: "Health & Disability", icon: "M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M17,13H13V17H11V13H7V11H11V7H13V11H17V13Z", link: "health_registration.html",
+                data: [ 
+                    ["Medical Conditions", val( (s.health?.standardDiseases || []).concat((s.health?.customDiseases || []).map(d=>d.title)).join(", ") )],
+                    ["Differently Abled", val(s.disabilityStatus)],
+                    ["Disability Records", val( (s.disabilityRecords || []).map(d=>d.title).join(", ") )]
+                ],
+                altLink: { index: 1, url: "disability_registration.html" }
+            },
+            {
+                title: "Allergy Records", icon: "M13,22A2,2 0 0,1 11,20V18.5C7.62,17.91 5,14.9 5,11.5V6L13,2L21,6V11.5C21,14.9 18.38,17.91 15,18.5V20A2,2 0 0,1 13,22M13,16.5C16.47,15.93 19,13.06 19,9.5V7L13,4L7,7V9.5C7,13.06 9.53,15.93 13,16.5Z", link: "allergy_registration.html",
+                data: [ ["Allergies & Reactions", val( getAllergies() )] ]
+            },
+            {
+                title: "Organ Registry", icon: "M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z", link: "organ_registration.html",
+                data: [ 
+                    ["Needs Transplant", val(s.organRegistry?.needsTransplant)], 
+                    ["Received Transplant", val(s.organRegistry?.hasReceivedTransplant)], 
+                    ["Willing to Donate", val(s.organRegistry?.willingToDonate)] 
+                ]
+            },
+            {
+                title: "Communication Nodes", icon: "M20,15.5C18.8,15.5 17.5,15.3 16.4,14.9C16.3,14.9 16.2,14.9 16.1,14.9C15.8,14.9 15.6,15 15.4,15.2L13.2,17.4C10.4,15.9 8,13.6 6.6,10.8L8.8,8.6C9.1,8.3 9.2,7.9 9,7.6C8.7,6.5 8.5,5.2 8.5,4C8.5,3.5 8,3 7.5,3H4C3.5,3 3,3.5 3,4C3,13.4 10.6,21 20,21C20.5,21 21,20.5 21,20V16.5C21,16 20.5,15.5 20,15.5Z", link: "communication_registration.html",
+                data: [ ["Primary Phone", val(s.contactPhone || s.phone)], ["Email Address", val(s.contactEmail || s.email)], ["WhatsApp", val(s.contactWhatsApp || s.wa)], ["Alternate Phone", val(s.telephoneNumber)], ["Guardian Phone" + (s.guardianRole ? " ("+s.guardianRole+")" : ""), val(s.guardianPhone)], ["Emergency Contact", val(s.emergencyPhone)] ],
+                altLink: { index: 3, url: "emergency_registration.html" }
+            },
+            {
+                title: "Document Vault", icon: "M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z", link: "document_registration.html",
+                data: [ ["Aadhaar", val(s.documents?.aadhaar)], ["PAN", val(s.documents?.pan)], ["Passport", val(s.documents?.passport)], ["Driving License", val(s.documents?.dl)] ]
+            },
+            {
+                title: "Asset Registry", icon: "M5,3H19A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3M7,7V9H9V7H7M11,7V9H17V7H11M7,11V13H9V11H7M11,11V13H17V11H11M7,15V17H9V15H7M11,15V17H17V15H11Z", link: "asset_registration.html",
+                data: [ ["Assets", val(getArrNames(s.assetRegistry))] ]
+            },
+            {
+                title: "Social & Digital", icon: "M16,11C17.66,11 18.99,9.66 18.99,8C18.99,6.34 17.66,5 16,5C14.34,5 13,6.34 13,8C13,9.66 14.34,11 16,11M8,11C9.66,11 10.99,9.66 10.99,8C10.99,6.34 9.66,5 8,5C6.34,5 5,6.34 5,8C5,9.66 6.34,11 8,11M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M16,13C15.71,13 15.38,13.02 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13Z", link: "social_registration.html",
+                data: [ ["Profiles", val(getArrNames(s.socialRegistry))] ]
+            },
+            {
+                title: "Welfare & Benefits", icon: "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,19.93A8,8 0 0,0 4.06,13H11V19.93M13,19.93V13H19.94A8,8 0 0,0 13,19.93M19.94,11H13V4.06A8,8 0 0,0 19.94,11M11,4.06V11H4.06A8,8 0 0,0 11,4.06Z", link: "benefit_registration.html",
+                data: [ ["Benefits", val(getArrNames(s.benefitRegistry))] ]
+            },
+            {
+                title: "Interests & Hobbies", icon: "M14,2H10V5H14V2M16,5H20V7H16V5M4,5H8V7H4V5M12,22L8,18H16L12,22M18,9H6V14C6,15.66 7.34,17 9,17H15C16.66,17 18,15.66 18,14V9Z", link: "interest_registration.html",
+                data: [ ["Hobbies", val(getArrNames(s.interestRegistry))] ]
+            },
+            {
+                title: "Geospatial & Localization", icon: "M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z", link: "geospatial_registration.html",
+                data: [ 
+                    ["Taluk", val(s.location?.taluk)], 
+                    ["Local Body", (s.location?.type && s.location?.place) ? (s.location.type + " - " + s.location.place) : val('')], 
+                    ["House Name", val(s.preciseLocation?.houseName || s.preciseLocation?.house)], 
+                    ["House Number", val(s.preciseLocation?.houseNumber)], 
+                    ["Street / Landmark", (s.preciseLocation?.street || s.preciseLocation?.landmark) ? [s.preciseLocation?.street, s.preciseLocation?.landmark].filter(Boolean).join(" / ") : val('')], 
+                    ["Pincode", val(s.preciseLocation?.pincode)], 
+                    ["Coordinates", val(s.preciseLocation?.coordinates)],
+                    ["Full Address", val(s.preciseLocation?.fullAddress)] 
+                ],
+                altLink: { index: 2, url: "precise_registration.html" }
+            },
+            {
+                title: "Legacy & Nomination", icon: "M12,12C9.97,12 8.1,11.13 6.8,9.8C5.5,8.5 4.63,6.63 4.63,4.6C4.63,2.57 5.5,0.7 6.8,-0.6C8.1,-1.9 9.97,-2.77 12,-2.77C14.03,-2.77 15.9,-1.9 17.2,-0.6C18.5,0.7 19.37,2.57 19.37,4.6C19.37,6.63 18.5,8.5 17.2,9.8C15.9,11.13 14.03,12 12,12M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z", link: "legacy_registration.html",
+                data: [ ["Nominee Name", val(s.legacyNominee?.name)], ["Relation", val(s.legacyNominee?.relationKey === 'other' ? s.legacyNominee?.customRelation : s.legacyNominee?.relationKey)], ["Phone", val(s.legacyNominee?.phone)] ]
+            },
+            {
+                title: "Local Member Data", icon: "M12,12C9.97,12 8.1,11.13 6.8,9.8C5.5,8.5 4.63,6.63 4.63,4.6C4.63,2.57 5.5,0.7 6.8,-0.6C8.1,-1.9 9.97,-2.77 12,-2.77C14.03,-2.77 15.9,-1.9 17.2,-0.6C18.5,0.7 19.37,2.57 19.37,4.6C19.37,6.63 18.5,8.5 17.2,9.8C15.9,11.13 14.03,12 12,12M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z", link: "member_registration.html",
+                data: [ ["Member Name", val(s.memberDetails?.name)], ["Ward Name", val(s.memberDetails?.wardName || s.memberDetails?.ward)], ["Ward Number", val(s.memberDetails?.wardNumber)], ["Member Phone", val(s.memberDetails?.phone)], ["Member Gender", val(s.memberDetails?.gender)] ]
+            }
+        ];
+
+        sections.forEach(sec => {
+            let itemsHtml = '';
+            sec.data.forEach((d, i) => {
+                let actualLink = sec.link;
+                if(sec.altLink && i >= sec.altLink.index) actualLink = sec.altLink.url;
+                itemsHtml += `
+                    <div class="data-item ${sec.data.length % 2 !== 0 && i === sec.data.length - 1 ? 'full' : ''}" onclick="window.location.href='${actualLink}?edit=true'" style="cursor:pointer;" title="Click to Edit">
+                        <span class="data-label">${d[0]}</span>
+                        <div class="data-value">${d[1]}</div>
+                    </div>
+                `;
+            });
+            list.innerHTML += `
+                <div class="summary-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><svg viewBox="0 0 24 24"><path d="${sec.icon}"/></svg> ${sec.title}</h3>
+                        <button class="btn-edit" onclick="window.location.href='${sec.link}?edit=true'" title="Edit Section">
+                            <svg viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>
+                        </button>
+                    </div>
+                    <div class="data-grid">${itemsHtml}</div>
+                </div>
+            `;
+        });
+
+        let mediaHtml = `
+            <div class="summary-card">
+                <div class="card-header">
+                    <h3 class="card-title"><svg viewBox="0 0 24 24"><path d="M4,4H10V10H4V4M20,4V10H14V4H20M14,15H16V13H14V11H16V13H18V11H20V13H18V15H20V18H18V20H16V18H13V20H11V16H14V15M16,15V18H18V15H16M4,20V14H10V20H4M6,6V8H8V6H6M16,6V8H18V6H16M6,16V18H8V16H6Z"/></svg> Biometric & Security</h3>
+                    <button class="btn-edit" onclick="window.location.href='profile_registration.html?edit=true'" title="Edit Section">
+                        <svg viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>
+                    </button>
+                </div>
+                <div class="data-item full" style="margin-bottom:15px; cursor:pointer;" onclick="window.location.href='profile_registration.html?edit=true'">
+                    <span class="data-label">Facial Scans</span>
+                    <div class="img-grid">
+                        ${s.profilePicturePrimary ? `<img src="${s.profilePicturePrimary}" class="img-box" onclick="showFullImage(this.src); event.stopPropagation();">` : '<div class="img-box empty-img"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor;margin-bottom:2px;"><path d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"/></svg>NOT<br>PROVIDED</div>'}
+                        ${s.profilePictureSecondary ? `<img src="${s.profilePictureSecondary}" class="img-box" onclick="showFullImage(this.src); event.stopPropagation();">` : '<div class="img-box empty-img"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor;margin-bottom:2px;"><path d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"/></svg>NOT<br>PROVIDED</div>'}
+                    </div>
+                </div>
+                
+                <div class="data-item full" style="margin-bottom:15px;">
+                    <span class="data-label">Cryptographic Signatures</span>
+                    <div class="data-grid" style="grid-template-columns: 1fr 1fr; margin-top: 10px;">
+                        <div onclick="window.location.href='signature_registration.html?edit=true'" style="cursor:pointer;">
+                            <span class="data-label" style="font-size: 8px;">User Node</span>
+                            ${s.signatures && s.signatures.userSig ? `<img src="${s.signatures.userSig}" class="sig-box">` : '<div class="sig-box empty-img" style="height:60px; font-size:8px;">NOT<br>PROVIDED</div>'}
+                        </div>
+                        <div onclick="window.location.href='signature_registration.html?edit=true'" style="cursor:pointer;">
+                            <span class="data-label" style="font-size: 8px;">Guardian Node</span>
+                            ${s.signatures && s.signatures.guardSig ? `<img src="${s.signatures.guardSig}" class="sig-box">` : '<div class="sig-box empty-img" style="height:60px; font-size:8px;">NOT<br>PROVIDED</div>'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-grid">
+                    <div class="data-item" onclick="window.location.href='password_registration.html?edit=true'" style="cursor:pointer;">
+                        <span class="data-label">Master Key Configuration</span>
+                        <div class="data-value" style="color:var(--c-green);">${s.masterPassword ? 'ULTRA SECURE • VERIFIED ✔' : '<span class="data-value empty">PENDING</span>'}</div>
+                    </div>
+                    <div class="data-item" onclick="window.location.href='recovery_registration.html?edit=true'" style="cursor:pointer;">
+                        <span class="data-label">Recovery Nodes</span>
+                        <div class="data-value">${s.recoveryHints && s.recoveryHints.length > 0 ? s.recoveryHints.length + ' SET' : '<span class="data-value empty">NOT PROVIDED</span>'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        list.innerHTML += mediaHtml;
+    </script>
+</body>
+</html>

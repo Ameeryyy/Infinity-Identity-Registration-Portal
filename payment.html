@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Payment</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: center; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(24px, 7vw, 32px); color: var(--c-blue); }
+        p.desc { font-size: 12px; opacity: 0.7; margin-bottom: 30px; line-height: 1.6; padding: 0 10px; }
+        p.desc strong { color: var(--c-blue); opacity: 1; }
+
+        .fee-box { border: 1px dashed rgba(255,255,255,0.3); border-radius: 12px; padding: 20px; margin-bottom: 30px; background: rgba(255,255,255,0.02); }
+        .fee-label { font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; display: block; font-weight: bold; }
+        .fee-amount { font-size: 36px; font-weight: bold; color: var(--c-green); text-shadow: 0 0 15px rgba(0,200,81,0.3); margin-bottom: 5px; }
+        .fee-tax { font-size: 9px; opacity: 0.5; letter-spacing: 1px; font-weight: bold; }
+
+        .methods-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; text-align: left; }
+        
+        .pay-card { border: 1px solid rgba(255,255,255,0.15); padding: 16px 20px; border-radius: 12px; cursor: pointer; transition: all 0.3s; display: flex; justify-content: space-between; align-items: center; background: transparent; }
+        .pay-card:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.02); }
+        .pay-card.active { border-color: var(--c-blue); background: rgba(0, 123, 255, 0.05); box-shadow: 0 5px 15px rgba(0, 123, 255, 0.15); }
+        
+        .pay-info { display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: bold; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
+        .pay-card.active .pay-info { opacity: 1; color: var(--c-blue); }
+        .pay-info svg { width: 24px; height: 24px; fill: currentColor; }
+        
+        .radio-circle { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .radio-circle::after { content: ''; width: 10px; height: 10px; background: #fff; border-radius: 50%; opacity: 0; transition: 0.3s; transform: scale(0.5); }
+        .pay-card.active .radio-circle { border-color: var(--c-blue); background: var(--c-blue); }
+        .pay-card.active .radio-circle::after { opacity: 1; transform: scale(1); }
+
+        .btn-next { width: 100%; padding: 16px; background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="robot.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Node Activation Fee</h2>
+        <p class="desc">Select a payment method to complete the secure transaction and activate your node.</p>
+
+        <div class="fee-box">
+            <span class="fee-label">One-Time Registration Fee</span>
+            <div class="fee-amount">₹ 25.00</div>
+            <div class="fee-tax">(INCLUSIVE OF ALL TAXES)</div>
+        </div>
+
+        <div class="methods-grid">
+            <div class="pay-card" id="card-upi" onclick="selectMethod('upi')">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M16.5 15H15V10.5H13V15H11.5V10.5H9.5V15H8V9H16.5Z"/></svg>
+                    <span>UPI / BHIM / GPAY</span>
+                </div>
+                <div class="radio-circle"></div>
+            </div>
+
+            <div class="pay-card" id="card-qr" onclick="selectMethod('qr')">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M4,4H10V10H4V4M6,6V8H8V6H6M14,4H20V10H14V4M16,6V8H18V6H16M4,14H10V20H4V14M6,16V18H8V16H6M14,14H17V17H14V14M17,14H20V17H17V14M14,17H17V20H14V17M17,17H20V20H17V17Z"/></svg>
+                    <span>SCAN QR CODE</span>
+                </div>
+                <div class="radio-circle"></div>
+            </div>
+            
+            <div class="pay-card" id="card-card" onclick="selectMethod('card')">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
+                    <span>Credit / Debit Card</span>
+                </div>
+                <div class="radio-circle"></div>
+            </div>
+            
+            <div class="pay-card" id="card-net" onclick="selectMethod('net')">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M11.5,1L2,6V8H21V6M16,10V17H19V10M2,22H21V19H2M10,10V17H13V10M4,10V17H7V10Z"/></svg>
+                    <span>Net Banking</span>
+                </div>
+                <div class="radio-circle"></div>
+            </div>
+
+            <div class="pay-card" id="card-crypto" onclick="selectMethod('crypto')">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11.5,8A2.5,2.5 0 0,0 9,10.5A2.5,2.5 0 0,0 11.5,13H13A1.5,1.5 0 0,1 14.5,14.5A1.5,1.5 0 0,1 13,16H9V18H11V19H13V18H13.5A2.5,2.5 0 0,0 16,15.5A2.5,2.5 0 0,0 13.5,13H12A1.5,1.5 0 0,1 10.5,11.5A1.5,1.5 0 0,1 12,10H16V8H14V7H12V8Z"/></svg>
+                    <span>Crypto Network</span>
+                </div>
+                <div class="radio-circle"></div>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="proceedToGateway()">Proceed</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let selectedMethod = '';
+        const btnNext = document.getElementById('btnNext');
+
+        function selectMethod(method) {
+            selectedMethod = method;
+            document.querySelectorAll('.pay-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(`card-${method}`).classList.add('active');
+            btnNext.classList.add('active');
+        }
+
+        function proceedToGateway() {
+            if (!selectedMethod) return;
+            btnNext.innerHTML = 'PROCESSING...';
+            btnNext.style.pointerEvents = 'none';
+            setTimeout(() => {
+                window.location.href = `payment_gateway.html?method=${selectedMethod}`;
+            }, 500);
+        }
+    </script>
+</body>
+</html>

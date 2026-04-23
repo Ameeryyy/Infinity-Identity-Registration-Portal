@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Interests & Hobbies</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .interest-card { border: 1px dashed rgba(255,255,255,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.02); position: relative; animation: fadeIn 0.4s ease; display: flex; align-items: center; gap: 15px; }
+        .interest-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--c-blue); }
+        .interest-icon svg { width: 20px; height: 20px; fill: currentColor; }
+        .interest-info { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow: hidden; }
+        .interest-category { font-size: 10px; font-weight: bold; text-transform: uppercase; color: var(--c-blue); letter-spacing: 1px; }
+        .interest-detail { font-size: 13px; font-weight: bold; letter-spacing: 1px; color: var(--fg); word-break: break-all; text-transform: uppercase; }
+        .btn-delete { cursor: pointer; opacity: 0.5; transition: 0.3s; width: 18px; height: 18px; fill: var(--c-red); flex-shrink: 0; }
+        .btn-delete:hover { opacity: 1; transform: scale(1.1); }
+
+        .add-form-card { border: 1px solid var(--c-blue); background: rgba(0, 123, 255, 0.02); border-radius: 12px; padding: 20px 15px; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(0,123,255,0.05); }
+        .add-form-title { font-size: 11px; font-weight: bold; color: var(--c-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; text-align: center; }
+
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group label { display: flex; justify-content: space-between; font-size: clamp(10px, 2.5vw, 12px); opacity: 0.9; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        
+        .custom-select-wrapper { display: flex; flex-direction: column; width: 100%; user-select: none; cursor: pointer; position: relative; z-index: 20; }
+        .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 0 15px; height: 48px; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-size: 12px; font-weight: bold; letter-spacing: 1px; color: inherit; transition: 0.3s; box-sizing: border-box; background: transparent; }
+        .custom-select-wrapper.open .custom-select-trigger { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .custom-select-trigger span { opacity: 0.5; font-weight: normal; transition: 0.3s; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+        .custom-select-trigger.selected span { opacity: 1; font-weight: bold; }
+        .custom-select-trigger svg.platform-icon { width: 18px; height: 18px; fill: var(--c-blue); display: none; }
+        .custom-select-trigger.selected svg.platform-icon { display: block; }
+        .select-arrow { width: 16px; height: 16px; fill: var(--fg); opacity: 0.5; transition: transform 0.3s ease; }
+        .custom-select-wrapper.open .select-arrow { transform: rotate(180deg); fill: var(--c-blue); }
+        
+        .custom-options { position: absolute; top: 100%; left: 0; width: 100%; background-color: #111111; border-radius: 12px; opacity: 0; visibility: hidden; transition: all 0.3s ease; overflow-y: auto; max-height: 0; padding: 0; margin-top: 0; border: none; box-sizing: border-box; z-index: 20; }
+        .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; max-height: 220px; padding: 5px 0; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .custom-options::-webkit-scrollbar { width: 4px; }
+        .custom-options::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .custom-option { padding: 12px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 11px; transition: 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: bold; text-transform: uppercase; line-height: 1.4; color: rgba(255,255,255,0.8); }
+        .custom-option svg { width: 16px; height: 16px; fill: currentColor; opacity: 0.7; }
+        .custom-option:last-child { border-bottom: none; }
+        .custom-option:hover, .custom-option.selected { background-color: rgba(255,255,255,0.05); color: var(--c-blue); }
+        .custom-option:hover svg, .custom-option.selected svg { opacity: 1; fill: var(--c-blue); }
+
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 48px; position: relative; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 13px; outline: none; font-family: inherit; font-weight: bold; height: 100%; min-width: 0; letter-spacing: 1px; text-transform: uppercase; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.3; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+        .input-wrapper input:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        .char-count { position: absolute; right: 5px; bottom: -18px; font-size: 9px; font-weight: bold; opacity: 0.5; letter-spacing: 1px; }
+
+        .btn-add-custom { width: 100%; padding: 14px; background: rgba(0, 123, 255, 0.1); border: 1px dashed var(--c-blue); color: var(--c-blue); border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+        .btn-add-custom:hover:not(:disabled) { background: var(--c-blue); color: #fff; border-style: solid; }
+        .btn-add-custom:disabled { opacity: 0.2; pointer-events: none; border-color: rgba(255,255,255,0.2); color: var(--fg); background: transparent; }
+        .btn-add-custom svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 15px; width: 100%; }
+        
+        .btn-skip { flex: 1; padding: clamp(14px, 4vw, 16px); background: transparent; color: rgba(255,255,255,0.6); border: 1px dashed rgba(255,255,255,0.3); border-radius: 12px; font-size: clamp(11px, 3vw, 13px); font-weight: bold; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; }
+        .btn-skip:hover { color: var(--fg); border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); }
+        .btn-skip:active { transform: scale(0.97); }
+
+        .btn-next { flex: 2; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: var(--c-yellow); }
+        .modal-desc { font-size: 12px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: rgba(255,255,255,0.1); }
+        .modal-btn:active { transform: scale(0.95); }
+        .modal-btn.primary { color: var(--bg); background: var(--fg); border-color: var(--fg); }
+        .modal-btn.primary:hover { opacity: 0.9; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+            .btn-row { flex-direction: column-reverse; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="benefit_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Interests & Hobbies</strong></h2>
+        <p class="desc">Record your personal <strong>interests</strong>, <strong>sports</strong>, and <strong>organizational affiliations</strong> for a comprehensive profile.</p>
+
+        <div id="addedInterestsContainer"></div>
+
+        <div class="add-form-card" id="addFormCard">
+            <div class="add-form-title">Add New Interest</div>
+            
+            <div class="input-group">
+                <label>Category</label>
+                <div class="custom-select-wrapper" id="interestSelect" onclick="toggleInterestDropdown()">
+                    <input type="hidden" id="interestVal" value="">
+                    <div class="custom-select-trigger">
+                        <span id="interestSelectText">
+                            <svg class="platform-icon" id="triggerIcon" viewBox="0 0 24 24"><path d=""/></svg>
+                            SELECT CATEGORY
+                        </span>
+                        <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                    <div class="custom-options" id="interestOptions"></div>
+                </div>
+            </div>
+
+            <div class="input-group" id="customCategoryGroup" style="display: none; margin-bottom: 20px;">
+                <label>Category Name</label>
+                <div class="input-wrapper">
+                    <input type="text" id="customCategoryInput" maxlength="30" placeholder="E.G. PHOTOGRAPHY" oninput="formatCustomCategory(this)" autocomplete="off">
+                </div>
+                <span class="char-count" id="count-customCategory">0/30</span>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 10px;">
+                <label>Interest / Details</label>
+                <div class="input-wrapper">
+                    <input type="text" id="interestInput" maxlength="50" placeholder="SELECT CATEGORY FIRST" oninput="formatInput(this)" autocomplete="off" disabled>
+                </div>
+                <span class="char-count" id="count-interest">0/50</span>
+            </div>
+
+            <button class="btn-add-custom" id="btnAddInterest" onclick="addInterest()" disabled>
+                <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+                ADD TO REGISTRY
+            </button>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-skip" onclick="skipStep()">Skip for Now</button>
+            <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Save & Proceed</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-title">Skip Step?</div>
+            <div class="modal-desc">Adding your interests and hobbies helps personalize your node configuration, but it is not mandatory. Do you want to skip?</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="confirmSkip()">Skip Step</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const interestMeta = {
+            'sports': { 
+                name: 'Sports & Athletics', 
+                placeholder: 'E.G. FOOTBALL / CRICKET', 
+                icon: 'M14,2H10V5H14V2M16,5H20V7H16V5M4,5H8V7H4V5M12,22L8,18H16L12,22M18,9H6V14C6,15.66 7.34,17 9,17H15C16.66,17 18,15.66 18,14V9Z'
+            },
+            'arts': { 
+                name: 'Arts & Culture', 
+                placeholder: 'E.G. PAINTING / MUSIC / DANCE', 
+                icon: 'M12,3A9,9 0 0,0 3,12A9,9 0 0,0 12,21A9,9 0 0,0 21,12C21,10.66 19.9,9.6 18.6,9.6C18,9.6 17.46,9.83 17.06,10.19C16.67,10.5 16,11.23 16,11.23C15.65,11.75 14.86,12 14.1,12C12.95,12 12,11.05 12,9.9C12,9.15 12.25,8.35 12.77,8C12.77,8 13.5,7.33 13.81,6.94C14.17,6.54 14.4,6 14.4,5.4C14.4,4.1 13.34,3 12,3M6.5,10C5.67,10 5,10.67 5,11.5C5,12.33 5.67,13 6.5,13C7.33,13 8,12.33 8,11.5C8,10.67 7.33,10 6.5,10M9.5,6C8.67,6 8,6.67 8,7.5C8,8.33 8.67,9 9.5,9C10.33,9 11,8.33 11,7.5C11,6.67 10.33,6 9.5,6Z'
+            },
+            'tech': { 
+                name: 'Tech & Gaming', 
+                placeholder: 'E.G. PC GAMING / CODING', 
+                icon: 'M21.58,16.09L21.57,16.25C21.43,17.96 19.93,19.26 18.21,19.12C17.43,19.06 16.73,18.7 16.2,18.15L14,16H10L7.8,18.15C7.27,18.7 6.57,19.06 5.79,19.12C4.07,19.26 2.57,17.96 2.43,16.25L2.42,16.09C2.33,14.07 2.33,12 2.42,9.91L2.43,9.75C2.57,8.04 4.07,6.74 5.79,6.88C6.57,6.94 7.27,7.3 7.8,7.85L10,10H14L16.2,7.85C16.73,7.3 17.43,6.94 18.21,6.88C19.93,6.74 21.43,8.04 21.57,9.75L21.58,9.91C21.67,12 21.67,14.07 21.58,16.09M6.5,11H8V13H6.5V11M9.5,11H11V13H9.5V11M13,11H14.5V13H13V11M16,11H17.5V13H16V11Z'
+            },
+            'reading': { 
+                name: 'Reading & Literature', 
+                placeholder: 'E.G. NOVELS / SCIENCE FICTION', 
+                icon: 'M9,4A3,3 0 0,0 6,7V19A3,3 0 0,0 9,22H19V20H9A1,1 0 0,1 8,19A1,1 0 0,1 9,18H19V4H9M19,2H9A5,5 0 0,0 4,7V19A5,5 0 0,0 9,24H21V2H19Z'
+            },
+            'social': { 
+                name: 'Social & Volunteer', 
+                placeholder: 'E.G. NGO WORK / COMMUNITY CLUB', 
+                icon: 'M16 11C17.66 11 18.99 9.66 18.99 8C18.99 6.34 17.66 5 16 5C14.34 5 13 6.34 13 8C13 9.66 14.34 11 16 11M8 11C9.66 11 10.99 9.66 10.99 8C10.99 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11M8 13C5.67 13 1 14.17 1 16.5V19H15V16.5C15 14.17 10.33 13 8 13M16 13C15.71 13 15.38 13.02 15.03 13.05C16.19 13.89 17 15 17 16.5V19H23V16.5C23 14.17 18.33 13 16 13Z'
+            },
+            'other': { 
+                name: 'Other Interest', 
+                placeholder: 'ENTER INTEREST OR HOBBY DETAILS', 
+                icon: 'M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,19.93A8,8 0 0,0 4.06,13H11V19.93M13,19.93V13H19.94A8,8 0 0,0 13,19.93M19.94,11H13V4.06A8,8 0 0,0 19.94,11M11,4.06V11H4.06A8,8 0 0,0 11,4.06Z'
+            }
+        };
+
+        let activeInterests = [];
+        const maxLimit = 50;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'benefit_registration.html';
+
+            document.addEventListener('click', (e) => {
+                const select = document.getElementById('interestSelect');
+                if (select && !select.contains(e.target)) select.classList.remove('open');
+            });
+
+            buildDropdown();
+
+            const s = brain.settings || {};
+            if (s.interestRegistry && Array.isArray(s.interestRegistry) && s.interestRegistry.length > 0) {
+                s.interestRegistry.forEach(item => {
+                    activeInterests.push(item);
+                    renderCard(item);
+                });
+                checkValidity();
+                
+                const btn = document.getElementById('btnNext');
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'SAVE & PROCEED';
+            }
+        }
+
+        function buildDropdown() {
+            const optsContainer = document.getElementById('interestOptions');
+            optsContainer.innerHTML = '';
+            
+            Object.keys(interestMeta).forEach(k => {
+                const div = document.createElement('div');
+                div.className = 'custom-option';
+                div.innerHTML = `<svg viewBox="0 0 24 24"><path d="${interestMeta[k].icon}"/></svg> ${interestMeta[k].name}`;
+                div.onclick = (e) => selectOption(k, interestMeta[k].name, interestMeta[k].icon, e);
+                optsContainer.appendChild(div);
+            });
+        }
+
+        function toggleInterestDropdown() {
+            document.getElementById('interestSelect').classList.toggle('open');
+        }
+
+        function selectOption(val, text, iconPath, e) {
+            if(e) e.stopPropagation();
+            document.getElementById('interestVal').value = val;
+            
+            const triggerText = document.getElementById('interestSelectText');
+            triggerText.innerHTML = `<svg class="platform-icon" viewBox="0 0 24 24"><path d="${iconPath}"/></svg> ${text}`;
+            triggerText.parentElement.classList.add('selected');
+            
+            document.querySelectorAll('#interestOptions .custom-option').forEach(opt => opt.classList.remove('selected'));
+            if(e) e.currentTarget.classList.add('selected');
+            
+            document.getElementById('interestSelect').classList.remove('open');
+            
+            const customGroup = document.getElementById('customCategoryGroup');
+            if(val === 'other') {
+                customGroup.style.display = 'block';
+            } else {
+                customGroup.style.display = 'none';
+                document.getElementById('customCategoryInput').value = '';
+                document.getElementById('count-customCategory').innerText = '0/30';
+            }
+
+            const inputField = document.getElementById('interestInput');
+            inputField.disabled = false;
+            inputField.placeholder = interestMeta[val].placeholder;
+            inputField.value = '';
+            
+            document.getElementById('count-interest').innerText = `0/${maxLimit}`;
+            
+            if(val === 'other') {
+                document.getElementById('customCategoryInput').focus();
+            } else {
+                inputField.focus();
+            }
+            validateAdd();
+        }
+
+        function formatCustomCategory(el) {
+            el.value = el.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+            if (el.value.length > 30) el.value = el.value.substring(0, 30);
+            const countEl = document.getElementById('count-customCategory');
+            countEl.innerText = `${el.value.length}/30`;
+            validateAdd();
+        }
+
+        function formatInput(el) {
+            el.value = el.value.toUpperCase().replace(/[^A-Z0-9\s\,\.\-]/g, '');
+            if (el.value.length > maxLimit) el.value = el.value.substring(0, maxLimit);
+            
+            const countEl = document.getElementById('count-interest');
+            if (el.value.length >= maxLimit) {
+                countEl.innerHTML = `<span style="color: var(--c-red); margin-right: 4px;">MAX</span>${el.value.length}/${maxLimit}`;
+            } else {
+                countEl.innerText = `${el.value.length}/${maxLimit}`;
+            }
+            validateAdd();
+        }
+
+        function validateAdd() {
+            const val = document.getElementById('interestVal').value;
+            const input = document.getElementById('interestInput').value.trim();
+            const customName = document.getElementById('customCategoryInput').value.trim();
+            const btn = document.getElementById('btnAddInterest');
+            
+            let isValid = val && input.length >= 3;
+            if (val === 'other' && customName.length < 2) {
+                isValid = false;
+            }
+            
+            if (isValid) {
+                btn.removeAttribute('disabled');
+            } else {
+                btn.setAttribute('disabled', 'true');
+            }
+        }
+
+        function addInterest() {
+            markUnsaved();
+            const typeKey = document.getElementById('interestVal').value;
+            const detailsStr = document.getElementById('interestInput').value.trim();
+            const customName = document.getElementById('customCategoryInput').value.trim();
+            
+            let categoryName = interestMeta[typeKey].name;
+            if (typeKey === 'other') {
+                categoryName = customName;
+            }
+
+            const newItem = {
+                id: Date.now().toString(),
+                type: typeKey,
+                name: categoryName,
+                icon: interestMeta[typeKey].icon,
+                value: detailsStr
+            };
+
+            activeInterests.push(newItem);
+            renderCard(newItem);
+
+            document.getElementById('interestVal').value = '';
+            document.getElementById('interestSelectText').innerHTML = `SELECT CATEGORY`;
+            document.getElementById('interestSelectText').parentElement.classList.remove('selected');
+            document.querySelectorAll('#interestOptions .custom-option').forEach(opt => opt.classList.remove('selected'));
+            
+            document.getElementById('customCategoryGroup').style.display = 'none';
+            document.getElementById('customCategoryInput').value = '';
+            document.getElementById('count-customCategory').innerText = '0/30';
+
+            const inputField = document.getElementById('interestInput');
+            inputField.value = '';
+            inputField.placeholder = 'SELECT CATEGORY FIRST';
+            inputField.disabled = true;
+            document.getElementById('count-interest').innerText = `0/50`;
+            
+            document.getElementById('btnAddInterest').setAttribute('disabled', 'true');
+            checkValidity();
+        }
+
+        function renderCard(item) {
+            const container = document.getElementById('addedInterestsContainer');
+            
+            const card = document.createElement('div');
+            card.className = 'interest-card';
+            card.id = `interest-${item.id}`;
+            
+            card.innerHTML = `
+                <div class="interest-icon">
+                    <svg viewBox="0 0 24 24"><path d="${item.icon}"/></svg>
+                </div>
+                <div class="interest-info">
+                    <span class="interest-category">${item.name}</span>
+                    <span class="interest-detail">${item.value}</span>
+                </div>
+                <svg class="btn-delete" onclick="removeInterest('${item.id}')" viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+            `;
+            
+            container.appendChild(card);
+        }
+
+        function removeInterest(id) {
+            markUnsaved();
+            activeInterests = activeInterests.filter(p => p.id !== id);
+            const card = document.getElementById(`interest-${id}`);
+            if (card) card.remove();
+            checkValidity();
+        }
+
+        function checkValidity() {
+            const btnNext = document.getElementById('btnNext');
+            if (activeInterests.length > 0) {
+                btnNext.classList.add('active');
+            } else {
+                btnNext.classList.remove('active');
+            }
+        }
+
+        function skipStep() {
+            document.getElementById('customModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('show');
+        }
+
+        function confirmSkip() {
+            closeModal();
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            window.location.href = isEdit ? 'edit.html' : 'geospatial_registration.html';
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+            const btn = document.getElementById('btnNext');
+            btn.classList.add('saved');
+            btn.innerHTML = 'SAVED ✔';
+
+            const userSettings = brain.settings || {};
+            userSettings.interestRegistry = activeInterests;
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'legacy_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

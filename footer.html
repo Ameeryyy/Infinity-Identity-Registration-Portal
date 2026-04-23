@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-yellow: #ffbb33; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 26px); height: clamp(20px, 6vw, 26px); fill: currentColor; }
+        
+        .container { width: 85%; max-width: 450px; animation: fadeIn 0.5s; text-align: center; z-index: 10; padding: 30px 20px; border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); }
+        
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 5px; font-size: clamp(18px, 5vw, 22px); letter-spacing: 2px; text-transform: uppercase; }
+        .dev-name { font-size: clamp(14px, 4vw, 16px); color: var(--c-blue); font-weight: bold; letter-spacing: 3px; margin-bottom: 25px; text-transform: uppercase; }
+        
+        p { font-size: clamp(11px, 3.5vw, 13px); opacity: 0.8; line-height: 1.6; margin-bottom: 25px; padding: 0 10px; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); } /* Changed to blue */
+        
+        .sys-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; border-top: 1px dashed rgba(128,128,128,0.3); border-bottom: 1px dashed rgba(128,128,128,0.3); padding: 15px 0; }
+        .sys-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.3s; padding: 5px; border-radius: 8px; user-select: none; }
+        .sys-item:hover { background: rgba(255,255,255,0.05); }
+        .sys-item:active { transform: scale(0.95); }
+        .sys-lbl { font-size: 9px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; pointer-events: none; }
+        .sys-val { font-size: 12px; font-weight: bold; font-family: monospace; color: var(--c-blue); pointer-events: none; }
+
+        .social-links { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .social-links a { opacity: 0.6; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        .social-links a:hover { opacity: 1; transform: translateY(-3px); }
+        .social-links svg { width: 24px; height: 24px; fill: var(--fg); transition: fill 0.3s; }
+        .social-links a:hover svg { fill: var(--c-blue); }
+
+        .btn-help { margin-top: 25px; padding: 12px; background: transparent; border: 1px dashed var(--c-blue); color: var(--c-blue); border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-help:hover { background: rgba(0, 123, 255, 0.1); }
+        .btn-help:active { transform: scale(0.97); }
+        .btn-help svg { width: 16px; height: 16px; fill: currentColor; }
+        
+        /* Modal CSS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: var(--c-blue); }
+        .modal-desc { font-size: 13px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; width: 100%; }
+        .modal-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: rgba(255,255,255,0.1); }
+        .modal-btn:active { transform: scale(0.95); }
+        .modal-btn.primary { background: var(--c-blue); border-color: var(--c-blue); color: #fff; }
+        .modal-btn.primary:hover { background: #0056b3; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="landing.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <h2>Core Developer</h2>
+        <div class="dev-name">Ameereyyy</div>
+        
+        <p>Managing the <strong>core infrastructure</strong> of the <strong>Infinity Identity framework</strong>. Dedicated to <strong>uncompromising security</strong>, pure logic, and flawless elegance.</p>
+        
+        <div class="sys-details">
+            <div class="sys-item" onclick="showInfo('version')">
+                <span class="sys-lbl">Build Version</span>
+                <span class="sys-val">1.0.0v</span>
+            </div>
+            <div class="sys-item" onclick="showInfo('protocol')">
+                <span class="sys-lbl">Protocol</span>
+                <span class="sys-val">Encrypted Node</span>
+            </div>
+        </div>
+
+        <div class="social-links">
+            <a href="https://youtube.com/@ameereyyy?si=fFn9UydbxMxe_94P" target="_blank" title="YouTube">
+                <svg viewBox="0 0 24 24"><path d="M21.58,7.19C21.5,6.5 21.14,5.9 20.58,5.53C19.23,5 12,5 12,5C12,5 4.77,5 3.42,5.53C2.86,5.9 2.5,6.5 2.42,7.19C2.26,8.77 2.26,10.38 2.26,12C2.26,13.62 2.26,15.23 2.42,16.81C2.5,17.5 2.86,18.1 3.42,18.47C4.77,19 12,19 12,19C12,19 19.23,19 20.58,18.47C21.14,18.1 21.5,17.5 21.58,16.81C21.74,15.23 21.74,13.62 21.74,12C21.74,10.38 21.74,8.77 21.58,7.19M10,15V9L15.2,12L10,15Z"/></svg>
+            </a>
+            <a href="https://www.instagram.com/ameeereyyyyy?igsh=ZXI2OWt4bTdvY28x" target="_blank" title="Instagram">
+                <svg viewBox="0 0 24 24"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/share/1EFzFtWUwQ/" target="_blank" title="Facebook">
+                <svg viewBox="0 0 24 24"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
+            </a>
+            <a href="https://x.com/ameereyyy" target="_blank" title="X (Twitter)">
+                <svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+            </a>
+        </div>
+
+        <button class="btn-help" onclick="askHelp()">
+            <svg viewBox="0 0 24 24"><path d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z"/></svg>
+            Help / FAQ Node
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="infoModal">
+        <div class="modal-box">
+            <div class="modal-title" id="infoTitle">INFO</div>
+            <div class="modal-desc" id="infoDesc">Details here.</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeInfoModal()">DISMISS</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-box">
+            <div class="modal-title" style="color: var(--c-yellow);">NEED HELP?</div>
+            <div class="modal-desc">You are about to be redirected to the external support site to report errors or ask questions. Do you want to proceed?</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeHelpModal()">CANCEL</button>
+                <button class="modal-btn primary" onclick="window.location.href='https://google.com'">PROCEED</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        function showInfo(type) {
+            const title = document.getElementById('infoTitle');
+            const desc = document.getElementById('infoDesc');
+            
+            if (type === 'version') {
+                title.innerText = 'BUILD VERSION';
+                desc.innerText = 'This indicates the current active build of the Infinity Identity system. 1.0.0v represents the initial pre-release framework prior to the public launch.';
+            } else if (type === 'protocol') {
+                title.innerText = 'ENCRYPTION PROTOCOL';
+                desc.innerText = 'The "Encrypted Node" protocol ensures that all your data is fragmented, end-to-end encrypted, and secured locally before any synchronization operation occurs.';
+            }
+            
+            document.getElementById('infoModal').classList.add('show');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').classList.remove('show');
+        }
+
+        function askHelp() {
+            document.getElementById('helpModal').classList.add('show');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

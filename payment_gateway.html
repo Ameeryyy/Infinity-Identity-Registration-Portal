@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Secure Gateway</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+
+        .container { width: 90%; max-width: 450px; animation: fadeIn 0.5s; text-align: center; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(20px, 6vw, 26px); color: var(--c-blue); text-transform: uppercase; }
+
+        .gateway-ui { display: none; text-align: left; }
+        .gateway-ui.active { display: block; animation: fadeIn 0.4s; }
+
+        .btn-grid { display: grid; gap: 10px; margin-bottom: 20px; }
+        .btn-grid.grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .btn-grid.grid-2 { grid-template-columns: repeat(2, 1fr); }
+        
+        .grid-item { border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px 5px; text-align: center; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.3s; background: transparent; color: var(--fg); text-transform: uppercase; user-select: none; }
+        .grid-item:hover { background: rgba(255,255,255,0.05); border-color: var(--c-blue); color: var(--c-blue); }
+        .grid-item.selected { background: rgba(0, 123, 255, 0.1); border-color: var(--c-blue); color: var(--c-blue); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.15); }
+
+        .divider { text-align: center; margin: 20px 0; opacity: 0.3; font-size: 10px; font-weight: bold; letter-spacing: 2px; }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 11px; opacity: 0.9; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; transition: 0.3s; background: transparent; height: 48px; position: relative; overflow: hidden; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        
+        .input-wrapper input.main-input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 13px; outline: none; font-family: inherit; font-weight: bold; height: 100%; min-width: 0; letter-spacing: 1px; text-transform: uppercase; }
+        .input-wrapper input.main-input::placeholder { font-weight: normal; opacity: 0.3; letter-spacing: normal; }
+        .input-wrapper input:disabled { opacity: 0.8; }
+        
+        .custom-handle-wrapper { position: relative; height: 100%; border-left: 1px solid rgba(255,255,255,0.2); }
+        .custom-handle-trigger { height: 100%; padding: 0 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--c-blue); font-weight: bold; font-size: 12px; min-width: 80px; }
+        
+        .handle-options { position: absolute; top: calc(100% + 5px); right: 0; background: #111; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.9); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; max-height: 220px; overflow-y: auto; width: 120px; }
+        .handle-options.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .handle-options::-webkit-scrollbar { width: 4px; }
+        .handle-options::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        
+        .handle-item { padding: 12px; font-size: 11px; text-align: center; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--fg); transition: 0.2s; font-weight: bold; }
+        .handle-item:last-child { border-bottom: none; }
+        .handle-item:hover { color: var(--c-blue); background: rgba(255,255,255,0.05); }
+
+        .custom-handle-input { width: 90px; flex-shrink: 0; border: none; border-left: 1px solid rgba(255,255,255,0.2); background: transparent; color: var(--c-blue); font-weight: bold; font-size: 12px; height: 100%; padding: 0 10px; outline: none; display: none; text-align: center; }
+        .custom-handle-input::placeholder { opacity: 0.5; font-weight: normal; color: var(--fg); text-transform: lowercase; }
+
+        .copy-btn { padding: 0 15px; cursor: pointer; color: var(--fg); font-size: 10px; font-weight: bold; border-left: 1px solid rgba(255,255,255,0.2); height: 100%; display: flex; align-items: center; justify-content: center; transition: 0.3s; background: rgba(255,255,255,0.05); }
+        .copy-btn:hover { background: rgba(255,255,255,0.1); color: var(--c-blue); }
+
+        .row-inputs { display: flex; gap: 10px; }
+
+        .btn-pay { width: 100%; padding: 16px; background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: 0.3s; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; }
+        .btn-pay.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
+        .btn-pay.active:active { transform: scale(0.97); }
+
+        .status-ui { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px 0; }
+        
+        .circle-loader { position: relative; width: 80px; height: 80px; margin-bottom: 25px; }
+        .spinner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 3px solid rgba(0, 123, 255, 0.2); border-top-color: var(--c-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        
+        .success-circle { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--c-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); opacity: 0; box-shadow: 0 0 30px rgba(0, 200, 81, 0.4); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s; }
+        .success-circle svg { width: 40px; height: 40px; fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100; }
+        .success-circle.show { transform: scale(1); opacity: 1; }
+        .success-circle.show svg { animation: drawCheck 0.5s ease 0.2s forwards; }
+
+        .status-text { font-size: 16px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; color: var(--c-blue); transition: 0.3s; }
+        .status-text.success { color: var(--c-green); text-shadow: 0 0 10px rgba(0,200,81,0.4); }
+
+        .char-count { position: absolute; right: 5px; bottom: -20px; font-size: 10px; font-weight: bold; opacity: 0.5; letter-spacing: 1px; pointer-events: none; }
+
+        .expandable-section { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease-in-out; margin-top: 0; }
+        .expandable-section.show { max-height: 150px; opacity: 1; margin-top: 15px; overflow: visible; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); z-index: 1000; display: none; transition: background 0.3s ease; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
+        .modal-content { width: 90%; max-width: 340px; background: #161618; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); transform: scale(0.9) translateY(10px); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 15px 40px rgba(0,0,0,0.9); padding: 30px 20px; align-items: center; text-align: center; }
+        .modal-overlay.show .modal-content { transform: scale(1) translateY(0); opacity: 1; }
+        .modal-title { font-weight: bold; font-size: 16px; margin-bottom: 15px; letter-spacing: 1px; color: #ffb74d; text-transform: uppercase; }
+        .modal-desc { font-size: 14px; opacity: 0.9; margin-bottom: 30px; line-height: 1.5; color: #ffffff; padding: 0 10px; }
+        .btn-dismiss { width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #ffffff; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 13px; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-dismiss:hover { background: rgba(255,255,255,0.05); }
+        .btn-dismiss:active { transform: scale(0.96); }
+
+        /* QR Code Styles */
+        .qr-box { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 20px 0; }
+        .qr-placeholder { width: 150px; height: 150px; background: #ffffff; padding: 10px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(255,255,255,0.1); }
+        .qr-placeholder svg { width: 100%; height: 100%; fill: #000000; }
+        .qr-instruction { font-size: 11px; opacity: 0.7; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.5; text-align: center; }
+        
+        .qr-status { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 25px; font-size: 11px; font-weight: bold; color: var(--c-yellow); letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; }
+        .pulse-dot { width: 8px; height: 8px; background-color: var(--c-yellow); border-radius: 50%; animation: pulse 1.5s infinite; }
+        .qr-status.success { color: var(--c-green); }
+        .qr-status.success .pulse-dot { display: none; }
+        
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 187, 51, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 187, 51, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 187, 51, 0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="payment.html" class="top-left" id="backBtn">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2 id="gatewayTitle">Secure Gateway</h2>
+
+        <div id="upi-ui" class="gateway-ui">
+            <div class="input-group">
+                <label>Select Payment App</label>
+                <div class="btn-grid grid-3">
+                    <div class="grid-item" onclick="selectGridItem(this, 'upiApp', 'GPay')">GPAY</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'upiApp', 'PhonePe')">PHONEPE</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'upiApp', 'Paytm')">PAYTM</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'upiApp', 'BHIM')">BHIM</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'upiApp', 'Amazon Pay')">AMAZON</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'upiApp', 'Other')">OTHER</div>
+                </div>
+            </div>
+            
+            <div class="expandable-section" id="otherUpiSection">
+                <div class="divider" style="margin-top: 5px;">OR ENTER UPI ID</div>
+                <div class="input-group">
+                    <label>UPI ID</label>
+                    <div style="position: relative; margin-bottom: 25px;">
+                        <div class="input-wrapper">
+                            <input type="text" class="main-input" placeholder="ENTER YOUR UPI ID" id="upiInput" maxlength="50" oninput="updateCount('count-upiInput', this.value.length, 50); validatePayment()" style="text-transform: lowercase;">
+                            
+                            <div class="custom-handle-wrapper" id="upiDropdownWrapper">
+                                <div class="custom-handle-trigger" onclick="toggleUpiDropdown()">
+                                    <span id="upiSelectText">@ybl</span>
+                                </div>
+                                <div class="handle-options" id="handleOptions">
+                                    <div class="handle-item" onclick="selectUpiHandle('@ybl')">@ybl</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@fam')">@fam</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@ibl')">@ibl</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@axl')">@axl</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@okaxis')">@okaxis</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@okhdfcbank')">@okhdfcbank</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@okicici')">@okicici</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@oksbi')">@oksbi</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@paytm')">@paytm</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@apl')">@apl</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('@pingpay')">@pingpay</div>
+                                    <div class="handle-item" onclick="selectUpiHandle('OTHER')">CUSTOM / OTHER</div>
+                                </div>
+                            </div>
+
+                            <input type="text" id="customHandle" class="custom-handle-input" placeholder="@custom" oninput="formatCustomHandle(this); validatePayment()">
+                        </div>
+                        <span class="char-count" id="count-upiInput">0/50</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-pay" id="btnPayUPI" onclick="triggerPayment('UPI')">PAY ₹ 25.00</button>
+        </div>
+
+        <div id="qr-ui" class="gateway-ui">
+            <div class="qr-box">
+                <div class="qr-placeholder">
+                    <svg viewBox="0 0 24 24"><path d="M4,4H10V10H4V4M6,6V8H8V6H6M14,4H20V10H14V4M16,6V8H18V6H16M4,14H10V20H4V14M6,16V18H8V16H6M14,14H17V17H14V14M17,14H20V17H17V14M14,17H17V20H14V17M17,17H20V20H17V17Z"/></svg>
+                </div>
+                <div class="qr-instruction">
+                    SCAN THIS QR CODE USING ANY UPI APP (GPAY, PHONEPE, PAYTM, ETC.) TO COMPLETE THE SECURE PAYMENT OF ₹ 25.00
+                </div>
+            </div>
+            <div class="qr-status" id="qrStatus">
+                <div class="pulse-dot"></div>
+                <span>AWAITING PAYMENT...</span>
+            </div>
+        </div>
+
+        <div id="card-ui" class="gateway-ui">
+            <div class="input-group">
+                <label>Select Card Network</label>
+                <div class="btn-grid grid-2">
+                    <div class="grid-item" onclick="selectGridItem(this, 'cardType', 'Visa')">VISA</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'cardType', 'Mastercard')">MASTERCARD</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'cardType', 'RuPay')">RUPAY</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'cardType', 'Maestro')">MAESTRO</div>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Cardholder Name</label>
+                <div style="position: relative; margin-bottom: 25px;">
+                    <div class="input-wrapper">
+                        <input type="text" class="main-input" placeholder="NAME ON CARD" id="cardName" maxlength="50" oninput="formatAlpha(this)">
+                    </div>
+                    <span class="char-count" id="count-cardName">0/50</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Card Number</label>
+                <div style="position: relative; margin-bottom: 25px;">
+                    <div class="input-wrapper">
+                        <input type="tel" class="main-input" placeholder="XXXX XXXX XXXX XXXX" id="cardNum" maxlength="19" oninput="formatCard(this)">
+                    </div>
+                    <span class="char-count" id="count-cardNum">0/19</span>
+                </div>
+            </div>
+            <div class="row-inputs">
+                <div class="input-group" style="flex:2;">
+                    <label>Expiry Date</label>
+                    <div style="position: relative; margin-bottom: 25px;">
+                        <div class="input-wrapper">
+                            <input type="tel" class="main-input" placeholder="MM/YY" id="cardExp" maxlength="5" oninput="formatExp(this)">
+                        </div>
+                        <span class="char-count" id="count-cardExp">0/5</span>
+                    </div>
+                </div>
+                <div class="input-group" style="flex:1; max-width: 120px;">
+                    <label>CVV</label>
+                    <div style="position: relative; margin-bottom: 25px;">
+                        <div class="input-wrapper">
+                            <input type="password" class="main-input" placeholder="•••" id="cardCvv" maxlength="3" oninput="formatCvv(this)" style="text-align: center; letter-spacing: 3px;">
+                        </div>
+                        <span class="char-count" id="count-cardCvv">0/3</span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-pay" id="btnPayCard" onclick="triggerPayment('Card')">PAY ₹ 25.00</button>
+        </div>
+
+        <div id="net-ui" class="gateway-ui">
+            <div class="input-group">
+                <label>Select Bank</label>
+                <div class="btn-grid grid-3">
+                    <div class="grid-item" onclick="selectGridItem(this, 'bank', 'SBI')">SBI</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'bank', 'HDFC')">HDFC</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'bank', 'ICICI')">ICICI</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'bank', 'AXIS')">AXIS</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'bank', 'KOTAK')">KOTAK</div>
+                    <div class="grid-item" onclick="selectGridItem(this, 'bank', 'PNB')">PNB</div>
+                    <div class="grid-item" style="grid-column: span 3;" onclick="selectGridItem(this, 'bank', 'OTHER')">OTHER BANK</div>
+                </div>
+                
+                <div class="expandable-section" id="otherBankSection">
+                    <div style="position: relative; margin-bottom: 25px;">
+                        <div class="input-wrapper">
+                            <input type="text" class="main-input" placeholder="ENTER BANK NAME" id="customBankVal" maxlength="50" oninput="formatAlpha(this)">
+                        </div>
+                        <span class="char-count" id="count-customBankVal">0/50</span>
+                    </div>
+                </div>
+                
+            </div>
+            <button class="btn-pay" id="btnPayNet" onclick="triggerPayment('NetBanking')">PAY ₹ 25.00</button>
+        </div>
+
+        <div id="crypto-ui" class="gateway-ui">
+            <div class="input-group">
+                <label>Select Crypto Network</label>
+                <div class="btn-grid grid-2">
+                    <div class="grid-item" onclick="selectCrypto(this, 'USDT')">USDT (TRC20)</div>
+                    <div class="grid-item" onclick="selectCrypto(this, 'BTC')">BITCOIN (BTC)</div>
+                    <div class="grid-item" onclick="selectCrypto(this, 'ETH')">ETHEREUM (ERC20)</div>
+                    <div class="grid-item" onclick="selectCrypto(this, 'BNB')">BINANCE (BEP20)</div>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Deposit Address (Send Exactly $0.30)</label>
+                <div class="input-wrapper">
+                    <input type="text" id="cryptoAddress" class="main-input" value="SELECT NETWORK FIRST" disabled style="color:var(--c-blue); font-size:11px; text-transform:none;">
+                    <div class="copy-btn" onclick="copyCrypto()">COPY</div>
+                </div>
+            </div>
+            <div class="divider">AWAITING BLOCKCHAIN CONFIRMATION</div>
+            <div class="input-group">
+                <label>Transaction Hash (TxID)</label>
+                <div style="position: relative; margin-bottom: 25px;">
+                    <div class="input-wrapper">
+                        <input type="text" class="main-input" placeholder="ENTER TXID AFTER PAYMENT" id="cryptoTxId" maxlength="100" oninput="updateCount('count-cryptoTxId', this.value.length, 100); validatePayment()" style="text-transform:none;">
+                    </div>
+                    <span class="char-count" id="count-cryptoTxId">0/100</span>
+                </div>
+            </div>
+            <button class="btn-pay" id="btnPayCrypto" onclick="triggerPayment('Crypto')">I HAVE SENT THE FUNDS</button>
+        </div>
+
+        <div id="status-ui" class="status-ui">
+            <div class="circle-loader">
+                <div class="spinner" id="spinner"></div>
+                <div class="success-circle" id="successCircle">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+            </div>
+            <div class="status-text" id="statusText">PROCESSING PAYMENT...</div>
+            <div style="font-size: 10px; opacity: 0.5; font-weight: bold; letter-spacing: 1px;" id="subStatusText">PLEASE DO NOT CLOSE THIS WINDOW</div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">WARNING</div>
+            <div class="modal-desc" id="modalDesc">Message goes here.</div>
+            <button class="btn-dismiss" onclick="closeModal()">DISMISS</button>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let currentMethod = 'upi';
+        const selections = { upiApp: '', upiHandle: '@ybl', cardType: '', bank: '', crypto: '' };
+        const cryptoWallets = {
+            'USDT': 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+            'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+            'ETH': '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+            'BNB': 'bnb136ns6lfw4zs5hg4n85vdthaad7hq5m4gtkgf23'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentMethod = urlParams.get('method') || 'upi';
+            
+            const titles = { 'upi': 'UPI Payment', 'qr': 'Scan QR Code', 'card': 'Card Payment', 'net': 'Net Banking', 'crypto': 'Crypto Payment' };
+            document.getElementById('gatewayTitle').innerText = titles[currentMethod] || 'Secure Gateway';
+            
+            const uiElement = document.getElementById(currentMethod + '-ui');
+            if(uiElement) uiElement.classList.add('active');
+
+            if(currentMethod === 'qr') {
+                simulateQrPayment();
+            }
+
+            document.addEventListener('click', (e) => {
+                const trigger = document.querySelector('.custom-handle-trigger');
+                const list = document.getElementById('handleOptions');
+                if (trigger && list && !trigger.contains(e.target) && !list.contains(e.target)) {
+                    list.classList.remove('show');
+                }
+            });
+        });
+
+        function simulateQrPayment() {
+            setTimeout(() => {
+                const qrStatus = document.getElementById('qrStatus');
+                if(qrStatus) {
+                    qrStatus.classList.add('success');
+                    qrStatus.innerHTML = '<svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg> <span>PAYMENT RECEIVED SUCCESSFULLY!</span>';
+                }
+                setTimeout(() => {
+                    executePaymentTransition('QR CODE PAYMENT');
+                }, 1500);
+            }, 6000); 
+        }
+
+        function showModal(title, desc) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerText = desc;
+            const modal = document.getElementById('customModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('customModal');
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        function updateCount(id, current, max) {
+            const el = document.getElementById(id);
+            if (el) {
+                if (current >= max) {
+                    el.innerHTML = `<span style="color: var(--c-red); margin-right: 4px;">MAX</span>${current}/${max}`;
+                } else {
+                    el.innerText = `${current}/${max}`;
+                }
+            }
+        }
+
+        function selectGridItem(element, category, value) {
+            const parent = element.parentElement;
+            parent.querySelectorAll('.grid-item').forEach(btn => btn.classList.remove('selected'));
+            element.classList.add('selected');
+            selections[category] = value;
+            
+            if (category === 'upiApp') {
+                const otherUpiSec = document.getElementById('otherUpiSection');
+                document.getElementById('upiInput').value = '';
+                updateCount('count-upiInput', 0, 50);
+                
+                if (value === 'Other') {
+                    otherUpiSec.classList.add('show');
+                    setTimeout(() => document.getElementById('upiInput').focus(), 300);
+                } else {
+                    otherUpiSec.classList.remove('show');
+                }
+            }
+            if (category === 'bank') {
+                const otherBankSec = document.getElementById('otherBankSection');
+                document.getElementById('customBankVal').value = '';
+                updateCount('count-customBankVal', 0, 50);
+                
+                if (value === 'OTHER') {
+                    otherBankSec.classList.add('show');
+                    setTimeout(() => document.getElementById('customBankVal').focus(), 300);
+                } else {
+                    otherBankSec.classList.remove('show');
+                }
+            }
+            validatePayment();
+        }
+
+        function selectCrypto(element, coin) {
+            selectGridItem(element, 'crypto', coin);
+            document.getElementById('cryptoAddress').value = cryptoWallets[coin];
+            validatePayment();
+        }
+
+        function toggleUpiDropdown() {
+            document.getElementById('handleOptions').classList.toggle('show');
+        }
+
+        function selectUpiHandle(val) {
+            const list = document.getElementById('handleOptions');
+            list.classList.remove('show');
+
+            if(val === 'OTHER') {
+                document.getElementById('upiDropdownWrapper').style.display = 'none';
+                document.getElementById('customHandle').style.display = 'block';
+                document.getElementById('customHandle').focus();
+                selections.upiHandle = '';
+            } else {
+                selections.upiHandle = val;
+                document.getElementById('upiSelectText').innerText = val;
+            }
+            validatePayment();
+        }
+
+        function formatCustomHandle(el) {
+            el.value = el.value.replace(/[^A-Za-z0-9_@.-]/g, '').toLowerCase();
+        }
+
+        function copyCrypto() {
+            const val = document.getElementById('cryptoAddress').value;
+            if(val && val !== 'SELECT NETWORK FIRST') {
+                navigator.clipboard.writeText(val);
+                showModal('ADDRESS COPIED', 'Crypto address successfully copied to clipboard.');
+            }
+        }
+
+        function formatAlpha(el) {
+            el.value = el.value.replace(/[^A-Za-z\s]/g, '').toUpperCase();
+            if(el.id === 'cardName') updateCount('count-cardName', el.value.length, 50);
+            if(el.id === 'customBankVal') updateCount('count-customBankVal', el.value.length, 50);
+            validatePayment();
+        }
+        function formatCard(el) {
+            let v = el.value.replace(/\D/g, '');
+            let res = '';
+            for(let i=0; i<v.length; i++) {
+                if(i>0 && i%4===0) res += ' ';
+                res += v[i];
+            }
+            el.value = res;
+            updateCount('count-cardNum', el.value.length, 19);
+            validatePayment();
+        }
+        function formatExp(el) {
+            let v = el.value.replace(/\D/g, '');
+            if(v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2,4);
+            el.value = v;
+            updateCount('count-cardExp', el.value.length, 5);
+            validatePayment();
+        }
+        function formatCvv(el) {
+            el.value = el.value.replace(/\D/g, '');
+            updateCount('count-cardCvv', el.value.length, 3);
+            validatePayment();
+        }
+
+        function validatePayment() {
+            let isValid = false;
+            let btn;
+
+            if(currentMethod === 'upi') {
+                btn = document.getElementById('btnPayUPI');
+                const upiInput = document.getElementById('upiInput').value.trim();
+                const customHandle = document.getElementById('customHandle').value.trim();
+                
+                if (selections.upiApp === 'Other') {
+                    if (upiInput.length >= 3) {
+                        if (document.getElementById('customHandle').style.display === 'block') {
+                            if (customHandle.length >= 2) isValid = true;
+                        } else {
+                            isValid = true;
+                        }
+                    }
+                } else if (selections.upiApp !== '') {
+                    isValid = true;
+                }
+            } 
+            else if (currentMethod === 'card') {
+                btn = document.getElementById('btnPayCard');
+                const cName = document.getElementById('cardName').value.trim();
+                const cNum = document.getElementById('cardNum').value.replace(/\s/g, '');
+                const cExp = document.getElementById('cardExp').value.trim();
+                const cCvv = document.getElementById('cardCvv').value.trim();
+                
+                if (selections.cardType !== '' && cName.length >= 3 && cNum.length >= 15 && cExp.length === 5 && cCvv.length === 3) {
+                    isValid = true;
+                }
+            } 
+            else if (currentMethod === 'net') {
+                btn = document.getElementById('btnPayNet');
+                if (selections.bank !== '') {
+                    if (selections.bank === 'OTHER') {
+                        if (document.getElementById('customBankVal').value.trim().length >= 3) isValid = true;
+                    } else {
+                        isValid = true;
+                    }
+                }
+            } 
+            else if (currentMethod === 'crypto') {
+                btn = document.getElementById('btnPayCrypto');
+                if (selections.crypto !== '' && document.getElementById('cryptoTxId').value.trim().length >= 10) {
+                    isValid = true;
+                }
+            }
+
+            if(btn) {
+                if(isValid) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        }
+
+        function executePaymentTransition(finalMethodText) {
+            document.getElementById('backBtn').style.display = 'none';
+            document.getElementById('gatewayTitle').style.display = 'none';
+            
+            document.querySelectorAll('.gateway-ui').forEach(el => el.classList.remove('active'));
+            document.getElementById('status-ui').style.display = 'flex';
+
+            const userSettings = brain.settings || {};
+            userSettings.transaction = {
+                id: 'TXN-' + Math.floor(100000000 + Math.random() * 900000000),
+                time: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                method: finalMethodText,
+                amount: '₹ 25.00'
+            };
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                window.location.href = 'encrypting.html';
+            }, 2500);
+        }
+
+        function triggerPayment(methodName) {
+            let btnId = 'btnPay' + (methodName === 'NetBanking' ? 'Net' : methodName);
+            if(!document.getElementById(btnId).classList.contains('active')) return;
+
+            let finalMethodText = methodName.toUpperCase();
+
+            if(currentMethod === 'upi') {
+                if (selections.upiApp === 'Other') {
+                    const upiVal = document.getElementById('upiInput').value.trim();
+                    const customVal = document.getElementById('customHandle').value.trim();
+                    let finalHandle = selections.upiHandle ? selections.upiHandle : (customVal.startsWith('@') ? customVal : '@' + customVal);
+                    finalMethodText = upiVal + finalHandle;
+                } else {
+                    finalMethodText = selections.upiApp + ' APP';
+                }
+            } else if(currentMethod === 'card') {
+                finalMethodText = selections.cardType ? selections.cardType + ' CARD' : 'CARD';
+            } else if(currentMethod === 'net') {
+                const otherBank = document.getElementById('customBankVal').value.trim();
+                finalMethodText = selections.bank === 'OTHER' && otherBank ? otherBank : (selections.bank || 'NET BANKING');
+            } else if(currentMethod === 'crypto') {
+                finalMethodText = selections.crypto ? selections.crypto + ' NETWORK' : 'CRYPTO';
+            }
+
+            executePaymentTransition(finalMethodText);
+        }
+    </script>
+</body>
+</html>

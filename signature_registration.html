@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Digital Signature</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: center; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(24px, 7vw, 32px); color: var(--c-blue); }
+        p.desc { font-size: 12px; opacity: 0.7; margin-bottom: clamp(20px, 5vw, 30px); line-height: 1.6; padding: 0 10px; }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(8px, 2vw, 15px); margin-bottom: clamp(15px, 4vw, 25px); }
+        .card-btn { border: 1px solid rgba(255,255,255,0.3); padding: clamp(12px, 3vw, 15px) 5px; border-radius: 12px; text-align: center; cursor: pointer; font-weight: bold; font-size: clamp(11px, 3vw, 12px); opacity: 0.6; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: transparent; user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .card-btn:hover { opacity: 0.9; background: rgba(255,255,255,0.05); }
+        .card-btn.active { opacity: 1; background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); transform: scale(0.96); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
+        .card-btn span { font-size: clamp(8px, 2vw, 9px); opacity: 0.8; font-weight: bold; letter-spacing: 1px; color: var(--c-yellow); }
+        .card-btn.active span { color: #ffffff; opacity: 0.9; }
+        
+        .sig-section { display: none; animation: fadeIn 0.4s ease; }
+        .sig-section.show { display: block; }
+        
+        .canvas-container { border: 1px dashed rgba(255,255,255,0.3); border-radius: 12px; background: rgba(255,255,255,0.02); position: relative; overflow: hidden; width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+        .placeholder-text { position: absolute; font-size: clamp(10px, 3vw, 12px); opacity: 0.3; font-weight: bold; pointer-events: none; letter-spacing: 2px; text-transform: uppercase; }
+        
+        .tools { display: flex; gap: clamp(10px, 2vw, 15px); margin-top: 15px; }
+        .btn-tool { flex: 1; padding: clamp(12px, 3vw, 14px); background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--fg); border-radius: 10px; font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; cursor: pointer; transition: all 0.3s; opacity: 0.8; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 1px; }
+        .btn-tool:hover { color: var(--c-blue); border-color: var(--c-blue); }
+        
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: clamp(20px, 5vw, 25px); letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="profile_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Cryptographic Signing</h2>
+        <p class="desc">Provide <strong>official signatures</strong> to authorize node registration.</p>
+        
+        <div class="grid-2">
+            <div class="card-btn active" id="tabUser" onclick="switchTab('user')">
+                Your Signature <span>(MANDATORY)</span>
+            </div>
+            <div class="card-btn" id="tabGuard" onclick="switchTab('guard')">
+                Guardian Signature <span id="guardStatusTag">(OPTIONAL)</span>
+            </div>
+        </div>
+        
+        <div class="sig-section show" id="areaUser">
+            <div class="canvas-container">
+                <div class="placeholder-text" id="ph-user">Draw or Scan Here</div>
+                <canvas id="canvasUser"></canvas>
+            </div>
+            <div class="tools">
+                <button class="btn-tool" id="btn-undo-user" onclick="undoCanvas('user')" style="display: none;">Undo</button>
+                <button class="btn-tool" onclick="clearCanvas('user')">Clear</button>
+                <button class="btn-tool" onclick="document.getElementById('uploadUser').click()">Scan Paper</button>
+                <input type="file" id="uploadUser" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(event, 'user')">
+            </div>
+        </div>
+        
+        <div class="sig-section" id="areaGuard">
+            <div class="canvas-container">
+                <div class="placeholder-text" id="ph-guard">Draw or Scan Here</div>
+                <canvas id="canvasGuard"></canvas>
+            </div>
+            <div class="tools">
+                <button class="btn-tool" id="btn-undo-guard" onclick="undoCanvas('guard')" style="display: none;">Undo</button>
+                <button class="btn-tool" onclick="clearCanvas('guard')">Clear</button>
+                <button class="btn-tool" onclick="document.getElementById('uploadGuard').click()">Scan Paper</button>
+                <input type="file" id="uploadGuard" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(event, 'guard')">
+            </div>
+        </div>
+        
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        let isMinor = false;
+        const sigStatus = { user: false, guard: false };
+        const canvases = {};
+        const undoStacks = { user: [], guard: [] };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'member_registration.html';
+
+            const userSettings = brain.settings || {};
+            const dob = userSettings.dateOfBirth;
+            if (dob) {
+                const bDate = new Date(dob);
+                const today = new Date();
+                let age = today.getFullYear() - bDate.getFullYear();
+                if (today.getMonth() < bDate.getMonth() || (today.getMonth() === bDate.getMonth() && today.getDate() < bDate.getDate())) age--;
+                isMinor = age < 18;
+            }
+            document.getElementById('guardStatusTag').innerText = isMinor ? '(MANDATORY)' : '(OPTIONAL)';
+            
+            ['user', 'guard'].forEach(setupCanvas);
+            
+            setTimeout(() => {
+                if (userSettings.signatures) {
+                    if (userSettings.signatures.userSig) loadSignatureToCanvas('user', userSettings.signatures.userSig);
+                    if (userSettings.signatures.guardSig) loadSignatureToCanvas('guard', userSettings.signatures.guardSig);
+                }
+            }, 150);
+
+            checkValidity();
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function saveState(type) {
+            const c = canvases[type].el;
+            undoStacks[type].push({
+                data: c.toDataURL(),
+                status: sigStatus[type]
+            });
+            document.getElementById('btn-undo-' + type).style.display = 'flex';
+        }
+
+        function undoCanvas(type) {
+            if (undoStacks[type].length > 0) {
+                markUnsaved();
+                const lastState = undoStacks[type].pop();
+                const img = new Image();
+                img.onload = () => {
+                    const c = canvases[type];
+                    const rect = c.el.parentElement.getBoundingClientRect();
+                    c.ctx.clearRect(0, 0, rect.width, rect.height);
+                    c.ctx.drawImage(img, 0, 0, rect.width, rect.height);
+                    
+                    sigStatus[type] = lastState.status;
+                    document.getElementById('ph-' + type).style.display = sigStatus[type] ? 'none' : 'block';
+                    checkValidity();
+                    
+                    if (undoStacks[type].length === 0) {
+                        document.getElementById('btn-undo-' + type).style.display = 'none';
+                    }
+                };
+                img.src = lastState.data;
+            }
+        }
+
+        function loadSignatureToCanvas(type, dataUrl) {
+            const img = new Image();
+            img.onload = () => {
+                const c = canvases[type];
+                c.ctx.save();
+                c.ctx.setTransform(1, 0, 0, 1, 0, 0);
+                c.ctx.clearRect(0, 0, c.el.width, c.el.height);
+                c.ctx.drawImage(img, 0, 0);
+                c.ctx.restore();
+                document.getElementById('ph-' + type).style.display = 'none';
+                sigStatus[type] = true;
+                checkValidity();
+                
+                const btn = document.getElementById('btnNext');
+                if (btn.classList.contains('active')) {
+                    btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                    btn.dataset.saved = 'true';
+                }
+            };
+            img.src = dataUrl;
+        }
+
+        function switchTab(tab) {
+            document.getElementById('tabUser').classList.toggle('active', tab === 'user');
+            document.getElementById('tabGuard').classList.toggle('active', tab === 'guard');
+            document.getElementById('areaUser').classList.toggle('show', tab === 'user');
+            document.getElementById('areaGuard').classList.toggle('show', tab === 'guard');
+            setTimeout(() => resizeCanvas(tab), 50);
+        }
+
+        function setupCanvas(type) {
+            const canvas = document.getElementById('canvas' + (type === 'user' ? 'User' : 'Guard'));
+            const ctx = canvas.getContext('2d');
+            canvases[type] = { el: canvas, ctx: ctx };
+            setTimeout(() => resizeCanvas(type), 100);
+            
+            let isDrawing = false;
+            let lastPos = { x: 0, y: 0 };
+
+            const startDraw = (e) => {
+                saveState(type); 
+                markUnsaved();
+                isDrawing = true;
+                lastPos = getPos(e, canvas);
+                ctx.beginPath(); ctx.arc(lastPos.x, lastPos.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff'; ctx.fill();
+                document.getElementById('ph-' + type).style.display = 'none';
+                e.preventDefault();
+            };
+
+            const draw = (e) => {
+                if (!isDrawing) return;
+                const pos = getPos(e, canvas);
+                ctx.beginPath(); ctx.moveTo(lastPos.x, lastPos.y); ctx.lineTo(pos.x, pos.y);
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
+                lastPos = pos; sigStatus[type] = true; checkValidity();
+                e.preventDefault();
+            };
+
+            const stopDraw = () => { isDrawing = false; };
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('touchstart', startDraw, {passive: false});
+            canvas.addEventListener('touchmove', draw, {passive: false});
+            canvas.addEventListener('touchend', stopDraw, {passive: false});
+        }
+
+        function resizeCanvas(type) {
+            const c = canvases[type].el;
+            const ctx = canvases[type].ctx;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = c.parentElement.getBoundingClientRect();
+            
+            if (rect.width === 0 || rect.height === 0) return;
+            
+            const newW = Math.floor(rect.width * dpr);
+            const newH = Math.floor(rect.height * dpr);
+
+            if (c.width === newW && c.height === newH) return;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = c.width;
+            tempCanvas.height = c.height;
+            if (c.width > 0 && c.height > 0) {
+                tempCanvas.getContext('2d').drawImage(c, 0, 0);
+            }
+
+            c.width = newW; 
+            c.height = newH;
+            ctx.scale(dpr, dpr);
+            c.style.width = rect.width + 'px'; 
+            c.style.height = rect.height + 'px';
+
+            if (tempCanvas.width > 0 && tempCanvas.height > 0) {
+                ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, rect.width, rect.height);
+            }
+        }
+
+        function getPos(e, canvas) {
+            const rect = canvas.getBoundingClientRect();
+            let x = e.clientX || (e.touches && e.touches[0].clientX);
+            let y = e.clientY || (e.touches && e.touches[0].clientY);
+            return { x: x - rect.left, y: y - rect.top };
+        }
+
+        function clearCanvas(type) {
+            saveState(type);
+            markUnsaved();
+            const c = canvases[type];
+            const rect = c.el.parentElement.getBoundingClientRect();
+            c.ctx.clearRect(0, 0, rect.width, rect.height);
+            document.getElementById('ph-' + type).style.display = 'block';
+            sigStatus[type] = false; checkValidity();
+        }
+
+        function handleUpload(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            saveState(type);
+            markUnsaved();
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const c = canvases[type]; const rect = c.el.getBoundingClientRect();
+                    c.ctx.clearRect(0, 0, rect.width, rect.height);
+                    const ratio = Math.min(rect.width/img.width, rect.height/img.height);
+                    c.ctx.filter = "grayscale(100%) contrast(150%)";
+                    c.ctx.drawImage(img, (rect.width - img.width*ratio)/2, (rect.height - img.height*ratio)/2, img.width*ratio, img.height*ratio);
+                    c.ctx.filter = "none";
+                    document.getElementById('ph-' + type).style.display = 'none';
+                    sigStatus[type] = true; checkValidity();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkValidity() {
+            document.getElementById('btnNext').classList.toggle('active', isMinor ? (sigStatus.user && sigStatus.guard) : sigStatus.user);
+        }
+
+        function saveAndProceed() {
+            if(!document.getElementById('btnNext').classList.contains('active')) return;
+            const btn = document.getElementById('btnNext'); btn.classList.add('saved'); btn.innerHTML = 'SAVED ✔';
+            const userSettings = brain.settings || {};
+            userSettings.signatures = { userSig: canvases['user'].el.toDataURL(), guardSig: sigStatus.guard ? canvases['guard'].el.toDataURL() : null };
+            brain.saveSettings(userSettings);
+            
+            setTimeout(() => { 
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'password_registration.html'; 
+            }, 800);
+        }
+    </script>
+</body>
+</html>

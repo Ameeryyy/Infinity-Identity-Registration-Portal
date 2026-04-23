@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Location Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: center; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 12px; font-size: clamp(24px, 7vw, 32px); color: var(--c-blue); text-transform: capitalize; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        p.desc strong { color: var(--c-blue); opacity: 1; }
+        
+        .static-path { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: clamp(20px, 5vw, 30px); justify-content: center; }
+        .path-chip { padding: clamp(4px, 1vw, 6px) clamp(8px, 2.5vw, 12px); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; font-size: clamp(9px, 2.5vw, 11px); font-weight: bold; opacity: 0.7; text-transform: uppercase; background: rgba(255,255,255,0.05); }
+        
+        .input-group { margin-bottom: clamp(20px, 5vw, 30px); display: none; text-align: left; }
+        .input-group.show { display: block; animation: slideDown 0.4s ease; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        
+        .grid-layout { display: grid; gap: clamp(8px, 2.5vw, 10px); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        
+        .card-btn { border: 1px solid rgba(255,255,255,0.3); padding: clamp(12px, 3.5vw, 15px) 5px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: clamp(11px, 3vw, 12px); opacity: 0.6; transition: all 0.3s ease; background: transparent; user-select: none; display: flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 1px; }
+        .card-btn:hover { opacity: 0.9; background: rgba(255,255,255,0.05); }
+        .card-btn.active { opacity: 1; background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); transform: scale(0.96); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
+        
+        .custom-select { width: 100%; cursor: pointer; }
+        .select-trigger { padding: clamp(12px, 3.5vw, 15px) 16px; border: 1px solid rgba(255,255,255,0.4); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: clamp(13px, 4vw, 15px); font-weight: bold; background: transparent; transition: 0.3s; }
+        .select-trigger:hover { border-color: var(--c-blue); }
+        .select-trigger.placeholder { font-weight: normal; opacity: 0.6; }
+        .select-trigger svg { width: clamp(16px, 4vw, 20px); height: clamp(16px, 4vw, 20px); opacity: 0.6; fill: var(--fg); transition: 0.3s; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); z-index: 1000; display: none; transition: background 0.3s ease; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        
+        .modal-content { width: 85%; max-width: 360px; background: #111111; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); transform: scale(0.9) translateY(10px); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); max-height: 70vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .modal-overlay.show .modal-content { transform: scale(1) translateY(0); opacity: 1; }
+        .modal-header { padding: 20px; border-bottom: 1px dashed rgba(255,255,255,0.2); text-align: center; font-weight: bold; font-size: clamp(14px, 4vw, 16px); letter-spacing: 2px; text-transform: uppercase; color: var(--c-blue); }
+        .options-list { flex: 1; overflow-y: auto; padding-bottom: 20px; }
+        .option-item { padding: clamp(14px, 4vw, 18px) 25px; font-size: clamp(13px, 4vw, 15px); border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s, color 0.2s; font-weight: bold; opacity: 0.8; text-align: center; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; color: var(--fg); }
+        .option-item:active, .option-item:hover { background: rgba(255,255,255,0.05); opacity: 1; color: var(--c-blue); }
+        
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+            .grid-3 { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="legacy_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Geospatial Positioning</h2>
+        <p class="desc">Define your <strong>node location</strong> within the planetary grid.</p>
+        
+        <div class="static-path">
+            <span class="path-chip">Earth</span>
+            <span class="path-chip">Asia</span>
+            <span class="path-chip">India</span>
+            <span class="path-chip">Kerala</span>
+            <span class="path-chip">Alappuzha</span>
+        </div>
+
+        <div class="input-group show">
+            <label>Select Sub-District (Taluk)</label>
+            <div class="grid-layout grid-3" id="talukGrid">
+                <div class="card-btn" onclick="selectTaluk('Ambalappuzha')">Ambalappuzha</div>
+                <div class="card-btn" onclick="selectTaluk('Cherthala')">Cherthala</div>
+                <div class="card-btn" onclick="selectTaluk('Kuttanad')">Kuttanad</div>
+                <div class="card-btn" onclick="selectTaluk('Karthikappally')">Karthikappally</div>
+                <div class="card-btn" onclick="selectTaluk('Chengannur')">Chengannur</div>
+                <div class="card-btn" onclick="selectTaluk('Mavelikkara')">Mavelikkara</div>
+            </div>
+        </div>
+
+        <div class="input-group" id="typeSection">
+            <label>Select Administrative Type</label>
+            <div class="grid-layout grid-2" id="typeGrid">
+                <div class="card-btn" id="btn-municipality" onclick="selectType('Municipality')">Municipality</div>
+                <div class="card-btn" id="btn-panchayath" onclick="selectType('Panchayath')">Panchayath</div>
+            </div>
+        </div>
+
+        <div class="input-group" id="placeSection">
+            <label>Select Residential Area</label>
+            <div class="custom-select" onclick="openModal()">
+                <div class="select-trigger placeholder">
+                    <span id="selectedPlace">Choose your location...</span>
+                    <svg viewBox="0 0 24 24"><path d="M7,10L12,15L17,10H7Z"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <div class="modal-header">SELECT AREA</div>
+            <div class="options-list" id="placeOptions"></div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const locationData = {
+            'Ambalappuzha': { 'Municipality': ['Alappuzha town'], 'Panchayath': ['Ambalappuzha', 'Purakkad', 'Punnapra', 'Vandanam', 'Mannanchery'] },
+            'Cherthala': { 'Municipality': ['Cherthala Town'], 'Panchayath': ['Arthunkal', 'Vayalar', 'Poochakkal', 'Thuravoor', 'Muhamma'] },
+            'Kuttanad': { 'Municipality': [], 'Panchayath': ['Mankombu', 'Pulinkunnu', 'Champakulam', 'Nedumudi', 'Kainakary', 'Neerettupuram'] },
+            'Karthikappally': { 'Municipality': ['Kayamkulam', 'Harippad'], 'Panchayath': ['Thrikkunnappuzha', 'Karuvatta', 'Pallana'] },
+            'Chengannur': { 'Municipality': ['Chengannur town'], 'Panchayath': ['Mannar', 'Thiruvanvandoor', 'Venmony', 'Pandanad'] },
+            'Mavelikkara': { 'Municipality': ['Mavelikkara town'], 'Panchayath': ['Chettikulangara', 'Chunakkara', 'Thamarakulam'] }
+        };
+        let sTaluk = '', sType = '', sPlace = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'auxiliary_registration.html';
+
+            const s = brain.settings || {};
+            if (s.location) {
+                if (s.location.taluk) selectTaluk(s.location.taluk, true);
+                if (s.location.type) selectType(s.location.type, true);
+                if (s.location.place) selectPlace(s.location.place, true);
+            }
+
+            checkValidity();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && s.location && s.location.place) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+        
+        function selectTaluk(taluk, isLoad = false) {
+            if (!isLoad) markUnsaved();
+            sTaluk = taluk; sType = ''; sPlace = '';
+            document.querySelectorAll('#talukGrid .card-btn').forEach(btn => btn.classList.toggle('active', btn.innerText === taluk.toUpperCase() || btn.innerText === taluk));
+            const bM = document.getElementById('btn-municipality'), bP = document.getElementById('btn-panchayath');
+            bM.style.display = locationData[taluk]['Municipality'].length > 0 ? 'flex' : 'none';
+            bP.style.display = locationData[taluk]['Panchayath'].length > 0 ? 'flex' : 'none';
+            document.querySelectorAll('#typeGrid .card-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('typeSection').classList.add('show');
+            document.getElementById('placeSection').classList.remove('show');
+            checkValidity();
+        }
+        
+        function selectType(type, isLoad = false) {
+            if (!isLoad) markUnsaved();
+            sType = type; sPlace = '';
+            document.querySelectorAll('#typeGrid .card-btn').forEach(btn => btn.classList.toggle('active', btn.innerText === type.toUpperCase() || btn.innerText === type));
+            const pOptions = document.getElementById('placeOptions'); pOptions.innerHTML = '';
+            locationData[sTaluk][type].forEach(p => {
+                const div = document.createElement('div'); div.className = 'option-item'; div.innerText = p;
+                div.onclick = () => selectPlace(p); pOptions.appendChild(div);
+            });
+            document.getElementById('placeSection').classList.add('show');
+            document.getElementById('selectedPlace').innerText = 'Choose your location...';
+            document.getElementById('placeSection').querySelector('.select-trigger').classList.add('placeholder');
+            checkValidity();
+        }
+
+        function selectPlace(p, isLoad = false) { 
+            if (!isLoad) markUnsaved();
+            sPlace = p; 
+            document.getElementById('selectedPlace').innerText = p; 
+            document.getElementById('placeSection').querySelector('.select-trigger').classList.remove('placeholder'); 
+            closeModal(); 
+            checkValidity(); 
+        }
+
+        function openModal() { document.getElementById('modalOverlay').style.display = 'flex'; setTimeout(() => document.getElementById('modalOverlay').classList.add('show'), 10); }
+        function closeModal(e) { if (e && e.target.id !== 'modalOverlay') return; document.getElementById('modalOverlay').classList.remove('show'); setTimeout(() => document.getElementById('modalOverlay').style.display = 'none', 300); }
+        
+        function checkValidity() { document.getElementById('btnNext').classList.toggle('active', !!(sTaluk && sType && sPlace)); }
+        
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+            const btn = document.getElementById('btnNext'); btn.classList.add('saved'); btn.innerHTML = 'SAVED ✔';
+            const settings = brain.settings || {}; settings.location = { taluk: sTaluk, type: sType, place: sPlace };
+            brain.saveSettings(settings);
+            setTimeout(() => { const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true'; window.location.href = isEdit ? 'edit.html' : 'precise_registration.html'; }, 800);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Parents Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { position: relative; z-index: 1; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .status-grid { display: flex; gap: 10px; margin-bottom: 12px; }
+        .status-btn { flex: 1; padding: clamp(8px, 2vw, 10px); border: 1px dashed rgba(255,255,255,0.3); border-radius: 8px; text-align: center; font-size: clamp(10px, 2.5vw, 11px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; opacity: 0.5; transition: all 0.3s; background: transparent; color: var(--fg); }
+        .status-btn:hover { opacity: 0.8; }
+        .status-btn.active { opacity: 1; border-style: solid; border-color: var(--c-blue); background: rgba(0, 123, 255, 0.1); color: var(--c-blue); }
+        .status-btn.active.deceased { border-color: var(--c-red); background: rgba(255, 68, 68, 0.1); color: var(--c-red); }
+
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: border-color 0.3s, box-shadow 0.3s; background: transparent; position: relative; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { width: 100%; padding: clamp(12px, 3.5vw, 15px) 16px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3.5vw, 14px); outline: none; font-family: inherit; font-weight: bold; letter-spacing: 1px; border-radius: 12px; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: normal; }
+
+        .char-count { position: absolute; right: 5px; bottom: -20px; font-size: 11px; opacity: 0.6; font-weight: bold; }
+        .warning-text { position: absolute; left: 5px; bottom: -20px; font-size: 11px; color: var(--c-red); opacity: 0; transition: opacity 0.3s; font-weight: bold; pointer-events: none; }
+        .warning-text.show { opacity: 0.8; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="gender_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Primary Lineage</strong></h2>
+        <p class="desc">Enter the legal designations of your <strong>biological or legal parents</strong> for proper ancestral mapping.</p>
+
+        <div class="input-group" style="margin-bottom: 30px;">
+            <label style="margin-bottom: 4px;">Father's Legal Name</label>
+            <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 12px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-yellow);">* Initials are strictly prohibited. Enter full name.</span>
+            
+            <div class="input-wrapper">
+                <input type="text" id="fatherName" maxlength="50" placeholder="ENTER FATHER's FULL NAME" oninput="formatName(this)" oncopy="return false;" onpaste="return false;" oncut="return false;" ondrop="return false;" oncontextmenu="return false;" autocomplete="off">
+            </div>
+            <span class="warning-text" id="warn-fatherName">Minimum 3 characters required.</span>
+            <span class="char-count" id="count-fatherName">0/50</span>
+        </div>
+
+        <div class="status-grid" id="father-status" style="margin-bottom: clamp(25px, 6vw, 35px);">
+            <div class="status-btn" data-val="Alive" onclick="setStatus('father', 'Alive')">Alive</div>
+            <div class="status-btn" data-val="Deceased" onclick="setStatus('father', 'Deceased')">Deceased</div>
+        </div>
+
+        <div class="input-group" style="margin-bottom: 30px;">
+            <label style="margin-bottom: 4px;">Mother's Legal Name</label>
+            <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 12px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-yellow);">* Initials are strictly prohibited. Enter full name.</span>
+            
+            <div class="input-wrapper">
+                <input type="text" id="motherName" maxlength="50" placeholder="ENTER MOTHER's FULL NAME" oninput="formatName(this)" oncopy="return false;" onpaste="return false;" oncut="return false;" ondrop="return false;" oncontextmenu="return false;" autocomplete="off">
+            </div>
+            <span class="warning-text" id="warn-motherName">Minimum 3 characters required.</span>
+            <span class="char-count" id="count-motherName">0/50</span>
+        </div>
+
+        <div class="status-grid" id="mother-status" style="margin-bottom: 10px;">
+            <div class="status-btn" data-val="Alive" onclick="setStatus('mother', 'Alive')">Alive</div>
+            <div class="status-btn" data-val="Deceased" onclick="setStatus('mother', 'Deceased')">Deceased</div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let fStatus = '';
+        let mStatus = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input[type="text"]').forEach(inp => {
+                ['paste', 'copy', 'cut', 'drop', 'contextmenu'].forEach(evt => {
+                    inp.addEventListener(evt, e => e.preventDefault());
+                });
+                inp.addEventListener('keydown', e => {
+                    if ((e.ctrlKey || e.metaKey) && ['v', 'c', 'x'].includes(e.key.toLowerCase())) {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'gender_registration.html';
+
+            const s = brain.settings || {};
+            if(s.fatherName) {
+                document.getElementById('fatherName').value = s.fatherName;
+                updateCharCount('fatherName', 50);
+            }
+            if(s.fatherStatus) {
+                setStatus('father', s.fatherStatus, true);
+            }
+            if(s.motherName) {
+                document.getElementById('motherName').value = s.motherName;
+                updateCharCount('motherName', 50);
+            }
+            if(s.motherStatus) {
+                setStatus('mother', s.motherStatus, true);
+            }
+            
+            validateForm();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && s.fatherName) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function updateCharCount(id, max) {
+            const el = document.getElementById(id);
+            const count = document.getElementById('count-' + id);
+            if(count && el) {
+                if (el.value.length > max) {
+                    el.value = el.value.substring(0, max);
+                }
+                let currentLen = el.value.length;
+                if (currentLen >= max) {
+                    count.innerHTML = `<span style="color: var(--c-red); margin-right: 4px;">MAX</span>${currentLen}/${max}`;
+                } else {
+                    count.innerText = `${currentLen}/${max}`;
+                }
+            }
+        }
+
+        function formatName(el) {
+            markUnsaved();
+            let val = el.value;
+            val = val.replace(/\d/g, ' ');
+            val = val.toUpperCase();
+            val = val.replace(/[^A-Z\s]/g, '');
+            val = val.replace(/\s{2,}/g, ' ');
+            if (val.startsWith(' ')) val = val.trimStart();
+            if (val.length > 50) val = val.substring(0, 50);
+            
+            el.value = val;
+            updateCharCount(el.id, 50);
+            validateForm();
+        }
+
+        function setStatus(parent, status, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            const grid = document.getElementById(parent + '-status');
+            const btns = grid.querySelectorAll('.status-btn');
+            btns.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('deceased');
+            });
+            
+            const selectedBtn = Array.from(btns).find(b => b.getAttribute('data-val') === status);
+            if (selectedBtn) {
+                selectedBtn.classList.add('active');
+                if (status === 'Deceased') {
+                    selectedBtn.classList.add('deceased');
+                }
+            }
+            
+            if (parent === 'father') fStatus = status;
+            if (parent === 'mother') mStatus = status;
+            
+            validateForm();
+        }
+
+        function validateForm() {
+            const btn = document.getElementById('btnNext');
+            const fName = document.getElementById('fatherName').value.trim();
+            const mName = document.getElementById('motherName').value.trim();
+            const warnFather = document.getElementById('warn-fatherName');
+            const warnMother = document.getElementById('warn-motherName');
+            
+            let valid = true;
+
+            if (fName.length > 0 && fName.length < 3) {
+                warnFather.classList.add('show');
+                valid = false;
+            } else {
+                warnFather.classList.remove('show');
+                if (fName.length === 0) valid = false;
+            }
+
+            if (mName.length > 0 && mName.length < 3) {
+                warnMother.classList.add('show');
+                valid = false;
+            } else {
+                warnMother.classList.remove('show');
+                if (mName.length === 0) valid = false;
+            }
+            
+            if (fStatus === '') valid = false;
+            if (mStatus === '') valid = false;
+
+            if (valid) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function saveAndProceed() {
+            if(!document.getElementById('btnNext').classList.contains('active')) return;
+
+            const btn = document.getElementById('btnNext');
+            const fName = document.getElementById('fatherName').value.trim();
+            const mName = document.getElementById('motherName').value.trim();
+
+            btn.classList.add('saved');
+            btn.innerHTML = 'SAVED ✔';
+
+            const userSettings = brain.settings || {};
+            userSettings.fatherName = fName;
+            userSettings.fatherStatus = fStatus;
+            userSettings.motherName = mName;
+            userSettings.motherStatus = mStatus;
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'guardian_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

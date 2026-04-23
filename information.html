@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>System Information</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 26px); height: clamp(20px, 6vw, 26px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 550px; max-height: 80vh; overflow-y: auto; animation: fadeIn 0.5s; padding: 20px; z-index: 10; border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); pointer-events: auto; }
+        .container::-webkit-scrollbar { display: none; }
+
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 20px; font-size: clamp(18px, 5vw, 24px); letter-spacing: 2px; text-transform: uppercase; text-align: center; }
+        
+        .search-wrapper { display: flex; align-items: center; border: 1px dashed rgba(255,255,255,0.3); border-radius: 12px; margin-bottom: 25px; background: rgba(255,255,255,0.02); transition: 0.3s; width: 100%; box-sizing: border-box; }
+        .search-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); background: rgba(255,255,255,0.05); }
+        .search-icon { padding-left: 15px; opacity: 0.5; display: flex; align-items: center; }
+        .search-icon svg { width: 18px; height: 18px; fill: currentColor; }
+        .search-wrapper input { flex: 1; width: 100%; padding: clamp(12px, 3vw, 14px) 15px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3.5vw, 14px); outline: none; font-weight: bold; letter-spacing: 1px; }
+        .search-wrapper input::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: 1px; }
+
+        .empty-state { padding: 30px 20px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 16px; text-align: center; opacity: 0.5; width: 100%; box-sizing: border-box; background: rgba(128,128,128,0.02); display: none; margin-top: 10px; }
+        .empty-state svg { width: 40px; height: 40px; margin-bottom: 10px; fill: currentColor; }
+        .empty-state h3 { font-size: 14px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+
+        .accordion { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+        .acc-item { border: 1px solid rgba(128,128,128,0.3); border-radius: 10px; background: rgba(0,0,0,0.2); overflow: hidden; transition: border-color 0.3s; }
+        .acc-header { width: 100%; text-align: left; padding: 15px; background: transparent; border: none; color: var(--fg); font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: color 0.3s; }
+        .acc-header:hover { color: var(--c-blue); }
+        .acc-icon { font-size: 16px; font-weight: normal; transition: transform 0.3s; opacity: 0.6; }
+        
+        .acc-content { max-height: 0; padding: 0 15px; opacity: 0; transition: all 0.3s ease; font-size: clamp(11px, 3vw, 13px); line-height: 1.6; opacity: 0.8; }
+        .acc-content strong { color: var(--c-blue); opacity: 1; }
+        
+        .acc-item.active { border-color: var(--c-blue); background: rgba(255,255,255,0.05); }
+        .acc-item.active .acc-header { color: var(--c-blue); border-bottom: 1px dashed rgba(128,128,128,0.3); }
+        .acc-item.active .acc-icon { transform: rotate(45deg); opacity: 1; color: var(--c-blue); }
+        .acc-item.active .acc-content { max-height: 300px; padding: 15px; opacity: 1; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="landing.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <h2>System Info</h2>
+        
+        <div class="search-wrapper">
+            <div class="search-icon">
+                <svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+            </div>
+            <input type="text" id="searchInput" placeholder="SEARCH INFORMATION..." onkeyup="filterInfo()">
+        </div>
+
+        <div id="emptyState" class="empty-state">
+            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7Z"/></svg>
+            <h3>NO RESULTS FOUND</h3>
+        </div>
+        
+        <div class="accordion" id="accordionList">
+            <div class="acc-item">
+                <button class="acc-header">1. Project Overview <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>The <strong>Infinity Identity</strong> framework is a world-class, minimal digital gateway designed to provide absolute control over user authentication and network presence. It stands as the core entry point for the entire Infinity ecosystem.</p>
+                </div>
+            </div>
+            
+            <div class="acc-item">
+                <button class="acc-header">2. Security Architecture <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>Our system utilizes <strong>Web Authentication (WebAuthn)</strong> tied directly to device hardware. By leveraging biometric data and screen locks locally, we ensure <strong>uncompromised security</strong> without storing sensitive passwords on remote servers.</p>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">3. Node Network <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>Every active user acts as a secure node. The portal continuously monitors <strong>Network Latency</strong> and <strong>Encryption States</strong> to ensure that the uplink to the master servers remains intact and invisible to unauthorized entities.</p>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">4. Design Philosophy <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>Built with a <strong>"Less is More"</strong> approach. The user interface eliminates distractions, offering pure functionality through adaptive Dark and Light minimalist themes, ensuring high-speed rendering even on limited devices.</p>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">5. Data Privacy <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>Privacy is our fundamental right. <strong>Zero telemetry</strong> data is stored externally. All your settings, preferences, and authentication keys remain fully encrypted within your local hardware.</p>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">6. Adaptive Theming <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>The system natively supports <strong>Pure B&W</strong> and <strong>Minimalist Color</strong> visual structures, dynamically adjusting to your device's system preferences or your manual overrides via the settings matrix.</p>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">7. State Preservation <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>During sudden network failures, the <strong>Infinity Brain Engine</strong> automatically caches input states, seamlessly restoring them once the node reconnects to the main grid.</p>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">8. Anti-Tamper Protocols <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>Right-click, text selection, and copy-paste functions are globally <strong>disabled</strong> across the application interface to prevent unauthorized code scraping and data extraction.</p>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">9. Real-Time Telemetry <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>The <strong>System Status</strong> module provides real-time ping analytics and active node mapping, guaranteeing the integrity of your continuous connection to the Infinity core.</p>
+                </div>
+            </div>
+
+            <div class="acc-item">
+                <button class="acc-header">10. Future Operations <span class="acc-icon">+</span></button>
+                <div class="acc-content">
+                    <p>Infinity V1.0 is just the beginning. The infrastructure is ready to scale, accommodating <strong>Advanced Global Operations</strong>, cross-node communication, and high-tier artificial intelligence integrations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        document.querySelectorAll('.acc-header').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const isActive = item.classList.contains('active');
+                
+                document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('active'));
+                
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        function filterInfo() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.acc-item');
+            let found = false;
+            
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                if (text.includes(query)) {
+                    item.style.display = 'block';
+                    found = true;
+                } else {
+                    item.style.display = 'none';
+                    item.classList.remove('active');
+                }
+            });
+            
+            document.getElementById('emptyState').style.display = found ? 'none' : 'block';
+        }
+    </script>
+</body>
+</html>

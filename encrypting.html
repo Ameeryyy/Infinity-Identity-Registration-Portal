@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Encrypting Data</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: monospace, system-ui, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; 
+        }
+
+        .container { width: 90%; max-width: 500px; text-align: center; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+        
+        .shield-container { position: relative; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
+        .shield-icon { width: 60px; height: 60px; fill: var(--c-blue); z-index: 2; animation: pulse 1.5s infinite alternate; }
+        .ring { position: absolute; width: 100%; height: 100%; border: 2px dashed var(--c-blue); border-radius: 50%; animation: spin 4s linear infinite; opacity: 0.5; }
+        .ring.reverse { animation: spin 3s linear infinite reverse; width: 80%; height: 80%; border-color: var(--c-green); opacity: 0.3; }
+
+        .status-title { font-size: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; color: var(--c-green); margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+        .status-desc { font-size: 12px; opacity: 0.7; margin: 0; letter-spacing: 1px; text-transform: uppercase; color: var(--c-blue); }
+
+        .progress-bar { width: 100%; max-width: 300px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; position: relative; margin-top: 10px; }
+        .progress-fill { height: 100%; width: 0%; background: var(--c-green); box-shadow: 0 0 10px var(--c-green); transition: width 0.1s linear; }
+
+        .hex-stream { font-size: 10px; color: rgba(255,255,255,0.3); line-height: 1.5; height: 60px; overflow: hidden; width: 100%; max-width: 350px; text-align: center; word-break: break-all; opacity: 0.8; }
+
+        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; filter: drop-shadow(0 0 5px var(--c-blue)); } 100% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 20px var(--c-blue)); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="shield-container">
+            <div class="ring"></div>
+            <div class="ring reverse"></div>
+            <svg class="shield-icon" viewBox="0 0 24 24">
+                <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,7.5 15.9,8.5L14.5,9.9C13.8,9.3 12.9,9 12,9C10.3,9 9,10.3 9,12C9,13.7 10.3,15 12,15C13.3,15 14.4,14.2 14.8,13H12V11H17V12C17,14.8 14.8,17 12,17C9.2,17 7,14.8 7,12C7,9.2 9.2,7 12,7Z"/>
+            </svg>
+        </div>
+
+        <div>
+            <h2 class="status-title" id="statusTitle">ENCRYPTING DATA</h2>
+            <p class="status-desc" id="statusDesc">Shredding and securing blocks...</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="hex-stream" id="hexStream"></div>
+    </div>
+
+    <script>
+        const hexChars = "0123456789ABCDEF!@#$%^&*";
+        const streamEl = document.getElementById('hexStream');
+        const fillEl = document.getElementById('progressFill');
+        const titleEl = document.getElementById('statusTitle');
+        const descEl = document.getElementById('statusDesc');
+
+        // Hex stream effect
+        setInterval(() => {
+            let str = "";
+            for(let i=0; i<150; i++) {
+                str += hexChars[Math.floor(Math.random() * hexChars.length)];
+            }
+            streamEl.innerText = str;
+        }, 50);
+
+        // Progress bar and text logic
+        let progress = 0;
+        const texts = [
+            "Shredding local fragments...",
+            "Generating 256-bit AES keys...",
+            "Applying cryptographic signatures...",
+            "Establishing secure tunnel...",
+            "Syncing encrypted node..."
+        ];
+
+        const progInterval = setInterval(() => {
+            progress += 1;
+            fillEl.style.width = progress + "%";
+
+            if(progress === 20) descEl.innerText = texts[1];
+            if(progress === 40) descEl.innerText = texts[2];
+            if(progress === 60) descEl.innerText = texts[3];
+            if(progress === 80) descEl.innerText = texts[4];
+
+            if(progress >= 100) {
+                clearInterval(progInterval);
+                titleEl.innerText = "NODE SECURED";
+                titleEl.style.color = "var(--c-blue)";
+                descEl.innerText = "Redirecting to gateway...";
+                
+                setTimeout(() => {
+                    window.location.href = 'payment_success.html';
+                }, 500);
+            }
+        }, 50); // 50ms * 100 = 5000ms (5 seconds total)
+    </script>
+</body>
+</html>

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Profile Picture Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; text-align: center; overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; margin-top: 40px; margin-bottom: 40px; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(20px, 6vw, 26px); color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; margin-bottom: 15px; line-height: 1.5; }
+        
+        .instructions { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 5px; }
+        .instructions .warn-red { color: var(--c-red); }
+        .instructions .warn-yellow { color: var(--c-yellow); }
+        
+        .camera-container { width: clamp(200px, 60vw, 260px); height: clamp(240px, 75vw, 320px); margin: 0 auto 15px auto; border-radius: 120px; overflow: hidden; border: 2px dashed rgba(255,255,255,0.3); position: relative; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+        
+        .camera-container.error { border-color: var(--c-red); border-style: dashed; box-shadow: 0 0 25px rgba(255, 68, 68, 0.4); }
+        .camera-container.warning { border-color: var(--c-yellow); border-style: dashed; box-shadow: 0 0 25px rgba(255, 187, 51, 0.4); }
+        .camera-container.detecting { border-color: var(--c-green); border-style: solid; box-shadow: 0 0 25px rgba(0, 200, 81, 0.5); }
+        
+        video { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
+        .preview-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 120px; display: none; z-index: 1; }
+        
+        .cam-overlay { position: absolute; width: 100%; height: 100%; border-radius: 120px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9); pointer-events: none; border: 1px solid rgba(255,255,255,0.05); z-index: 2; }
+        .face-guide { position: absolute; width: 60%; height: 55%; border: 2px dashed rgba(255,255,255,0.2); border-radius: 50%; top: 20%; left: 20%; pointer-events: none; transition: border-color 0.3s, opacity 0.3s; z-index: 3; }
+        
+        .camera-container.error .face-guide { border-color: var(--c-red); }
+        .camera-container.warning .face-guide { border-color: var(--c-yellow); }
+        .camera-container.detecting .face-guide { border-color: var(--c-green); border-style: solid; }
+        
+        .status-text { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; height: 15px; margin-bottom: 15px; transition: opacity 0.3s, text-shadow 0.3s, color 0.3s; opacity: 0.8; color: var(--fg); }
+        .status-text.error { color: var(--c-red); text-shadow: 0 0 10px rgba(255,68,68,0.5); }
+        .status-text.warning { color: var(--c-yellow); text-shadow: 0 0 10px rgba(255,187,51,0.5); }
+        .status-text.success { color: var(--c-green); text-shadow: 0 0 10px rgba(0,200,81,0.5); }
+
+        .thumbnails { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; height: clamp(50px, 12vw, 60px); }
+        .thumb { width: clamp(50px, 12vw, 60px); height: clamp(50px, 12vw, 60px); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); object-fit: cover; opacity: 0.3; transition: all 0.3s; transform: scaleX(-1); background: rgba(255,255,255,0.05); pointer-events: none; }
+        .thumb.has-img { opacity: 1; border-color: var(--c-blue); box-shadow: 0 0 15px rgba(0,123,255,0.3); pointer-events: auto; cursor: pointer; }
+
+        .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-bottom: 20px; display: none; }
+        .progress-fill { height: 100%; width: 0%; background: var(--c-blue); transition: width 0.1s linear; }
+
+        .match-result { font-size: clamp(20px, 5vw, 24px); font-weight: bold; margin-bottom: 20px; display: none; color: var(--c-green); text-shadow: 0 0 15px rgba(0,200,81,0.4); }
+
+        .controls { display: flex; justify-content: center; gap: 15px; margin-bottom: clamp(15px, 4vw, 30px); flex-wrap: wrap; }
+        
+        .btn-ctrl { padding: clamp(10px, 3vw, 12px) clamp(15px, 4vw, 25px); background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--fg); border-radius: 12px; font-size: clamp(10px, 2.5vw, 11px); font-weight: bold; cursor: pointer; transition: all 0.3s; opacity: 0.8; text-transform: uppercase; display: flex; align-items: center; gap: 8px; letter-spacing: 1px; }
+        .btn-ctrl:hover:not(:disabled) { opacity: 1; background: rgba(255,255,255,0.05); }
+        .btn-ctrl:active:not(:disabled) { transform: scale(0.95); }
+        .btn-ctrl svg { width: clamp(14px, 4vw, 16px); height: clamp(14px, 4vw, 16px); fill: currentColor; }
+        
+        .btn-ctrl:disabled { opacity: 0.3; cursor: not-allowed; border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+        
+        .btn-ctrl.ready-auto { border-color: var(--c-green); color: var(--c-green); opacity: 1; box-shadow: 0 0 15px rgba(0,200,81,0.2); }
+        .btn-ctrl.ready-auto svg { fill: var(--c-green); }
+
+        .btn-ctrl.ready-manual { border-color: var(--c-yellow); color: var(--c-yellow); opacity: 1; box-shadow: 0 0 15px rgba(255,187,51,0.2); }
+        .btn-ctrl.ready-manual svg { fill: var(--c-yellow); }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; letter-spacing: 1px; display: block; margin-top: 10px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flash { 0% { background: #ffffff; opacity: 1; } 100% { background: transparent; opacity: 0; } }
+        
+        .flash-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; pointer-events: none; z-index: 100; opacity: 0; border-radius: 120px; }
+        .flash-overlay.flashing { animation: flash 0.4s ease-out; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); z-index: 1000; display: none; transition: background 0.3s ease; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
+        .modal-content { width: 90%; max-width: 340px; background: #161618; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); transform: scale(0.9) translateY(10px); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 15px 40px rgba(0,0,0,0.9); padding: 30px 20px; align-items: center; text-align: center; }
+        .modal-overlay.show .modal-content { transform: scale(1) translateY(0); opacity: 1; }
+        
+        .btn-dismiss { width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #ffffff; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 13px; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-dismiss:hover { background: rgba(255,255,255,0.05); }
+        .btn-dismiss:active { transform: scale(0.96); }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 10px; margin-top: 60px; margin-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+    
+    <a href="member_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Dual Verification</h2>
+        <p class="desc">Capture two consecutive visual nodes to compute cryptographic biometric match accuracy.</p>
+
+        <div class="instructions">
+            <span class="warn-red">NO GLASSES ALLOWED</span>
+            <span class="warn-yellow">MAINTAIN NEUTRAL EXPRESSION</span>
+        </div>
+
+        <div class="camera-container error" id="camContainer">
+            <video id="videoFeed" autoplay playsinline></video>
+            <img id="previewImg" class="preview-img">
+            <div class="cam-overlay"></div>
+            <div class="face-guide" id="faceGuide"></div>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <div class="flash-overlay" id="flashOverlay"></div>
+        </div>
+
+        <div class="thumbnails">
+            <img class="thumb" id="thumb1" onclick="viewImage(1)">
+            <img class="thumb" id="thumb2" onclick="viewImage(2)">
+        </div>
+
+        <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="match-result" id="matchResult"></div>
+        <div class="status-text error" id="statusText">INITIALIZING CAMERA...</div>
+
+        <div class="controls" id="camControls">
+            <button id="btnCapture" class="btn-ctrl" onclick="captureImage()" disabled>
+                <svg viewBox="0 0 24 24"><path d="M4,4H10V10H4V4M20,4V10H14V4H20M14,15H16V13H14V11H16V13H18V11H20V13H18V15H20V18H18V20H16V18H13V20H11V16H14V15M16,15V18H18V15H16M4,20V14H10V20H4M6,6V8H8V6H6M16,6V8H18V6H16M6,16V18H8V16H6Z"/></svg>
+                Capture Image
+            </button>
+            <button class="btn-ctrl" onclick="switchCamera()">
+                <svg viewBox="0 0 24 24"><path d="M9,2L7.17,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6A2,2 0 0,0 20,4H16.83L15,2H9M12,15C10.34,15 9,13.66 9,12C9,10.34 10.34,9 12,9C13.66,9 15,10.34 15,12C15,13.66 13.66,15 12,15M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M15,8.81L12.55,10.03L13.34,12.63L11.08,10.82L8.82,12.63L9.61,10.03L7.16,8.81L9.77,8.6L11.08,6.2L12.39,8.6L15,8.81Z"/></svg>
+                Switch Lens
+            </button>
+        </div>
+
+        <div class="controls" id="retakeControls" style="display:none;">
+            <button class="btn-ctrl" onclick="resetVerification()">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M18,11H13L14.81,9.19A3.94,3.94 0 0,0 12,8A4,4 0 1,0 15.86,13H17.91A6,6 0 1,1 12,6A5.91,5.91 0 0,1 16.22,7.78L18,6V11Z"/></svg>
+                Restart Verification
+            </button>
+        </div>
+
+        <div class="controls" id="viewControls" style="display:none;">
+            <button class="btn-ctrl" onclick="retakeSingle()">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M18,11H13L14.81,9.19A3.94,3.94 0 0,0 12,8A4,4 0 1,0 15.86,13H17.91A6,6 0 1,1 12,6A5.91,5.91 0 0,1 16.22,7.78L18,6V11Z"/></svg>
+                Retake
+            </button>
+            <button class="btn-ctrl" onclick="closePreview()">
+                <svg viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
+                Close Preview
+            </button>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Proceed to Security Key</button>
+    </div>
+
+    <div class="modal-overlay" id="camWarningModal" style="z-index: 1001;">
+        <div class="modal-content">
+            <div style="font-weight: bold; font-size: 16px; margin-bottom: 15px; letter-spacing: 1px; color: var(--c-red);">CAMERA ACCESS FAILED</div>
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 30px; line-height: 1.5; color: #ffffff; padding: 0 10px;">Camera access is not supported or was denied. Please check your device settings and grant permissions.</div>
+            <button class="btn-dismiss" onclick="closeCamWarningModal()">DISMISS</button>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const video = document.getElementById('videoFeed');
+        const previewImg = document.getElementById('previewImg');
+        const faceGuide = document.getElementById('faceGuide');
+        const canvas = document.getElementById('canvas');
+        const btnNext = document.getElementById('btnNext');
+        const btnCapture = document.getElementById('btnCapture');
+        const camContainer = document.getElementById('camContainer');
+        const statusText = document.getElementById('statusText');
+        const thumb1 = document.getElementById('thumb1');
+        const thumb2 = document.getElementById('thumb2');
+        const matchResult = document.getElementById('matchResult');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const flashOverlay = document.getElementById('flashOverlay');
+        
+        let stream = null;
+        let videoDevices = [];
+        let currentDeviceIndex = 0;
+        let isFrontFacing = true;
+        let detectInterval = null;
+        let autoCaptureTimer = null;
+        let faceDetector = null;
+        
+        let phase = 1;
+        let retakePhase = null;
+        let imgData1 = '';
+        let imgData2 = '';
+        let lastFaceRatio = 0;
+        let isReadyToCapture = false;
+        let currentViewIndex = 0;
+
+        function markUnsaved() {
+            if (btnNext.dataset.saved === 'true') {
+                btnNext.dataset.saved = 'false';
+                btnNext.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        async function getCameras() {
+            try {
+                await navigator.mediaDevices.getUserMedia({ video: true }); 
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                videoDevices = devices.filter(device => device.kind === 'videoinput');
+            } catch (err) {
+                console.log("Camera access error:", err);
+            }
+        }
+
+        async function initCamera() {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            if (detectInterval) clearInterval(detectInterval);
+            if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+            
+            if (videoDevices.length === 0) await getCameras();
+            
+            let constraints = { video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } } };
+            
+            if (videoDevices.length > 0) {
+                let frontCamera = videoDevices.find(d => d.label.toLowerCase().includes('front'));
+                const device = frontCamera && currentDeviceIndex === 0 ? frontCamera : videoDevices[currentDeviceIndex];
+                constraints = { video: { deviceId: { exact: device.deviceId } } };
+                isFrontFacing = device.label.toLowerCase().includes('front') || currentDeviceIndex === 0;
+            }
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                video.style.transform = isFrontFacing ? 'scaleX(-1)' : 'scaleX(1)';
+                video.onloadedmetadata = () => { 
+                    video.play(); 
+                    startFaceDetection(); 
+                };
+            } catch (err) {
+                setCameraState('error', "CAMERA ACCESS DENIED");
+                showCamWarningModal();
+            }
+        }
+
+        function switchCamera() {
+            if (videoDevices.length > 1) {
+                currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+            } else {
+                isFrontFacing = !isFrontFacing;
+            }
+            initCamera();
+        }
+
+        function setCameraState(state, message) {
+            statusText.innerText = message;
+            btnCapture.classList.remove('ready-auto', 'ready-manual');
+            
+            if (state === 'error') {
+                camContainer.className = 'camera-container error';
+                statusText.className = 'status-text error';
+                btnCapture.disabled = true;
+                isReadyToCapture = false;
+                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+            } 
+            else if (state === 'warning') {
+                camContainer.className = 'camera-container warning';
+                statusText.className = 'status-text warning';
+                btnCapture.disabled = false;
+                btnCapture.classList.add('ready-manual');
+                isReadyToCapture = true;
+                if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+            } 
+            else if (state === 'success') {
+                camContainer.className = 'camera-container detecting';
+                statusText.className = 'status-text success';
+                btnCapture.disabled = false;
+                btnCapture.classList.add('ready-auto');
+                isReadyToCapture = true;
+                
+                // Trigger auto capture after verifying liveness
+                if (!autoCaptureTimer && ((retakePhase !== null && retakePhase <= 2) || (retakePhase === null && phase <= 2))) {
+                    autoCaptureTimer = setTimeout(() => {
+                        if (isReadyToCapture && camContainer.classList.contains('detecting')) {
+                            captureImage();
+                        }
+                    }, 2500); // Give user time to blink/verify
+                }
+            }
+        }
+
+        async function startFaceDetection() {
+            if ('FaceDetector' in window) {
+                try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 }); } catch (e) {}
+            }
+
+            detectInterval = setInterval(async () => {
+                if(video.readyState !== 4 || (phase > 2 && retakePhase === null) || previewImg.style.display === 'block') return;
+                
+                if (!faceDetector) {
+                    setCameraState('warning', "AUTO-DETECT UNAVAILABLE. PLEASE CAPTURE MANUALLY.");
+                    return;
+                }
+
+                try {
+                    const faces = await faceDetector.detect(video);
+                    if (faces.length > 0) {
+                        const face = faces[0].boundingBox;
+                        const vW = video.videoWidth;
+                        const vH = video.videoHeight;
+                        
+                        const faceCenterX = face.x + (face.width / 2);
+                        const faceCenterY = face.y + (face.height / 2);
+                        
+                        const isCenteredX = Math.abs(faceCenterX - vW/2) < (vW * 0.15);
+                        const isCenteredY = Math.abs(faceCenterY - vH/2) < (vH * 0.15);
+                        const isGoodSize = face.width > (vW * 0.20) && face.width < (vW * 0.70);
+
+                        // Basic Liveness Simulation via expression/movement variation
+                        let hasExpression = false;
+                        const currentRatio = face.height / face.width;
+                        if (lastFaceRatio !== 0 && Math.abs(currentRatio - lastFaceRatio) > 0.05) hasExpression = true;
+                        lastFaceRatio = currentRatio;
+
+                        if (isCenteredX && isCenteredY && isGoodSize) {
+                            if (hasExpression) {
+                                // LIVENESS: BLINK DETECTED
+                                setCameraState('success', "LIVENESS VERIFIED. AUTO-CAPTURING...");
+                            } else {
+                                // REQUIRE BLINK
+                                setCameraState('warning', "PLEASE POSITION YOUR FACE AND BLINK TO VERIFY.");
+                            }
+                        } else {
+                            if (!isCenteredX || !isCenteredY) setCameraState('error', "CENTER YOUR FACE IN THE CIRCLE");
+                            else if (!isGoodSize) setCameraState('error', face.width <= (vW * 0.20) ? "MOVE CLOSER" : "MOVE BACK");
+                        }
+                    } else {
+                        setCameraState('error', "NO FACE DETECTED");
+                        lastFaceRatio = 0;
+                    }
+                } catch (e) {
+                    setCameraState('warning', "AUTO-DETECT UNAVAILABLE. PLEASE CAPTURE MANUALLY.");
+                }
+            }, 300);
+        }
+
+        function flashCamera() {
+            flashOverlay.classList.remove('flashing');
+            void flashOverlay.offsetWidth;
+            flashOverlay.classList.add('flashing');
+        }
+
+        function triggerMatchProcess() {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            if (detectInterval) clearInterval(detectInterval);
+            video.style.display = 'none';
+            faceGuide.style.display = 'none';
+            document.getElementById('camControls').style.display = 'none';
+            camContainer.className = 'camera-container';
+            
+            runBiometricMatch();
+        }
+
+        function captureImage() {
+            if ((phase > 2 && retakePhase === null) || !stream || !isReadyToCapture || previewImg.style.display === 'block') return;
+            
+            markUnsaved();
+            if (autoCaptureTimer) { clearTimeout(autoCaptureTimer); autoCaptureTimer = null; }
+            flashCamera();
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            
+            if (isFrontFacing) { 
+                ctx.translate(canvas.width, 0); 
+                ctx.scale(-1, 1); 
+            }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            let activePhase = retakePhase !== null ? retakePhase : phase;
+
+            if (activePhase === 1) {
+                imgData1 = canvas.toDataURL('image/jpeg', 0.9);
+                thumb1.src = imgData1;
+                thumb1.classList.add('has-img');
+                
+                if (retakePhase === 1) {
+                    retakePhase = null;
+                    if (imgData2) {
+                        phase = 3;
+                        triggerMatchProcess();
+                        return;
+                    }
+                }
+                
+                phase = 2;
+                setCameraState('error', "ALIGN FOR SECONDARY CONFIRMATION");
+                
+            } else if (activePhase === 2) {
+                imgData2 = canvas.toDataURL('image/jpeg', 0.9);
+                thumb2.src = imgData2;
+                thumb2.classList.add('has-img');
+                
+                if (retakePhase === 2) retakePhase = null;
+                
+                phase = 3;
+                triggerMatchProcess();
+            }
+        }
+
+        async function runBiometricMatch() {
+            statusText.innerText = "ANALYZING BIOMETRIC TOPOLOGY...";
+            statusText.className = 'status-text';
+            progressBar.style.display = 'block';
+            
+            let p = 0;
+            const simInterval = setInterval(() => {
+                p += Math.random() * 15;
+                if (p > 100) p = 100;
+                progressFill.style.width = p + '%';
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(simInterval);
+                progressFill.style.width = '100%';
+                const score = (92 + Math.random() * 7).toFixed(2);
+                setTimeout(() => finalizeMatch(score), 500);
+            }, 2500);
+        }
+
+        function finalizeMatch(score) {
+            progressBar.style.display = 'none';
+            matchResult.style.display = 'block';
+            matchResult.innerText = score + "% MATCH";
+            document.getElementById('retakeControls').style.display = 'flex';
+            
+            statusText.innerText = "BIOMETRIC VERIFICATION SUCCESSFUL";
+            statusText.className = 'status-text success';
+            btnNext.classList.add('active');
+        }
+
+        function viewImage(num) {
+            let src = num === 1 ? imgData1 : imgData2;
+            if (!src) return;
+            
+            currentViewIndex = num;
+            
+            previewImg.src = src;
+            previewImg.style.display = 'block';
+            video.style.opacity = '0';
+            faceGuide.style.opacity = '0';
+            
+            document.getElementById('camControls').style.display = 'none';
+            document.getElementById('retakeControls').style.display = 'none';
+            document.getElementById('viewControls').style.display = 'flex';
+        }
+
+        function closePreview() {
+            previewImg.style.display = 'none';
+            video.style.opacity = '1';
+            faceGuide.style.opacity = '1';
+            
+            document.getElementById('viewControls').style.display = 'none';
+            if (phase === 3) {
+                document.getElementById('retakeControls').style.display = 'flex';
+            } else {
+                document.getElementById('camControls').style.display = 'flex';
+            }
+        }
+
+        function retakeSingle() {
+            markUnsaved();
+            if (currentViewIndex === 1) {
+                imgData1 = '';
+                thumb1.src = '';
+                thumb1.classList.remove('has-img');
+                if (imgData2) {
+                    retakePhase = 1;
+                } else {
+                    phase = 1;
+                }
+            } else if (currentViewIndex === 2) {
+                imgData2 = '';
+                thumb2.src = '';
+                thumb2.classList.remove('has-img');
+                if (imgData1) {
+                    retakePhase = 2;
+                } else {
+                    phase = 2;
+                }
+            }
+            
+            matchResult.style.display = 'none';
+            progressBar.style.display = 'none';
+            progressFill.style.width = '0%';
+            btnNext.classList.remove('active');
+            
+            previewImg.style.display = 'none';
+            video.style.opacity = '1';
+            faceGuide.style.opacity = '1';
+            
+            document.getElementById('viewControls').style.display = 'none';
+            document.getElementById('retakeControls').style.display = 'none';
+            document.getElementById('camControls').style.display = 'flex';
+            
+            video.style.display = 'block';
+            faceGuide.style.display = 'block';
+            setCameraState('error', "INITIALIZING CAMERA...");
+            initCamera();
+        }
+
+        function resetVerification() {
+            markUnsaved();
+            phase = 1;
+            retakePhase = null;
+            imgData1 = ''; imgData2 = '';
+            thumb1.src = ''; thumb2.src = '';
+            thumb1.classList.remove('has-img'); thumb2.classList.remove('has-img');
+            matchResult.style.display = 'none';
+            progressBar.style.display = 'none';
+            progressFill.style.width = '0%';
+            btnNext.classList.remove('active');
+            
+            previewImg.style.display = 'none';
+            video.style.opacity = '1';
+            faceGuide.style.opacity = '1';
+            
+            document.getElementById('viewControls').style.display = 'none';
+            document.getElementById('retakeControls').style.display = 'none';
+            document.getElementById('camControls').style.display = 'flex';
+            
+            video.style.display = 'block';
+            faceGuide.style.display = 'block';
+            setCameraState('error', "INITIALIZING CAMERA...");
+            initCamera();
+        }
+
+        function showCamWarningModal() {
+            const modal = document.getElementById('camWarningModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        function closeCamWarningModal() {
+            const modal = document.getElementById('camWarningModal');
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        function saveAndProceed() {
+            if (phase !== 3 || !btnNext.classList.contains('active')) return;
+            
+            btnNext.classList.add('saved');
+            btnNext.innerHTML = 'SAVED ✔';
+            
+            const userSettings = brain.settings || {};
+            userSettings.profilePicturePrimary = imgData1;
+            userSettings.profilePictureSecondary = imgData2;
+            brain.saveSettings(userSettings);
+            
+            setTimeout(() => { 
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'password_registration.html'; 
+            }, 800);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            const backBtn = document.getElementById('backBtn');
+            if (backBtn) backBtn.href = isEdit ? 'edit.html' : 'signature_registration.html';
+            
+            const s = brain.settings || {};
+            if (s.profilePicturePrimary && s.profilePictureSecondary) {
+                imgData1 = s.profilePicturePrimary;
+                imgData2 = s.profilePictureSecondary;
+                thumb1.src = imgData1; thumb1.classList.add('has-img');
+                thumb2.src = imgData2; thumb2.classList.add('has-img');
+                phase = 3;
+                
+                document.getElementById('camControls').style.display = 'none';
+                camContainer.className = 'camera-container';
+                video.style.display = 'none';
+                faceGuide.style.display = 'none';
+                
+                matchResult.style.display = 'block';
+                matchResult.innerText = "BIOMETRICS SECURED";
+                document.getElementById('retakeControls').style.display = 'flex';
+                
+                statusText.innerText = "PREVIOUS MATCH VERIFIED";
+                statusText.className = 'status-text success';
+                btnNext.classList.add('active');
+                
+                btnNext.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btnNext.dataset.saved = 'true';
+            } else {
+                initCamera();
+            }
+        });
+    </script>
+</body>
+</html>

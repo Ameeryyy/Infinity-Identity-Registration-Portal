@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Education Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        p.desc strong { color: var(--c-blue); opacity: 1; }
+        
+        .input-group { margin-bottom: clamp(20px, 5vw, 30px); position: relative; z-index: 1; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .flexible-grid { display: flex; flex-wrap: wrap; gap: clamp(6px, 2vw, 10px); }
+        .flexible-grid .card-btn { flex: 1 1 calc(50% - 10px); min-width: 120px; }
+
+        .card-btn { border: 1px solid var(--fg); padding: clamp(12px, 3vw, 15px) 5px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: clamp(10px, 2.5vw, 11px); opacity: 0.5; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; user-select: none; text-transform: uppercase; letter-spacing: 1px; line-height: 1.3; }
+        .card-btn:hover { opacity: 0.8; }
+        .card-btn.active { opacity: 1 !important; background: var(--c-blue) !important; color: #ffffff !important; border-color: var(--c-blue) !important; transform: scale(0.96); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
+
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 48px; position: relative; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 13px; outline: none; font-family: inherit; font-weight: bold; height: 100%; min-width: 0; letter-spacing: 1px; text-transform: uppercase; }
+        .input-wrapper textarea { flex: 1; padding: 15px; background: transparent; border: none; color: inherit; font-size: 13px; outline: none; font-family: inherit; font-weight: bold; min-width: 0; letter-spacing: 1px; resize: none; line-height: 1.5; text-transform: uppercase; }
+        .input-wrapper input::placeholder, .input-wrapper textarea::placeholder { font-weight: normal; opacity: 0.3; letter-spacing: normal; }
+
+        .char-count { position: absolute; right: 5px; bottom: -20px; font-size: 10px; font-weight: bold; opacity: 0.5; letter-spacing: 1px; }
+
+        .hidden-section { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease-in-out; margin-top: 0; }
+        .hidden-section.show { max-height: 500px; opacity: 1; margin-top: 15px; overflow: visible; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 15px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) { .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; } }
+    </style>
+</head>
+<body>
+
+    <a href="disability_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Education Profile</strong></h2>
+        <p class="desc">Define your <strong>highest academic qualification</strong> achieved to date.</p>
+
+        <div class="input-group">
+            <label>Primary Qualification</label>
+            <div class="flexible-grid" id="grid-edu">
+                <div class="card-btn" onclick="selectEdu('Below SSLC', this)">Below SSLC</div>
+                <div class="card-btn" onclick="selectEdu('SSLC', this)">SSLC / 10th</div>
+                <div class="card-btn" onclick="selectEdu('Plus Two', this)">Higher Secondary</div>
+                <div class="card-btn" onclick="selectEdu('Diploma', this)">Diploma</div>
+                <div class="card-btn" onclick="selectEdu('Graduation', this)">Graduation</div>
+                <div class="card-btn" onclick="selectEdu('Post Graduation', this)">Post Graduation</div>
+                <div class="card-btn" onclick="selectEdu('Doctorate', this)">Doctorate / PhD</div>
+                <div class="card-btn" onclick="selectEdu('Other', this)">Other</div>
+            </div>
+        </div>
+
+        <div id="otherEduContainer" class="hidden-section">
+            <div class="input-group">
+                <label>Qualification Title</label>
+                <div style="position: relative; margin-bottom: 25px;">
+                    <div class="input-wrapper">
+                        <input type="text" id="eduTitle" maxlength="50" placeholder="E.G. TECHNICAL CERTIFICATION" oninput="formatText(this, 'count-eduTitle', 50)" autocomplete="off">
+                    </div>
+                    <span class="char-count" id="count-eduTitle">0/50</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Description</label>
+                <div style="position: relative; margin-bottom: 25px;">
+                    <div class="input-wrapper" style="height: auto;">
+                        <textarea id="eduDesc" rows="3" maxlength="150" placeholder="E.G. COMPLETED 6 MONTH COURSE IN AI" oninput="formatText(this, 'count-eduDesc', 150)" autocomplete="off"></textarea>
+                    </div>
+                    <span class="char-count" id="count-eduDesc">0/150</span>
+                </div>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="save()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let selectedEdu = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'disability_registration.html';
+
+            const s = brain.settings || {};
+            if (s.education && s.education.level) {
+                const btnNode = Array.from(document.querySelectorAll('#grid-edu .card-btn')).find(b => b.getAttribute('onclick').includes(`'${s.education.level}'`));
+                if (btnNode) selectEdu(s.education.level, btnNode, true);
+                
+                if (s.education.level === 'Other') {
+                    if (s.education.customTitle) {
+                        document.getElementById('eduTitle').value = s.education.customTitle;
+                        updateCount('count-eduTitle', s.education.customTitle.length, 50);
+                    }
+                    if (s.education.customDesc) {
+                        document.getElementById('eduDesc').value = s.education.customDesc;
+                        updateCount('count-eduDesc', s.education.customDesc.length, 150);
+                    }
+                }
+            }
+
+            validate();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && s.education && s.education.level) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function updateCount(id, current, max) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = (current >= max ? `<span style="color:var(--c-red)">MAX</span>` : '') + `${current}/${max}`;
+        }
+
+        function formatText(el, countId, max) {
+            markUnsaved();
+            el.value = el.value.toUpperCase();
+            updateCount(countId, el.value.length, max);
+            validate();
+        }
+
+        function selectEdu(val, el, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            selectedEdu = val;
+            document.querySelectorAll('#grid-edu .card-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            
+            const other = document.getElementById('otherEduContainer');
+            if (val === 'Other') {
+                other.classList.add('show');
+            } else {
+                other.classList.remove('show');
+                document.getElementById('eduTitle').value = '';
+                document.getElementById('eduDesc').value = '';
+                updateCount('count-eduTitle', 0, 50);
+                updateCount('count-eduDesc', 0, 150);
+            }
+            validate();
+        }
+
+        function validate() {
+            const btn = document.getElementById('btnNext');
+            const title = document.getElementById('eduTitle').value.trim();
+            const desc = document.getElementById('eduDesc').value.trim();
+            
+            let ok = selectedEdu !== '';
+            if (selectedEdu === 'Other' && (title.length < 3 || desc.length < 5)) ok = false;
+            
+            btn.classList.toggle('active', ok);
+        }
+
+        function save() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+            const btn = document.getElementById('btnNext');
+            btn.classList.add('saved'); btn.innerHTML = 'SAVED ✔';
+            const s = brain.settings || {};
+            s.education = {
+                level: selectedEdu,
+                customTitle: selectedEdu === 'Other' ? document.getElementById('eduTitle').value : null,
+                customDesc: selectedEdu === 'Other' ? document.getElementById('eduDesc').value : null
+            };
+            brain.saveSettings(s);
+            setTimeout(() => { 
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'political_registration.html'; 
+            }, 800);
+        }
+    </script>
+</body>
+</html>

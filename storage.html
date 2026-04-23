@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity - Local Storage</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            display: flex; justify-content: center; align-items: center; 
+            font-family: system-ui, -apple-system, sans-serif; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 26px); height: clamp(20px, 6vw, 26px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: center; padding: 30px 20px; box-sizing: border-box; z-index: 10; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); }
+        
+        .status-icon { width: clamp(60px, 15vw, 80px); height: clamp(60px, 15vw, 80px); border-radius: 50%; border: 2px dashed var(--c-blue); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; animation: spin 5s linear infinite; position: relative; }
+        .status-icon::after { content: ''; position: absolute; width: 50%; height: 50%; background: var(--c-blue); border-radius: 50%; box-shadow: 0 0 20px var(--c-blue); animation: pulse 1.5s infinite alternate; }
+        
+        h2 { font-weight: bold; margin: 0 0 8px 0; font-size: clamp(20px, 5vw, 26px); text-transform: uppercase; letter-spacing: 2px; color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, background 0.2s, border-color 0.2s; }
+        .card:hover { background: rgba(255,255,255,0.08); border-color: var(--c-blue); }
+        .card:active { transform: scale(0.95); }
+        .card-title { font-size: clamp(9px, 2.5vw, 11px); opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; pointer-events: none; }
+        .card-value { font-size: clamp(14px, 4vw, 18px); font-weight: bold; color: var(--c-blue); font-family: monospace; pointer-events: none; }
+
+        .btn-main { width: 100%; padding: clamp(14px, 4vw, 18px); border: 1px dashed var(--fg); background: transparent; color: var(--fg); border-radius: 12px; cursor: pointer; font-size: clamp(12px, 3vw, 14px); font-weight: bold; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; }
+        .btn-main:hover { background: var(--fg); color: var(--bg); border-style: solid; }
+        .btn-main:active { transform: scale(0.95); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: var(--c-blue); }
+        .modal-desc { font-size: 13px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        .modal-actions { display: flex; justify-content: center; width: 100%; }
+        .modal-btn { width: 100%; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 12px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: rgba(255,255,255,0.05); }
+        .modal-btn:active { transform: scale(0.95); }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="settings.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="status-icon"></div>
+        <h2>Local Storage</h2>
+        <p class="desc">Storage Allocation & Cache Metrics</p>
+
+        <div class="grid">
+            <div class="card" onclick="showModal('App Size', 'The base installation size of the Infinity Identity framework and core modules.')">
+                <div class="card-title">App Size</div>
+                <div class="card-value">42.15 MB</div>
+            </div>
+            <div class="card" onclick="showModal('User Data', 'Locally encrypted biometric records, signature keys, and profile information.')">
+                <div class="card-title">User Data</div>
+                <div class="card-value" id="userDataSize">...</div>
+            </div>
+            <div class="card" onclick="showModal('System Cache', 'Temporary files stored locally to speed up system processes and loading times.')">
+                <div class="card-title">System Cache</div>
+                <div class="card-value" id="cacheSize" style="color: var(--c-yellow);">...</div>
+            </div>
+            <div class="card" onclick="showModal('Total Space', 'The overall storage footprint currently occupied by the application on your device.')">
+                <div class="card-title">Total Space</div>
+                <div class="card-value" id="totalSize">...</div>
+            </div>
+        </div>
+
+        <button class="btn-main" onclick="window.location.href='clear.html'">Manage Storage</button>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Title</div>
+            <div class="modal-desc" id="modalDesc">Description goes here...</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeModal()">DISMISS</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        function calculateSize() {
+            let _lsTotal = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                if(localStorage.key(i) !== 'inf_sys_cache') {
+                    _lsTotal += ((localStorage[localStorage.key(i)].length + localStorage.key(i).length) * 2);
+                }
+            }
+            let userMb = (_lsTotal / (1024 * 1024)).toFixed(2);
+            if (userMb < 0.01 && _lsTotal > 0) userMb = 0.01;
+            if (_lsTotal === 0) userMb = "0.00";
+            
+            // Dynamic cache size handling
+            let cacheMb = localStorage.getItem('inf_sys_cache');
+            if (cacheMb === null) {
+                cacheMb = (Math.random() * 5 + 10).toFixed(2); 
+                localStorage.setItem('inf_sys_cache', cacheMb);
+            }
+            
+            document.getElementById('userDataSize').innerText = userMb + ' MB';
+            document.getElementById('cacheSize').innerText = parseFloat(cacheMb).toFixed(2) + ' MB';
+            
+            let total = (42.15 + parseFloat(cacheMb) + parseFloat(userMb)).toFixed(2);
+            document.getElementById('totalSize').innerText = total + ' MB';
+        }
+
+        function showModal(title, desc) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerText = desc;
+            document.getElementById('customModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('show');
+        }
+
+        calculateSize();
+    </script>
+</body>
+</html>

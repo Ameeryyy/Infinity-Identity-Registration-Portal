@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Contact Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: center; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); z-index: 10; }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(24px, 7vw, 32px); color: var(--c-blue); }
+        p.desc { font-size: 12px; opacity: 0.7; margin-bottom: 30px; line-height: 1.6; padding: 0 10px; }
+        p.desc strong { color: var(--c-blue); opacity: 1; }
+        
+        .input-group { margin-bottom: 35px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; opacity: 0.9; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; }
+        
+        .input-container { position: relative; }
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 50px; position: relative; z-index: 2; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 14px; outline: none; font-family: inherit; font-weight: bold; height: 100%; min-width: 0; letter-spacing: 1px; }
+        
+        .char-count { position: absolute; right: 5px; bottom: -20px; font-size: 10px; font-weight: bold; opacity: 0.5; letter-spacing: 1px; }
+        .warning-text { position: absolute; left: 5px; bottom: -20px; font-size: 10px; color: var(--c-red); opacity: 0; transition: 0.3s; font-weight: bold; pointer-events: none; letter-spacing: 1px; }
+        .warning-text.show { opacity: 0.9; }
+
+        .domain-trigger { padding: 0 12px; height: 100%; display: flex; align-items: center; background: #111111; border-left: 1px solid rgba(255,255,255,0.15); cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap; user-select: none; transition: 0.3s; }
+        .domain-trigger:hover { background: #1a1a1a; }
+        .domain-trigger svg { width: 14px; height: 14px; fill: var(--fg); margin-left: 8px; transition: transform 0.3s; }
+        
+        .domain-list { position: absolute; top: calc(100% + 5px); right: 85px; background: #111111; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; z-index: 100; width: 140px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); opacity: 0; visibility: hidden; transform: scale(0.95) translateY(-10px); transform-origin: top right; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height: 220px; overflow-y: auto; }
+        .domain-list.show { opacity: 1; visibility: visible; transform: scale(1) translateY(0); }
+        .domain-list::-webkit-scrollbar { width: 4px; }
+        .domain-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        
+        .domain-item { padding: 12px 15px; font-size: 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--fg); transition: 0.2s; font-weight: bold; text-align: center; }
+        .domain-item:last-child { border-bottom: none; }
+        .domain-item:hover, .domain-item.selected { color: var(--c-blue); background: rgba(255,255,255,0.05); }
+
+        .btn-action { background: transparent; border: none; border-left: 1px solid rgba(255,255,255,0.2); color: inherit; padding: 0 15px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.3s; height: 100%; flex-shrink: 0; text-transform: uppercase; }
+        .btn-action:hover { opacity: 1; color: var(--c-blue); background: rgba(255,255,255,0.05); }
+        .btn-action.verified { background: var(--c-green); color: #fff; border: none; pointer-events: none; }
+
+        .otp-box { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease; margin-top: 0; border-left: 3px solid var(--c-blue); padding-left: 12px; margin-left: 5px; }
+        .otp-box.show { max-height: 100px; opacity: 1; margin-top: 32px; }
+        
+        .otp-wrapper { display: flex; align-items: center; border: 1px dashed rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; height: 45px; background: rgba(255,255,255,0.03); }
+        .otp-wrapper input { flex: 1; background: transparent; border: none; color: inherit; font-size: 16px; font-weight: bold; letter-spacing: 5px; text-align: center; outline: none; }
+        .btn-verify { background: var(--c-blue); color: #fff; border: none; padding: 0 15px; font-weight: bold; cursor: pointer; font-size: 11px; height: 100%; transition: 0.2s; letter-spacing: 1px; }
+        .btn-verify:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-verify:disabled { background: rgba(128,128,128,0.5); cursor: not-allowed; }
+        
+        .timer-text { font-size: 10px; color: var(--c-yellow); margin-top: 8px; font-weight: bold; display: block; letter-spacing: 1px; }
+
+        .btn-next { width: 100%; padding: 16px; background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: 0.3s; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #fff; }
+        .btn-next.saved { background: var(--c-green); border-color: var(--c-green); opacity: 1; pointer-events: none; transform: scale(0.98); }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+    
+    <a href="allergy_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Communication Nodes</h2>
+        <p class="desc">Bind your <strong>communication endpoints</strong>. All nodes require mandatory <strong>6-digit OTP validation</strong> within 5 minutes.</p>
+        
+        <div class="input-group">
+            <label>Primary Phone Number</label>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="tel" id="val-phone" placeholder="10-DIGIT NUMBER" maxlength="10" oninput="clean(this); updateCount('phone', 10); reset('phone')" autocomplete="off">
+                    <button type="button" class="btn-action" id="btn-phone" onclick="send('phone')">SEND OTP</button>
+                </div>
+                <span class="warning-text" id="warn-phone">PLEASE FILL FULL NUMBER</span>
+                <span class="char-count" id="count-phone">0/10</span>
+            </div>
+            <div class="otp-box" id="box-phone">
+                <div class="otp-wrapper">
+                    <input type="number" id="otp-phone" oninput="limit(this)">
+                    <button type="button" id="vbtn-phone" class="btn-verify" onclick="verify('phone')">VERIFY</button>
+                </div>
+                <span class="timer-text" id="time-phone">TIME REMAINING: 05:00</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Primary Email Address</label>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="val-email" placeholder="username" maxlength="25" oninput="updateCount('email', 25); reset('email')" style="text-transform:lowercase" autocomplete="off">
+                    
+                    <div class="domain-trigger" id="domain-trigger" onclick="toggleDomain()">
+                        <span id="domain-text">@gmail.com</span>
+                        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                    <button type="button" class="btn-action" id="btn-email" onclick="send('email')">SEND OTP</button>
+                </div>
+                
+                <div class="domain-list" id="domain-list">
+                    <div class="domain-item selected" onclick="pickDomain('@gmail.com', this)">@gmail.com</div>
+                    <div class="domain-item" onclick="pickDomain('@yahoo.com', this)">@yahoo.com</div>
+                    <div class="domain-item" onclick="pickDomain('@outlook.com', this)">@outlook.com</div>
+                    <div class="domain-item" onclick="pickDomain('@icloud.com', this)">@icloud.com</div>
+                    <div class="domain-item" onclick="pickDomain('@hotmail.com', this)">@hotmail.com</div>
+                    <div class="domain-item" onclick="pickDomain('@aol.com', this)">@aol.com</div>
+                    <div class="domain-item" onclick="pickDomain('@protonmail.com', this)">@protonmail.com</div>
+                    <div class="domain-item" onclick="pickDomain('@zoho.com', this)">@zoho.com</div>
+                    <div class="domain-item" onclick="pickDomain('@yandex.com', this)">@yandex.com</div>
+                    <div class="domain-item" onclick="pickDomain('@mail.com', this)">@mail.com</div>
+                    <div class="domain-item" onclick="pickDomain('@mac.com', this)">@mac.com</div>
+                    <div class="domain-item" onclick="pickDomain('@me.com', this)">@me.com</div>
+                </div>
+
+                <span class="warning-text" id="warn-email">MINIMUM 3 CHARACTERS REQUIRED</span>
+                <span class="char-count" id="count-email">0/25</span>
+            </div>
+            <div class="otp-box" id="box-email">
+                <div class="otp-wrapper">
+                    <input type="number" id="otp-email" oninput="limit(this)">
+                    <button type="button" id="vbtn-email" class="btn-verify" onclick="verify('email')">VERIFY</button>
+                </div>
+                <span class="timer-text" id="time-email">TIME REMAINING: 05:00</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>WhatsApp Number</label>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="tel" id="val-wa" placeholder="10-DIGIT NUMBER" maxlength="10" oninput="clean(this); updateCount('wa', 10); reset('wa')" autocomplete="off">
+                    <button type="button" class="btn-action" id="btn-wa" onclick="send('wa')">SEND OTP</button>
+                </div>
+                <span class="warning-text" id="warn-wa">PLEASE FILL FULL NUMBER</span>
+                <span class="char-count" id="count-wa">0/10</span>
+            </div>
+            <div class="otp-box" id="box-wa">
+                <div class="otp-wrapper">
+                    <input type="number" id="otp-wa" oninput="limit(this)">
+                    <button type="button" id="vbtn-wa" class="btn-verify" onclick="verify('wa')">VERIFY</button>
+                </div>
+                <span class="timer-text" id="time-wa">TIME REMAINING: 05:00</span>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="save()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const state = { phone: { v: false, t: 300, i: null }, email: { v: false, t: 300, i: null }, wa: { v: false, t: 300, i: null }, d: '@gmail.com' };
+        
+        function clean(e) { e.value = e.value.replace(/[^0-9]/g, ''); if(e.value.length > 10) e.value = e.value.slice(0, 10); }
+        function limit(e) { if (e.value.length > 6) e.value = e.value.slice(0, 6); }
+        
+        function updateCount(id, max) {
+            const el = document.getElementById('val-' + id);
+            const count = document.getElementById('count-' + id);
+            if (el && count) {
+                let len = el.value.length;
+                if (len >= max) {
+                    count.innerHTML = `<span style="color: var(--c-red); margin-right: 4px;">MAX</span>${len}/${max}`;
+                } else {
+                    count.innerText = `${len}/${max}`;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input').forEach(inp => {
+                ['paste', 'copy', 'cut', 'drop', 'contextmenu'].forEach(evt => {
+                    inp.addEventListener(evt, e => e.preventDefault());
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                const trigger = document.getElementById('domain-trigger');
+                const list = document.getElementById('domain-list');
+                if (trigger && list && !trigger.contains(e.target) && !list.contains(e.target)) {
+                    list.classList.remove('show');
+                    const svg = document.querySelector('#domain-trigger svg');
+                    if(svg) svg.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'ancestral_registration.html';
+
+            const s = brain.settings || {};
+            if (s.phone) {
+                document.getElementById('val-phone').value = s.phone;
+                updateCount('phone', 10);
+                state.phone.v = true;
+                const b = document.getElementById('btn-phone');
+                b.classList.add('verified'); b.innerText = 'VERIFIED ✔';
+                document.getElementById('val-phone').disabled = true;
+            }
+            if (s.email) {
+                const parts = s.email.split('@');
+                document.getElementById('val-email').value = parts[0];
+                state.d = '@' + parts[1];
+                document.getElementById('domain-text').innerText = state.d;
+                updateCount('email', 25);
+                state.email.v = true;
+                const b = document.getElementById('btn-email');
+                b.classList.add('verified'); b.innerText = 'VERIFIED ✔';
+                document.getElementById('val-email').disabled = true;
+                document.getElementById('domain-trigger').style.pointerEvents = 'none';
+            }
+            if (s.wa) {
+                document.getElementById('val-wa').value = s.wa;
+                updateCount('wa', 10);
+                state.wa.v = true;
+                const b = document.getElementById('btn-wa');
+                b.classList.add('verified'); b.innerText = 'VERIFIED ✔';
+                document.getElementById('val-wa').disabled = true;
+            }
+
+            check();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && s.phone) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function toggleDomain() {
+            const list = document.getElementById('domain-list');
+            const svg = document.querySelector('#domain-trigger svg');
+            list.classList.toggle('show');
+            if(list.classList.contains('show')) {
+                svg.style.transform = 'rotate(180deg)';
+            } else {
+                svg.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function pickDomain(v, el) { 
+            state.d = v; 
+            document.getElementById('domain-text').innerText = v; 
+            document.querySelectorAll('.domain-item').forEach(item => item.classList.remove('selected'));
+            el.classList.add('selected');
+            toggleDomain(); 
+            reset('email'); 
+        }
+
+        function reset(k) { 
+            markUnsaved();
+            state[k].v = false; clearInterval(state[k].i); state[k].t = 300;
+            const b = document.getElementById('btn-'+k); b.classList.remove('verified'); b.innerText = 'SEND OTP'; b.style.pointerEvents = 'auto';
+            document.getElementById('val-'+k).disabled = false; 
+            document.getElementById('box-'+k).classList.remove('show');
+            document.getElementById('otp-'+k).value = '';
+            document.getElementById('time-'+k).innerText = 'TIME REMAINING: 05:00';
+            const warn = document.getElementById('warn-'+k);
+            if(warn) warn.classList.remove('show');
+            if(k==='email') document.getElementById('domain-trigger').style.pointerEvents = 'auto';
+            check();
+        }
+
+        function send(k) {
+            const v = document.getElementById('val-'+k).value.trim(); 
+            const warn = document.getElementById('warn-'+k);
+            if ((k === 'phone' || k === 'wa') && v.length !== 10) { 
+                warn.innerText = 'PLEASE FILL FULL NUMBER';
+                warn.classList.add('show'); 
+                return; 
+            }
+            if (k === 'email' && v.length < 3) { 
+                warn.innerText = 'MINIMUM 3 CHARACTERS REQUIRED';
+                warn.classList.add('show'); 
+                return; 
+            }
+
+            warn.classList.remove('show');
+            document.getElementById('btn-'+k).innerText = 'SENT';
+            document.getElementById('btn-'+k).style.pointerEvents = 'none';
+            document.getElementById('box-'+k).classList.add('show');
+            document.getElementById('otp-'+k).focus();
+            startTimer(k);
+        }
+
+        function startTimer(k) {
+            clearInterval(state[k].i);
+            state[k].t = 300;
+            state[k].i = setInterval(() => {
+                state[k].t--;
+                const m = Math.floor(state[k].t / 60), s = state[k].t % 60;
+                document.getElementById('time-'+k).innerText = `TIME REMAINING: 0${m}:${s < 10 ? '0' + s : s}`;
+                if (state[k].t <= 0) { 
+                    clearInterval(state[k].i); 
+                    document.getElementById('time-'+k).innerText = 'OTP EXPIRED';
+                    const b = document.getElementById('btn-'+k);
+                    b.innerText = 'RESEND'; 
+                    b.style.pointerEvents = 'auto';
+                }
+            }, 1000);
+        }
+
+        function verify(k) {
+            if (document.getElementById('otp-'+k).value.length === 6) {
+                state[k].v = true; clearInterval(state[k].i);
+                const b = document.getElementById('btn-'+k); b.classList.add('verified'); b.innerText = 'VERIFIED ✔';
+                document.getElementById('val-'+k).disabled = true; 
+                document.getElementById('box-'+k).classList.remove('show');
+                if(k==='email') document.getElementById('domain-trigger').style.pointerEvents = 'none';
+                check();
+            }
+        }
+
+        function check() { document.getElementById('btnNext').classList.toggle('active', state.phone.v && state.email.v && state.wa.v); }
+
+        function save() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+            const b = document.getElementById('btnNext'); b.classList.add('saved'); b.innerHTML = 'SAVED ✔';
+            const s = brain.settings || {};
+            s.phone = document.getElementById('val-phone').value;
+            s.email = document.getElementById('val-email').value + state.d;
+            s.wa = document.getElementById('val-wa').value;
+            brain.saveSettings(s);
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'emergency_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

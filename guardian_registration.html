@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Guardian Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: center; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(24px, 7vw, 32px); color: var(--c-blue); text-transform: capitalize; }
+        p.desc { font-size: 12px; opacity: 0.7; margin-bottom: 30px; line-height: 1.6; padding: 0 10px; }
+        
+        .input-group { margin-bottom: 35px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; opacity: 0.9; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .card-btn { border: 1px solid var(--fg); padding: 12px 5px; border-radius: 12px; text-align: center; cursor: pointer; font-weight: bold; font-size: 10px; opacity: 0.5; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: transparent; user-select: none; text-transform: uppercase; letter-spacing: 1px; display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 60px; }
+        .card-btn small { font-size: 8px; opacity: 0.7; font-weight: normal; }
+        .card-btn:hover { opacity: 0.8; background: rgba(255,255,255,0.05); }
+        .card-btn.active { opacity: 1; background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); }
+        
+        .input-container { position: relative; margin-top: 15px; }
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 50px; position: relative; z-index: 2; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 14px; outline: none; font-family: inherit; font-weight: bold; height: 100%; min-width: 0; letter-spacing: 1px; }
+        
+        .char-count { position: absolute; right: 5px; bottom: -20px; font-size: 10px; font-weight: bold; opacity: 0.5; letter-spacing: 1px; }
+        .warning-text { position: absolute; left: 5px; bottom: -20px; font-size: 10px; color: var(--c-red); opacity: 0; transition: 0.3s; font-weight: bold; pointer-events: none; letter-spacing: 1px; }
+        .warning-text.show { opacity: 0.9; }
+
+        .btn-action { background: transparent; border: none; border-left: 1px solid rgba(255,255,255,0.2); color: inherit; padding: 0 15px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.3s; height: 100%; flex-shrink: 0; text-transform: uppercase; }
+        .btn-action:hover { opacity: 1; color: var(--c-blue); background: rgba(255,255,255,0.05); }
+        .btn-action.verified { background: var(--c-green); color: #fff; border: none; pointer-events: none; }
+
+        .otp-box { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease; margin-top: 0; border-left: 3px solid var(--c-blue); padding-left: 12px; margin-left: 5px; }
+        .otp-box.show { max-height: 100px; opacity: 1; margin-top: 32px; overflow: visible; }
+        
+        .otp-wrapper { display: flex; align-items: center; border: 1px dashed rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; height: 45px; background: rgba(255,255,255,0.03); }
+        .otp-wrapper input { flex: 1; background: transparent; border: none; color: inherit; font-size: 16px; font-weight: bold; letter-spacing: 5px; text-align: center; outline: none; }
+        .btn-verify { background: var(--c-blue); color: #fff; border: none; padding: 0 15px; font-weight: bold; cursor: pointer; font-size: 11px; height: 100%; transition: 0.2s; letter-spacing: 1px; }
+        
+        .timer-text { font-size: 10px; color: var(--c-yellow); margin-top: 8px; font-weight: bold; display: block; letter-spacing: 1px; }
+
+        .btn-next { width: 100%; padding: 16px; background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: 0.3s; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #fff; }
+        .btn-next.saved { background: var(--c-green); border-color: var(--c-green); opacity: 1; pointer-events: none; transform: scale(0.98); }
+        
+        .hidden-section { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease-in-out; margin-bottom: 0; }
+        .hidden-section.show { max-height: 800px; opacity: 1; margin-bottom: 25px; overflow: visible; }
+
+        .custom-select-wrapper { display: flex; flex-direction: column; width: 100%; user-select: none; cursor: pointer; position: relative; z-index: 10; margin-top: 15px; }
+        .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 0 15px; height: 50px; border: 1px solid var(--fg); border-radius: 12px; font-size: 12px; font-weight: bold; letter-spacing: 1px; color: inherit; transition: 0.3s; box-sizing: border-box; background: transparent; }
+        .custom-select-wrapper.open .custom-select-trigger { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .custom-select-trigger span { opacity: 0.5; font-weight: normal; transition: 0.3s; }
+        .custom-select-trigger.selected span { opacity: 1; font-weight: bold; }
+        .select-arrow { width: 16px; height: 16px; fill: var(--fg); opacity: 0.5; transition: transform 0.3s ease; }
+        .custom-select-wrapper.open .select-arrow { transform: rotate(180deg); fill: var(--c-blue); }
+        
+        .custom-options { position: relative; width: 100%; background-color: #111111; border-radius: 12px; opacity: 0; visibility: hidden; transition: all 0.3s ease; overflow-y: auto; max-height: 0; padding: 0; margin-top: 0; border: none; box-sizing: border-box; }
+        .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; max-height: 200px; padding: 5px 0; margin-top: 10px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .custom-options::-webkit-scrollbar { width: 4px; }
+        .custom-options::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .custom-option { padding: 12px 15px; cursor: pointer; font-size: 12px; transition: 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: bold; }
+        .custom-option:last-child { border-bottom: none; }
+        .custom-option:hover, .custom-option.selected { background-color: rgba(255,255,255,0.05); color: var(--c-blue); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+    
+    <a href="parents_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Guardian Authorization</h2>
+        <p class="desc">Define your <strong>legal guardian</strong> node to authorize this entity registration.</p>
+
+        <div class="input-group" id="guardianSection">
+            <label>Select Guardian</label>
+            <div class="grid-3">
+                <div class="card-btn" id="btn-father" onclick="selectGuardian('Father')">
+                    FATHER <small id="disp-father">NOT SET</small>
+                </div>
+                <div class="card-btn" id="btn-mother" onclick="selectGuardian('Mother')">
+                    MOTHER <small id="disp-mother">NOT SET</small>
+                </div>
+                <div class="card-btn" id="btn-other" onclick="selectGuardian('Other')">
+                    OTHER <small>CUSTOM ENTRY</small>
+                </div>
+            </div>
+
+            <div id="otherGuardianDetails" class="hidden-section">
+                <div class="input-container" style="margin-bottom: 25px;">
+                    <label>Full Name</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="otherGuardianName" maxlength="50" placeholder="ENTER FULL NAME" oninput="formatName(this)">
+                    </div>
+                    <span class="warning-text" id="warn-otherGuardianName">MINIMUM 3 CHARACTERS</span>
+                    <span class="char-count" id="count-otherGuardianName">0/50</span>
+                </div>
+
+                <div class="input-container">
+                    <label>Relationship</label>
+                    <div class="custom-select-wrapper" id="relationSelect" onclick="toggleRelationDropdown()">
+                        <input type="hidden" id="guardianRelationVal" value="">
+                        <div class="custom-select-trigger">
+                            <span id="relationSelectText">SELECT RELATION</span>
+                            <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                        </div>
+                        <div class="custom-options">
+                            <div class="custom-option" data-value="Paternal Grandfather" onclick="selectRelationOption(this, event)">Paternal Grandfather</div>
+                            <div class="custom-option" data-value="Paternal Grandmother" onclick="selectRelationOption(this, event)">Paternal Grandmother</div>
+                            <div class="custom-option" data-value="Maternal Grandfather" onclick="selectRelationOption(this, event)">Maternal Grandfather</div>
+                            <div class="custom-option" data-value="Maternal Grandmother" onclick="selectRelationOption(this, event)">Maternal Grandmother</div>
+                            <div class="custom-option" data-value="Paternal Uncle" onclick="selectRelationOption(this, event)">Paternal Uncle</div>
+                            <div class="custom-option" data-value="Paternal Aunt" onclick="selectRelationOption(this, event)">Paternal Aunt</div>
+                            <div class="custom-option" data-value="Maternal Uncle" onclick="selectRelationOption(this, event)">Maternal Uncle</div>
+                            <div class="custom-option" data-value="Maternal Aunt" onclick="selectRelationOption(this, event)">Maternal Aunt</div>
+                            <div class="custom-option" data-value="Brother" onclick="selectRelationOption(this, event)">Brother</div>
+                            <div class="custom-option" data-value="Sister" onclick="selectRelationOption(this, event)">Sister</div>
+                            <div class="custom-option" data-value="Cousin" onclick="selectRelationOption(this, event)">Cousin</div>
+                            <div class="custom-option" data-value="Spouse" onclick="selectRelationOption(this, event)">Spouse</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <label>Guardian Phone Number</label>
+                <div class="input-wrapper">
+                    <input type="tel" id="val-guardian" placeholder="10-DIGIT NUMBER" maxlength="10" oninput="clean(this); updateCount('guardian', 10); reset('guardian')" autocomplete="off">
+                    <button type="button" class="btn-action" id="btn-guardian" onclick="send('guardian')">SEND OTP</button>
+                </div>
+                <span class="warning-text" id="warn-guardian">PLEASE FILL FULL NUMBER</span>
+                <span class="char-count" id="count-guardian">0/10</span>
+            </div>
+            <div class="otp-box" id="box-guardian">
+                <div class="otp-wrapper">
+                    <input type="number" id="otp-guardian" oninput="limit(this)">
+                    <button type="button" id="vbtn-guardian" class="btn-verify" onclick="verify('guardian')">VERIFY</button>
+                </div>
+                <span class="timer-text" id="time-guardian">TIME REMAINING: 05:00</span>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="save()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const state = { guardian: { v: false, t: 300, i: null } };
+        let selectedRole = '';
+        let fName = '', mName = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const settings = brain.settings || {};
+            fName = settings.fatherName || '';
+            mName = settings.motherName || '';
+            
+            if(fName) document.getElementById('disp-father').innerText = fName;
+            if(mName) document.getElementById('disp-mother').innerText = mName;
+
+            document.addEventListener('click', (e) => {
+                const relSelect = document.getElementById('relationSelect');
+                if (relSelect && !relSelect.contains(e.target)) relSelect.classList.remove('open');
+            });
+            
+            if(settings.guardianRole) {
+                selectGuardian(settings.guardianRole, true);
+                if (settings.guardianRole === 'Other') {
+                    document.getElementById('otherGuardianName').value = settings.guardianName || '';
+                    document.getElementById('count-otherGuardianName').innerText = (settings.guardianName || '').length + '/50';
+                    if (settings.guardianRelation) {
+                        document.getElementById('guardianRelationVal').value = settings.guardianRelation;
+                        const opt = document.querySelector(`.custom-option[data-value="${settings.guardianRelation}"]`);
+                        if (opt) {
+                            const triggerText = document.getElementById('relationSelectText');
+                            triggerText.innerText = opt.innerText;
+                            triggerText.parentElement.classList.add('selected');
+                        }
+                    }
+                }
+                if (settings.guardianPhone) {
+                    document.getElementById('val-guardian').value = settings.guardianPhone;
+                    document.getElementById('count-guardian').innerText = settings.guardianPhone.length + '/10';
+                    state.guardian.v = true;
+                    const b = document.getElementById('btn-guardian');
+                    b.classList.add('verified'); 
+                    b.innerText = 'VERIFIED ✔';
+                    document.getElementById('val-guardian').disabled = true;
+                }
+            }
+
+            check();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && settings.guardianRole) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function selectGuardian(role, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            selectedRole = role;
+            document.querySelectorAll('.grid-3 .card-btn').forEach(c => c.classList.toggle('active', c.id === 'btn-' + role.toLowerCase()));
+            const otherSection = document.getElementById('otherGuardianDetails');
+            otherSection.classList.toggle('show', role === 'Other');
+            check();
+        }
+
+        function toggleRelationDropdown() { document.getElementById('relationSelect').classList.toggle('open'); }
+
+        function selectRelationOption(el, event) {
+            if(event) event.stopPropagation();
+            markUnsaved();
+            const val = el.getAttribute('data-value');
+            document.getElementById('guardianRelationVal').value = val;
+            const triggerText = document.getElementById('relationSelectText');
+            triggerText.innerText = el.innerText;
+            triggerText.parentElement.classList.add('selected');
+            document.getElementById('relationSelect').classList.remove('open');
+            check();
+        }
+
+        function formatName(el) {
+            markUnsaved();
+            el.value = el.value.toUpperCase().replace(/[^A-Z\s]/g, '').replace(/\s{2,}/g, ' ');
+            document.getElementById('count-otherGuardianName').innerText = el.value.length + '/50';
+            check();
+        }
+
+        function clean(e) { e.value = e.value.replace(/[^0-9]/g, ''); }
+        function limit(e) { if (e.value.length > 6) e.value = e.value.slice(0, 6); }
+        function updateCount(id, max) { document.getElementById('count-' + id).innerText = document.getElementById('val-' + id).value.length + '/' + max; }
+
+        function reset(k) { 
+            markUnsaved();
+            state[k].v = false; clearInterval(state[k].i);
+            const b = document.getElementById('btn-'+k); b.classList.remove('verified'); b.innerText = 'SEND OTP'; b.style.pointerEvents = 'auto';
+            document.getElementById('val-'+k).disabled = false; document.getElementById('box-'+k).classList.remove('show');
+            check();
+        }
+
+        function send(k) {
+            const v = document.getElementById('val-'+k).value.trim();
+            if (v.length !== 10) { document.getElementById('warn-'+k).classList.add('show'); return; }
+            document.getElementById('warn-'+k).classList.remove('show');
+            document.getElementById('btn-'+k).innerText = 'SENT';
+            document.getElementById('btn-'+k).style.pointerEvents = 'none';
+            document.getElementById('box-'+k).classList.add('show');
+            startTimer(k);
+        }
+
+        function startTimer(k) {
+            state[k].t = 300;
+            state[k].i = setInterval(() => {
+                state[k].t--;
+                const m = Math.floor(state[k].t / 60), s = state[k].t % 60;
+                document.getElementById('time-'+k).innerText = `TIME REMAINING: 0${m}:${s < 10 ? '0' + s : s}`;
+                if (state[k].t <= 0) { clearInterval(state[k].i); document.getElementById('btn-'+k).innerText = 'RESEND'; document.getElementById('btn-'+k).style.pointerEvents = 'auto'; }
+            }, 1000);
+        }
+
+        function verify(k) {
+            if (document.getElementById('otp-'+k).value.length === 6) {
+                state[k].v = true; clearInterval(state[k].i);
+                const b = document.getElementById('btn-'+k); b.classList.add('verified'); b.innerText = 'VERIFIED ✔';
+                document.getElementById('val-'+k).disabled = true; document.getElementById('box-'+k).classList.remove('show');
+                check();
+            }
+        }
+
+        function check() { 
+            let isValid = (selectedRole !== '' && state.guardian.v);
+            if (selectedRole === 'Other') {
+                const name = document.getElementById('otherGuardianName').value.trim();
+                const rel = document.getElementById('guardianRelationVal').value;
+                if (name.length < 3 || !rel) isValid = false;
+            }
+            document.getElementById('btnNext').classList.toggle('active', isValid); 
+        }
+
+        function save() {
+            const btn = document.getElementById('btnNext'); btn.classList.add('saved'); btn.innerHTML = 'SAVED ✔';
+            const s = brain.settings || {};
+            s.guardianRole = selectedRole;
+            s.guardianName = (selectedRole === 'Other') ? document.getElementById('otherGuardianName').value.trim() : (selectedRole === 'Father' ? fName : mName);
+            s.guardianRelation = (selectedRole === 'Other') ? document.getElementById('guardianRelationVal').value : selectedRole;
+            s.guardianPhone = document.getElementById('val-guardian').value;
+            brain.saveSettings(s);
+            setTimeout(() => { window.location.href = 'relation_registration.html'; }, 800);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Settings</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-yellow: #ffbb33; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            background-color: var(--bg) !important; 
+            background-image: linear-gradient(rgba(128, 128, 128, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            color: var(--fg) !important; 
+            display: flex; justify-content: center; align-items: center; 
+            font-family: system-ui, -apple-system, sans-serif; 
+        }
+
+        .corner { position: absolute; width: clamp(30px, 8vw, 80px); height: clamp(30px, 8vw, 80px); border: 2px solid var(--fg); opacity: 0.15; transition: opacity 0.3s; pointer-events: none; }
+        .corner-tl { top: 40px; left: 40px; border-right: none; border-bottom: none; }
+        .corner-tr { top: 40px; right: 40px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: 40px; left: 40px; border-right: none; border-top: none; }
+        .corner-br { bottom: 40px; right: 40px; border-left: none; border-top: none; }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 26px); height: clamp(20px, 6vw, 26px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; animation: fadeIn 0.5s; padding: 20px; box-sizing: border-box; z-index: 10; border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; background: rgba(255,255,255,0.02); backdrop-filter: blur(10px); }
+        .container::-webkit-scrollbar { display: none; }
+        
+        h2 { font-weight: bold; margin: 0 0 25px 0; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        .setting-group { margin-bottom: 30px; }
+        .setting-group h3 { font-size: 14px; font-weight: bold; margin-bottom: 12px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; border-left: 3px solid var(--c-blue); padding-left: 10px; }
+        
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-group.full { grid-template-columns: 1fr; margin-top: 10px; }
+        button { padding: 14px; border: 1px dashed rgba(255,255,255,0.3); background: rgba(0,0,0,0.2); color: inherit; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+        button:hover { border-color: var(--c-blue); background: rgba(255,255,255,0.05); }
+        button.active { background: var(--fg); color: var(--bg); border-style: solid; border-color: var(--fg); }
+        
+        .btn-danger { border-color: var(--c-red); color: var(--c-red); }
+        .btn-danger:hover { background: var(--c-red); color: #ffffff; border-style: solid; }
+
+        .btn-opt { border-color: var(--c-green); color: var(--c-green); }
+        .btn-opt:hover { background: rgba(0,200,81,0.1); border-style: solid; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .modal-desc { font-size: 12px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: rgba(255,255,255,0.1); }
+        .modal-btn:active { transform: scale(0.95); }
+        
+        .modal-btn.danger { color: var(--c-red); border-color: rgba(255,68,68,0.4); background: rgba(255,68,68,0.1); }
+        .modal-btn.danger:hover { background: rgba(255,68,68,0.2); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) { .corner { opacity: 0.05; } .container { border: none; background: transparent; backdrop-filter: none; } }
+    </style>
+</head>
+<body class="minimal-ui">
+    <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+    <a href="landing.html" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <h2 data-i18n="settings_title">Settings</h2>
+        
+        <div class="setting-group">
+            <h3 data-i18n="appearance_mode">Appearance Mode</h3>
+            <p style="font-size: 11px; opacity: 0.8; margin-top: -5px; margin-bottom: 15px; line-height: 1.5;">
+                <strong style="color: var(--c-blue);">Pure Dark:</strong> Monochrome. No accent colors.<br>
+                <strong style="color: var(--c-blue);">Minimal Dark:</strong> Optimized with minimal color highlights.
+            </p>
+            <div class="btn-group">
+                <button id="theme-pure" onclick="setMode('pure-dark')">Pure Dark</button>
+                <button id="theme-minimal" onclick="setMode('minimal-dark')">Minimal Dark</button>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h3 data-i18n="security_system">Security & System</h3>
+            <div class="btn-group full">
+                <button id="btn-lock" onclick="toggleLock()">App Lock: Off</button>
+                <button class="btn-opt" onclick="window.location.href='optimization.html'">System Optimization</button>
+                <button class="btn-danger" onclick="window.location.href='storage.html'">Storage & Cache</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Title</div>
+            <div class="modal-desc" id="modalDesc">Description goes here...</div>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        function updateUI() {
+            // App Lock
+            const lockBtn = document.getElementById('btn-lock');
+            lockBtn.innerText = brain.settings.appLock ? '✔ App Lock: On' : 'App Lock: Off';
+            if (brain.settings.appLock) lockBtn.classList.add('active');
+            else lockBtn.classList.remove('active');
+
+            // Themes
+            const currentTheme = brain.settings.theme || 'minimal-dark';
+            document.getElementById('theme-pure').classList.remove('active');
+            document.getElementById('theme-minimal').classList.remove('active');
+            
+            if(currentTheme === 'pure-dark') document.getElementById('theme-pure').classList.add('active');
+            else document.getElementById('theme-minimal').classList.add('active');
+        }
+
+        function setMode(m) { 
+            brain.saveSettings({ theme: m }); 
+            updateUI();
+        }
+
+        function showModal(title, desc, type, confirmCallback = null) {
+            const modal = document.getElementById('customModal');
+            const mTitle = document.getElementById('modalTitle');
+            const mDesc = document.getElementById('modalDesc');
+            const mActions = document.getElementById('modalActions');
+
+            mTitle.innerText = title;
+            mTitle.style.color = type === 'danger' ? 'var(--c-red)' : 'var(--c-yellow)';
+            mDesc.innerText = desc;
+
+            if (type === 'danger' && confirmCallback) {
+                mActions.innerHTML = `
+                    <button class="modal-btn" onclick="closeModal()">CANCEL</button>
+                    <button class="modal-btn danger" id="confirmBtn">PROCEED</button>
+                `;
+                document.getElementById('confirmBtn').onclick = () => {
+                    closeModal();
+                    confirmCallback();
+                };
+            } else {
+                mActions.innerHTML = `<button class="modal-btn" onclick="closeModal()">DISMISS</button>`;
+            }
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('show');
+        }
+
+        async function toggleLock() {
+            if (brain.settings.appLock) { 
+                brain.saveSettings({ appLock: false }); 
+                updateUI();
+            } else { 
+                try {
+                    if (await brain.setupAuth()) {
+                        brain.saveSettings({ appLock: true });
+                        updateUI();
+                    } else {
+                        showModal('Authentication Failed', 'Biometric or screen lock is not supported or was cancelled. Please check your device settings.', 'warning');
+                    }
+                } catch (e) {
+                    showModal('Security Error', 'An error occurred while enabling app lock. Feature might not be supported on your device.', 'warning');
+                }
+            }
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>

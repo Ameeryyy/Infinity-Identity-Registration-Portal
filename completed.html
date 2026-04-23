@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Registration Complete</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-green: #00C851; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            background-image: linear-gradient(rgba(128, 128, 128, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 128, 128, 0.1) 1px, transparent 1px);
+            background-size: 60px 60px;
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; text-align: center; 
+        }
+
+        .corner { position: absolute; width: clamp(30px, 8vw, 80px); height: clamp(30px, 8vw, 80px); border: 2px solid var(--fg); opacity: 0.15; transition: opacity 0.3s; pointer-events: none; }
+        .corner-tl { top: 40px; left: 40px; border-right: none; border-bottom: none; }
+        .corner-tr { top: 40px; right: 40px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: 40px; left: 40px; border-right: none; border-top: none; }
+        .corner-br { bottom: 40px; right: 40px; border-left: none; border-top: none; }
+        
+        .success-icon { width: clamp(80px, 20vw, 100px); height: clamp(80px, 20vw, 100px); border-radius: 50%; border: 3px solid var(--c-green); background: rgba(0, 200, 81, 0.1); display: flex; align-items: center; justify-content: center; margin-bottom: clamp(20px, 5vh, 30px); animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 30px rgba(0, 200, 81, 0.3); }
+        .success-icon svg { width: clamp(40px, 10vw, 50px); height: clamp(40px, 10vw, 50px); fill: var(--c-green); filter: drop-shadow(0 0 5px rgba(0, 200, 81, 0.5)); }
+        
+        .title { font-size: clamp(20px, 6vw, 28px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; color: var(--c-green); text-shadow: 0 0 10px rgba(0,200,81,0.3); animation: slideUp 0.5s ease 0.2s both; }
+        
+        .message-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); padding: clamp(15px, 5vw, 25px); border-radius: 15px; max-width: 320px; width: 85%; animation: slideUp 0.5s ease 0.4s both; backdrop-filter: blur(10px); }
+        .message-box p { margin: 0 0 15px 0; font-size: clamp(12px, 3.5vw, 14px); line-height: 1.6; opacity: 0.9; }
+        .message-box .highlight { font-size: clamp(13px, 4vw, 15px); font-weight: bold; color: var(--fg); opacity: 1; margin: 0; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px; }
+
+        .btn-done { background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,0.3); padding: clamp(14px, 4vw, 16px) clamp(30px, 8vw, 40px); border-radius: 12px; font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; margin-top: clamp(30px, 8vh, 40px); animation: slideUp 0.5s ease 0.6s both; transition: 0.3s; }
+        .btn-done.filled { background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
+        .btn-done:active { transform: scale(0.95); }
+        .btn-done:hover:not(.filled) { background: rgba(255,255,255,0.05); }
+
+        @keyframes scaleIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes slideUp { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .corner { opacity: 0.05; border-width: 1px; }
+            .corner-tl { top: 20px; left: 20px; }
+            .corner-tr { top: 20px; right: 20px; }
+            .corner-bl { bottom: 20px; left: 20px; }
+            .corner-br { bottom: 20px; right: 20px; }
+        }
+        @media (max-width: 320px) { .corner { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="success-icon">
+        <svg viewBox="0 0 24 24"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>
+    </div>
+
+    <div class="title">Upload Success</div>
+    
+    <div class="message-box">
+        <p>All biometric and geospatial data has been securely encrypted and transmitted to the Infinity Master Servers.</p>
+        <p class="highlight">Your account verification process will be completed within 3 to 5 working days.</p>
+    </div>
+
+    <button class="btn-done" onclick="finishProcess(this)">VIEW BILL</button>
+
+    <script src="brain.js"></script>
+    <script>
+        function finishProcess(btn) {
+            btn.classList.add('filled');
+            btn.style.pointerEvents = 'none';
+            setTimeout(() => {
+                window.location.href = 'bill.html'; 
+            }, 600);
+        }
+    </script>
+</body>
+</html>

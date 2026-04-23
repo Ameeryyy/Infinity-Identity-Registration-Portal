@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Secured Nodes</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { display: flex; flex-direction: column; width: 90%; max-width: 600px; min-height: 100vh; padding: clamp(60px, 10vh, 80px) 0 clamp(30px, 5vh, 40px) 0; animation: fadeIn 0.5s; text-align: left; box-sizing: border-box; margin: 0 auto; z-index: 10; position: relative; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 5px; text-align: center; color: var(--c-blue); }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 5px; text-align: center; font-size: clamp(20px, 6vw, 26px); text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        .subtitle { font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; margin-bottom: clamp(20px, 5vh, 30px); text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .search-wrapper { display: flex; align-items: stretch; border: 1px dashed rgba(255,255,255,0.3); border-radius: 12px; margin-bottom: 20px; overflow: visible; background: rgba(255,255,255,0.02); transition: 0.3s; width: 100%; backdrop-filter: blur(5px); z-index: 20; }
+        .search-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); background: rgba(255,255,255,0.05); }
+        
+        .search-select-wrapper { position: relative; border-right: 1px dashed rgba(255,255,255,0.2); }
+        .search-select-trigger { height: 100%; padding: 0 clamp(10px, 3vw, 15px); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--c-blue); font-weight: bold; font-size: clamp(10px, 2.5vw, 12px); text-transform: uppercase; letter-spacing: 1px; background: rgba(0, 123, 255, 0.1); min-width: 60px; border-radius: 12px 0 0 12px; }
+        .search-select-options { position: absolute; top: calc(100% + 5px); left: 0; background: #111; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.9); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; width: 120px; }
+        .search-select-options.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .search-option { padding: 12px; font-size: 11px; text-align: center; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--fg); font-weight: bold; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+        .search-option:last-child { border-bottom: none; }
+        .search-option:hover { color: var(--c-blue); background: rgba(255,255,255,0.05); }
+
+        .search-icon { padding-left: 15px; opacity: 0.5; display: flex; align-items: center; }
+        .search-icon svg { width: 18px; height: 18px; fill: currentColor; }
+        .search-wrapper input { flex: 1; width: 100%; padding: clamp(12px, 3vw, 14px) 15px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3.5vw, 14px); outline: none; font-weight: bold; letter-spacing: 1px; }
+        .search-wrapper input::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: 1px; }
+
+        #savedList, #exampleList { display: flex; flex-direction: column; gap: clamp(15px, 4vw, 20px); width: 100%; }
+        
+        .node-card { border: 1px dashed rgba(255,255,255,0.3); border-radius: clamp(12px, 3vw, 16px); padding: clamp(15px, 4vw, 25px); background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); transition: all 0.3s; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: clamp(10px, 3vw, 15px); cursor: pointer; }
+        .node-card:hover { border-color: var(--c-blue); background: rgba(0,123,255,0.05); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,123,255,0.1); }
+        .node-card.removing { transform: scale(0.9); opacity: 0; }
+        
+        .nc-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 15px; position: relative; }
+        
+        .nc-profile { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); }
+        .nc-avatar { width: clamp(36px, 10vw, 45px); height: clamp(36px, 10vw, 45px); border-radius: 50%; border: 1px solid var(--c-blue); display: flex; align-items: center; justify-content: center; font-size: clamp(16px, 4vw, 20px); font-weight: bold; text-transform: uppercase; color: var(--c-blue); background: rgba(0, 123, 255, 0.1); text-shadow: 0 0 10px rgba(0,123,255,0.5); }
+        .nc-info h3 { margin: 0 0 5px 0; font-size: clamp(14px, 4vw, 16px); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .nc-info p { margin: 0; font-size: clamp(9px, 2.5vw, 10px); opacity: 0.5; font-family: monospace; letter-spacing: 1px; color: var(--c-blue); }
+        
+        .actions-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: clamp(6px, 2vw, 10px); }
+        
+        .btn-delete { background: transparent; border: none; color: var(--fg); opacity: 0.3; cursor: pointer; padding: 5px; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; z-index: 2; position: relative; }
+        .btn-delete:hover { opacity: 1; color: var(--c-red); filter: drop-shadow(0 0 5px rgba(255,68,68,0.5)); }
+        .btn-delete svg { width: clamp(16px, 4.5vw, 18px); height: clamp(16px, 4.5vw, 18px); fill: currentColor; }
+
+        .nc-status-badge { padding: 5px 10px; border: 1px solid var(--c-blue); border-radius: 8px; font-size: clamp(8px, 2vw, 10px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; background: var(--c-blue); color: #ffffff; box-shadow: 0 0 10px rgba(0, 123, 255, 0.3); }
+        .nc-status-badge.outline { background: transparent; color: var(--c-blue); box-shadow: none; }
+        
+        .nc-body { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(10px, 3vw, 15px); }
+        .nc-data { display: flex; flex-direction: column; gap: 4px; }
+        .nc-label { font-size: clamp(9px, 2vw, 10px); opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; color: var(--c-blue); }
+        .nc-value { font-size: clamp(11px, 3vw, 13px); font-weight: bold; text-transform: uppercase; }
+        
+        .nc-timeline { margin-top: clamp(6px, 2vw, 10px); padding-top: clamp(10px, 3vw, 15px); border-top: 1px solid rgba(255,255,255,0.1); }
+        .timeline-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-bottom: 10px; overflow: hidden; display: flex; }
+        .timeline-fill { height: 100%; background: var(--c-blue); transition: width 0.5s ease; box-shadow: 0 0 10px var(--c-blue); }
+        .timeline-text { display: flex; justify-content: space-between; font-size: clamp(8px, 2.5vw, 10px); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        
+        .empty-state { padding: clamp(30px, 8vh, 50px) 20px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 16px; text-align: center; opacity: 0.5; width: 100%; box-sizing: border-box; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); }
+        .empty-state svg { width: clamp(30px, 8vw, 40px); height: clamp(30px, 8vw, 40px); margin-bottom: 10px; fill: currentColor; }
+        .empty-state h3 { font-size: clamp(14px, 4vw, 16px); margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: clamp(20px, 5vw, 25px); width: 85%; max-width: 320px; text-align: center; transform: scale(0.9); transition: transform 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-title { font-size: clamp(14px, 4vw, 16px); font-weight: bold; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px; color: var(--c-blue); }
+        .modal-title.danger { color: var(--c-red); }
+        .modal-text { font-size: clamp(11px, 3vw, 13px); opacity: 0.8; margin: 0 0 25px 0; line-height: 1.5; color: var(--fg); }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; margin-bottom: 20px; overflow: hidden; background: transparent; transition: 0.3s; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { width: 100%; padding: clamp(10px, 3vw, 12px) 15px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3.5vw, 14px); outline: none; font-weight: bold; letter-spacing: 2px; text-align: center; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.3; letter-spacing: normal; }
+
+        .error-msg { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-top: -10px; margin-bottom: 15px; display: block; height: 14px; opacity: 0; transition: opacity 0.3s; }
+        .error-msg.show { opacity: 0.8; color: var(--c-red); }
+
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal { flex: 1; padding: clamp(10px, 3vw, 12px); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: var(--fg); border-radius: 8px; font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; cursor: pointer; text-transform: uppercase; transition: all 0.2s; letter-spacing: 1px; }
+        .btn-modal:hover { background: rgba(255,255,255,0.1); }
+        .btn-modal:active { transform: scale(0.95); }
+        .btn-confirm-del { border-color: rgba(255,68,68,0.4); color: var(--c-red); background: rgba(255,68,68,0.1); }
+        .btn-confirm-del:hover { background: rgba(255,68,68,0.2); color: var(--c-red); }
+        
+        .btn-auth { border-color: var(--c-blue); color: var(--c-blue); background: rgba(0,123,255,0.1); }
+        .btn-auth:hover { background: rgba(0,123,255,0.2); color: var(--c-blue); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    
+    <a href="home.html?tab=saved" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Secured Nodes Archive</strong></h2>
+        <div class="subtitle" id="totalNodes">0 Nodes Initialized</div>
+        
+        <div class="search-wrapper">
+            <div class="search-select-wrapper" id="searchDropdownWrapper">
+                <div class="search-select-trigger" onclick="toggleSearchSelect()">
+                    <span id="searchSelectText">NAME</span>
+                </div>
+                <div class="search-select-options" id="searchOptions">
+                    <div class="search-option" onclick="selectSearchType('name', 'NAME')">NAME</div>
+                    <div class="search-option" onclick="selectSearchType('dob', 'D.O.B')">D.O.B</div>
+                    <div class="search-option" onclick="selectSearchType('phone', 'PHONE')">PHONE</div>
+                </div>
+            </div>
+            <div class="search-icon">
+                <svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+            </div>
+            <input type="text" id="searchInput" placeholder="SEARCH BY NAME..." onkeyup="filterNodes()">
+        </div>
+
+        <div id="savedList"></div>
+
+        <div class="subtitle" style="margin-top: 40px; margin-bottom: 15px; color: var(--c-blue); opacity: 0.8;">--- Reference Examples ---</div>
+        <div id="exampleList">
+            
+            <div class="node-card example-card" style="border-color: rgba(255,255,255,0.1);" onclick="viewFullDetails('ex1')">
+                <div class="nc-header">
+                    <div class="nc-profile">
+                        <div class="nc-avatar">A</div>
+                        <div class="nc-info">
+                            <h3>AL AMEER</h3>
+                            <p>EXAMPLE PROFILE 01</p>
+                        </div>
+                    </div>
+                    <div class="actions-wrap">
+                        <div class="nc-status-badge">ACTIVE NODE</div>
+                    </div>
+                </div>
+                <div class="nc-body">
+                    <div class="nc-data">
+                        <span class="nc-label">D.O.B</span>
+                        <span class="nc-value">19 SEP 2007 | MALE</span>
+                    </div>
+                    <div class="nc-data" style="text-align: right;">
+                        <span class="nc-label">Origin</span>
+                        <span class="nc-value">ALAPPUZHA, INDIA</span>
+                    </div>
+                </div>
+                <div class="nc-timeline">
+                    <div class="timeline-bar">
+                        <div class="timeline-fill" style="width: 100%; background: var(--c-green); box-shadow: 0 0 10px var(--c-green);"></div>
+                    </div>
+                    <div class="timeline-text">
+                        <span style="color: var(--c-green);">READY</span>
+                        <span>OPEN FULL DETAILS ➔</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="node-card example-card" style="border-color: rgba(255,255,255,0.1);" onclick="viewFullDetails('ex2')">
+                <div class="nc-header">
+                    <div class="nc-profile">
+                        <div class="nc-avatar">S</div>
+                        <div class="nc-info">
+                            <h3>SAFA FATHIMA</h3>
+                            <p>EXAMPLE PROFILE 02</p>
+                        </div>
+                    </div>
+                    <div class="actions-wrap">
+                        <div class="nc-status-badge">ACTIVE NODE</div>
+                    </div>
+                </div>
+                <div class="nc-body">
+                    <div class="nc-data">
+                        <span class="nc-label">D.O.B</span>
+                        <span class="nc-value">04 DEC 2007 | FEMALE</span>
+                    </div>
+                    <div class="nc-data" style="text-align: right;">
+                        <span class="nc-label">Origin</span>
+                        <span class="nc-value">KERALA, INDIA</span>
+                    </div>
+                </div>
+                <div class="nc-timeline">
+                    <div class="timeline-bar">
+                        <div class="timeline-fill" style="width: 100%; background: var(--c-green); box-shadow: 0 0 10px var(--c-green);"></div>
+                    </div>
+                    <div class="timeline-text">
+                        <span style="color: var(--c-green);">READY</span>
+                        <span>OPEN FULL DETAILS ➔</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="warningModal">
+        <div class="modal-box">
+            <h3 class="modal-title danger">Delete Node?</h3>
+            <p class="modal-text">This will permanently purge all cryptographic data for this node. Are you sure?</p>
+            <div class="modal-actions">
+                <button class="btn-modal" onclick="closeModals()">Cancel</button>
+                <button class="btn-modal btn-confirm-del" onclick="proceedToPassword()">Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-box">
+            <h3 class="modal-title">Authentication Required</h3>
+            <p class="modal-text" style="margin-bottom: 15px;">Enter your Master Password to authorize deletion.</p>
+            
+            <div class="input-wrapper">
+                <input type="password" id="delPass" placeholder="MASTER KEY">
+            </div>
+            <span class="error-msg" id="passError">INVALID SECURITY KEY</span>
+
+            <div class="modal-actions">
+                <button class="btn-modal" onclick="closeModals()">Cancel</button>
+                <button class="btn-modal btn-auth" onclick="executeDelete()">Authorize</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let accountsData = [];
+        let pendingDeleteId = null;
+        let currentSearchType = 'name';
+        
+        function toggleSearchSelect() {
+            document.getElementById('searchOptions').classList.toggle('show');
+        }
+
+        function selectSearchType(type, text) {
+            currentSearchType = type;
+            document.getElementById('searchSelectText').innerText = text;
+            document.getElementById('searchOptions').classList.remove('show');
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            
+            if (type === 'name') {
+                input.type = 'text';
+                input.placeholder = 'SEARCH BY NAME...';
+            } else if (type === 'dob') {
+                input.type = 'tel'; 
+                input.placeholder = 'SEARCH BY D.O.B...';
+            } else if (type === 'phone') {
+                input.type = 'tel';
+                input.placeholder = 'SEARCH BY PHONE...';
+            }
+            filterNodes();
+        }
+
+        document.addEventListener('click', (e) => {
+            const trigger = document.querySelector('.search-select-trigger');
+            const list = document.getElementById('searchOptions');
+            if (trigger && list && !trigger.contains(e.target) && !list.contains(e.target)) {
+                list.classList.remove('show');
+            }
+        });
+
+        function filterNodes() {
+            const queryRaw = document.getElementById('searchInput').value.toLowerCase();
+            const queryNumeric = queryRaw.replace(/[^0-9]/g, ''); 
+            const type = currentSearchType;
+            const cards = document.querySelectorAll('.node-card');
+            
+            cards.forEach(card => {
+                let match = false;
+                
+                if (type === 'name') {
+                    const el = card.querySelector('h3');
+                    if (el && el.innerText.toLowerCase().includes(queryRaw)) {
+                        match = true;
+                    }
+                } else if (type === 'dob') {
+                    const dataItems = card.querySelectorAll('.nc-data');
+                    dataItems.forEach(item => {
+                        const label = item.querySelector('.nc-label');
+                        if (label && (label.innerText.includes('D.O.B') || label.innerText.includes('Created'))) {
+                            const val = item.querySelector('.nc-value').innerText.toLowerCase().replace(/[^0-9]/g, '');
+                            if (val.includes(queryNumeric)) match = true;
+                        }
+                    });
+                } else if (type === 'phone') {
+                    const val = card.innerText.toLowerCase().replace(/[^0-9]/g, '');
+                    if (val.includes(queryNumeric)) match = true;
+                }
+
+                if (match) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function loadSavedNodes() {
+            const list = document.getElementById('savedList');
+            let accountsDataRaw = JSON.parse(localStorage.getItem('inf_finalized_accounts')) || [];
+            
+            accountsData = accountsDataRaw.filter(acc => !["1", "2", "3"].includes(acc.id));
+            if (accountsData.length !== accountsDataRaw.length) {
+                localStorage.setItem('inf_finalized_accounts', JSON.stringify(accountsData));
+            }
+
+            document.getElementById('totalNodes').innerText = `${accountsData.length} NODES INITIALIZED`;
+
+            if (accountsData.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7Z"/></svg>
+                        <h3>NO DATA FOUND</h3>
+                    </div>
+                `;
+                filterNodes();
+                return;
+            }
+
+            accountsData.sort((a, b) => b.date - a.date);
+
+            let html = "";
+            accountsData.forEach(acc => {
+                const initial = acc.name ? acc.name.charAt(0).toUpperCase() : 'X';
+                const nodeID = "LOCAL SAVED DATA";
+                
+                html += `
+                    <div class="node-card" id="node-${acc.id}" onclick="viewFullDetails('${acc.id}')">
+                        <div class="nc-header">
+                            <div class="nc-profile">
+                                <div class="nc-avatar">${initial}</div>
+                                <div class="nc-info">
+                                    <h3>${acc.name}</h3>
+                                    <p>${nodeID}</p>
+                                </div>
+                            </div>
+                            <div class="actions-wrap">
+                                <button class="btn-delete" onclick="confirmDelete(event, '${acc.id}')">
+                                    <svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                                </button>
+                                <div class="nc-status-badge">ACTIVE NODE</div>
+                            </div>
+                        </div>
+                        <div class="nc-body">
+                            <div class="nc-data">
+                                <span class="nc-label">Created</span>
+                                <span class="nc-value">SECURE NODE</span>
+                            </div>
+                            <div class="nc-data" style="text-align: right;">
+                                <span class="nc-label">Origin</span>
+                                <span class="nc-value">${acc.location || "ENCRYPTED"}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
+            filterNodes();
+        }
+
+        function viewFullDetails(id) {
+            localStorage.setItem('inf_view_node_id', id);
+            window.location.href = 'saved.html';
+        }
+
+        function confirmDelete(e, id) {
+            e.stopPropagation(); 
+            pendingDeleteId = id;
+            document.getElementById('warningModal').classList.add('show');
+        }
+
+        function closeModals() {
+            pendingDeleteId = null;
+            document.getElementById('warningModal').classList.remove('show');
+            document.getElementById('passwordModal').classList.remove('show');
+            document.getElementById('delPass').value = '';
+            document.getElementById('passError').classList.remove('show');
+        }
+
+        function proceedToPassword() {
+            document.getElementById('warningModal').classList.remove('show');
+            setTimeout(() => {
+                document.getElementById('passwordModal').classList.add('show');
+                document.getElementById('delPass').focus();
+            }, 300);
+        }
+
+        function executeDelete() {
+            const passInput = document.getElementById('delPass').value;
+            const settings = brain.settings || {};
+            const storedPass = settings.masterPassword || "";
+            const err = document.getElementById('passError');
+
+            if (storedPass !== "" && passInput !== storedPass) {
+                err.classList.add('show');
+                setTimeout(() => err.classList.remove('show'), 3000);
+                return;
+            }
+
+            if (!pendingDeleteId) return;
+
+            accountsData = accountsData.filter(s => s.id !== pendingDeleteId);
+            localStorage.setItem('inf_finalized_accounts', JSON.stringify(accountsData));
+            
+            const card = document.getElementById('node-' + pendingDeleteId);
+            if(card) {
+                card.classList.add('removing');
+                setTimeout(() => {
+                    loadSavedNodes();
+                    filterNodes();
+                }, 300);
+            } else {
+                loadSavedNodes();
+            }
+            
+            closeModals();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSavedNodes);
+    </script>
+</body>
+</html>

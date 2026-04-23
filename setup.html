@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - Setup</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-yellow: #ffbb33; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg) !important; 
+            background-image: linear-gradient(rgba(128, 128, 128, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 128, 128, 0.15) 1px, transparent 1px);
+            background-size: 60px 60px;
+            color: var(--fg) !important; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: background 0.3s, color 0.3s;
+        }
+        
+        .corner { position: absolute; width: clamp(30px, 8vw, 80px); height: clamp(30px, 8vw, 80px); border: 2px solid var(--fg); opacity: 0.15; transition: opacity 0.3s; pointer-events: none; }
+        .corner-tl { top: 40px; left: 40px; border-right: none; border-bottom: none; }
+        .corner-tr { top: 40px; right: 40px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: 40px; left: 40px; border-right: none; border-top: none; }
+        .corner-br { bottom: 40px; right: 40px; border-left: none; border-top: none; }
+
+        @media (max-width: 768px) {
+            .corner { opacity: 0.05; border-width: 1px; }
+            .corner-tl { top: 20px; left: 20px; }
+            .corner-tr { top: 20px; right: 20px; }
+            .corner-bl { bottom: 20px; left: 20px; }
+            .corner-br { bottom: 20px; right: 20px; }
+        }
+
+        .step { display: none; width: 85%; max-width: 400px; z-index: 10; padding: 30px; border: 1px solid rgba(128, 128, 128, 0.2); border-radius: 16px; background: rgba(128, 128, 128, 0.05); backdrop-filter: blur(10px); }
+        .active { display: block; animation: fadeIn 0.5s; }
+        
+        /* Main Button Style (Solid Border for all main choices) */
+        button { 
+            padding: 16px 20px; 
+            margin: 8px 0; 
+            border: 1px solid var(--fg); 
+            background: transparent; 
+            color: var(--fg); 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 13px; 
+            width: 100%; 
+            font-weight: bold; 
+            transition: all 0.2s; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            outline: none; 
+            opacity: 1;
+        }
+        button:hover { background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        button:active { transform: scale(0.96); }
+        
+        /* Secondary Button Style (Dashed border only for Go Back / Change) */
+        .btn-secondary { border: 1px dashed rgba(255,255,255,0.4); color: var(--fg); opacity: 0.7; }
+        .btn-secondary:hover { opacity: 1; border-color: var(--c-blue); background: rgba(0, 123, 255, 0.1); color: var(--c-blue); border-style: solid; }
+
+        h2 { margin-top: 0; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; }
+        p { margin-top: 0; margin-bottom: 25px; font-size: 13px; opacity: 0.8; line-height: 1.6; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+
+        .warning-box {
+            background: rgba(255, 187, 51, 0.1); 
+            border: 1px dashed var(--c-yellow); 
+            padding: 15px; 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            text-align: left;
+        }
+        .warning-box h4 { margin: 0 0 5px 0; color: var(--c-yellow); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        .warning-box p { margin: 0; font-size: 11px; opacity: 0.9; line-height: 1.4; color: var(--fg); }
+
+        .selection-box {
+            padding: 15px; border: 1px solid rgba(0, 123, 255, 0.3); background: rgba(0, 123, 255, 0.05);
+            border-radius: 12px; margin-bottom: 20px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="minimal-ui">
+
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div id="step1" class="step active">
+        <h2>Welcome to Infinity</h2>
+        <p>Your journey towards a <strong>world-class digital experience</strong> begins here. Set up your <strong>preferences</strong> to continue.</p>
+        <button onclick="next(2)">Start Setup</button>
+    </div>
+    
+    <div id="step2" class="step">
+        <h2>Base Theme</h2>
+        <p>Choose your preferred visual experience.<br><br>
+        <span style="color: var(--c-blue); font-weight: bold;">Dark Theme is highly recommended. It consumes less battery, protects your eyes, and ensures ultra-smooth UI animations.</span></p>
+        
+        <button onclick="setBaseTheme('dark')">Dark Theme (Recommended)</button>
+        <button onclick="setBaseTheme('light')">Light Theme</button>
+        <button onclick="setBaseTheme('system')">System Default</button>
+    </div>
+
+    <div id="step3" class="step">
+        <h2>Visual Style</h2>
+        
+        <div id="warningLight" class="warning-box" style="display:none; margin-bottom: 20px;">
+            <h4>Optimization Warning</h4>
+            <p>You have selected a non-dark base theme. We highly recommend <strong>Dark Theme</strong> for optimal performance, smooth animations, and battery life.</p>
+            <button class="btn-secondary" style="border-color: var(--c-yellow); color: var(--c-yellow); font-size: 11px; padding: 10px; margin: 10px 0 0 0; opacity: 1;" onclick="setBaseTheme('dark')">Switch to Dark Theme</button>
+        </div>
+
+        <p style="font-size: 12px; margin-bottom: 25px;">
+            Select your structural layout style.<br><br>
+            <span style="color: var(--c-blue); font-weight: bold;">Minimalistic is highly recommended to experience smooth UI animations & subtle color accents. Pure Monochrome is strictly black & white.</span>
+        </p>
+
+        <button onclick="setSubTheme('minimal')">Minimalistic (Recommended)</button>
+        <button onclick="setSubTheme('pure')">Pure Monochrome</button>
+        
+        <button class="btn-secondary" style="margin-top:15px;" onclick="next(2)">GO BACK</button>
+    </div>
+
+    <div id="step4" class="step">
+        <h2>Theme Confirmation</h2>
+        
+        <div class="selection-box">
+            <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;">You have selected:</span><br>
+            <strong id="selThemeName" style="font-size: 16px; letter-spacing: 1px; display: block; margin-top: 5px;">...</strong>
+        </div>
+
+        <div id="warnLight" class="warning-box" style="display:none;">
+            <h4>Optimization Warning</h4>
+            <p>You have selected a non-dark base theme. We highly recommend <strong>Dark Theme</strong> for optimal performance, smooth animations, and better battery life.</p>
+        </div>
+
+        <div id="warnPure" class="warning-box" style="display:none;">
+            <h4>Style Warning</h4>
+            <p>You have selected Pure Monochrome. UI colors and subtle visual animations are disabled for absolute minimalism.</p>
+        </div>
+
+        <button onclick="confirmTheme()">Confirm & Continue</button>
+        <button class="btn-secondary" onclick="next(2)">CHANGE THEME</button>
+    </div>
+
+    <div id="step5" class="step">
+        <h2>Language Selection</h2>
+        <p style="font-size: 12px; margin-bottom: 25px;">
+            Select your preferred system language.<br><br>
+            <span style="color: var(--c-blue); font-weight: bold;">This will set the default language across the portal. You can easily change this later in your Settings menu.</span>
+        </p>
+        <button onclick="setLanguage('en')">English</button>
+        <button onclick="setLanguage('ml')">Malayalam</button>
+        
+        <button class="btn-secondary" style="margin-top:15px;" onclick="next(4)">GO BACK</button>
+    </div>
+    
+    <div id="step6" class="step">
+        <h2>App Lock</h2>
+        <p style="font-size: 12px; margin-bottom: 25px;">
+            Would you like to enable <strong>Web Authentication</strong> for extra security?<br><br>
+            <span style="color: var(--c-blue); font-weight: bold;">This uses your device's screen lock or fingerprint. Highly recommended to protect your digital node.</span>
+        </p>
+        <button onclick="setLock(true)">Enable Lock (Recommended)</button>
+        <button onclick="setLock(false)">No, Skip</button>
+        
+        <button class="btn-secondary" style="margin-top:15px;" onclick="next(5)">GO BACK</button>
+    </div>
+
+    <div id="step7" class="step">
+        <h2>Security Status</h2>
+        <div class="selection-box" style="border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05);">
+            <span style="font-size: 11px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;">Security Preference:</span><br>
+            <strong id="lockMsg" style="font-size: 16px; letter-spacing: 1px; display: block; margin-top: 5px; color: var(--fg);">...</strong>
+        </div>
+        
+        <button onclick="finalizeSetup()">Finalize & Boot</button>
+        <button class="btn-secondary" onclick="next(6)">CHANGE OPTION</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let config = { theme: 'minimal-dark', appLock: false, language: 'en' };
+        let selectedBase = 'dark';
+        let selectedStyle = 'minimal';
+        let selectedLock = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.add('minimal-ui');
+            brain.settings.theme = 'minimal-dark';
+            brain.applyTheme();
+        });
+        
+        function next(step) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+        }
+        
+        function setBaseTheme(base) {
+            selectedBase = base;
+            
+            if (base === 'light' || base === 'system') {
+                document.getElementById('warningLight').style.display = 'block';
+            } else {
+                document.getElementById('warningLight').style.display = 'none';
+            }
+            
+            next(3);
+        }
+
+        function setSubTheme(style) {
+            selectedStyle = style;
+            
+            let finalTheme = '';
+            if (selectedBase === 'system') {
+                finalTheme = 'system-' + selectedStyle;
+            } else {
+                finalTheme = selectedStyle + '-' + selectedBase;
+            }
+            
+            config.theme = finalTheme;
+            brain.settings.theme = finalTheme;
+            brain.applyTheme();
+            
+            const baseNames = { 'dark': 'Dark Theme', 'light': 'Light Theme', 'system': 'System Default' };
+            const styleNames = { 'minimal': 'Minimalistic', 'pure': 'Pure Monochrome' };
+            document.getElementById('selThemeName').innerText = baseNames[selectedBase] + ' • ' + styleNames[selectedStyle];
+            
+            document.getElementById('warnLight').style.display = (selectedBase !== 'dark') ? 'block' : 'none';
+            document.getElementById('warnPure').style.display = (selectedStyle === 'pure') ? 'block' : 'none';
+
+            next(4);
+        }
+
+        function confirmTheme() {
+            next(5); // Goes to Language Selection
+        }
+
+        function setLanguage(lang) {
+            config.language = lang;
+            brain.settings.language = lang;
+            brain.applyLanguage(); 
+            next(6); // Goes to App Lock
+        }
+        
+        function setLock(enable) {
+            selectedLock = enable;
+            const msgObj = document.getElementById('lockMsg');
+            if(enable) {
+                msgObj.innerText = 'APP LOCK ENABLED';
+                msgObj.style.color = 'var(--c-green)';
+            } else {
+                msgObj.innerText = 'SECURITY SKIPPED';
+                msgObj.style.color = 'var(--c-red)';
+            }
+            next(7);
+        }
+
+        function finalizeSetup() {
+            if (selectedLock) {
+                config.appLock = true;
+                brain.saveSettings(config);
+                window.location.href = 'applock.html';
+            } else {
+                config.appLock = false;
+                brain.saveSettings(config);
+                window.location.href = 'agreement.html';
+            }
+        }
+    </script>
+</body>
+</html>

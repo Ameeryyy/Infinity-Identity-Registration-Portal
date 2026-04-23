@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Document Vault</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { margin-bottom: 25px; position: relative; text-align: left; }
+        .input-group label { display: flex; justify-content: space-between; font-size: clamp(11px, 3vw, 13px); opacity: 0.9; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        
+        .input-container { position: relative; }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 48px; position: relative; z-index: 2; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 14px; outline: none; font-family: inherit; font-weight: bold; height: 100%; min-width: 0; letter-spacing: 2px; text-transform: uppercase; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.3; letter-spacing: normal; font-size: 12px; }
+        .input-wrapper input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .date-input { color-scheme: dark; text-transform: uppercase; letter-spacing: 1px !important; }
+
+        .char-count { position: absolute; right: 5px; bottom: -22px; font-size: 10px; font-weight: bold; opacity: 0.5; letter-spacing: 1px; pointer-events: none; }
+        .warning-text { position: absolute; left: 5px; bottom: -22px; font-size: 10px; color: var(--c-red); font-weight: bold; opacity: 0; transition: 0.3s; letter-spacing: 1px; pointer-events: none; }
+        .warning-text.show { opacity: 1; }
+
+        .btn-action { background: transparent; border: none; border-left: 1px solid rgba(255,255,255,0.2); color: inherit; padding: 0 15px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.3s; height: 100%; flex-shrink: 0; text-transform: uppercase; }
+        .btn-action:hover { opacity: 1; color: var(--c-blue); background: rgba(255,255,255,0.05); }
+        .btn-action.verified { background: var(--c-green); color: #fff; border: none; pointer-events: none; }
+
+        .otp-box { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease; margin-top: 0; border-left: 3px solid var(--c-blue); padding-left: 12px; margin-left: 5px; }
+        .otp-box.show { max-height: 100px; opacity: 1; margin-top: 32px; }
+        
+        .otp-wrapper { display: flex; align-items: center; border: 1px dashed rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; height: 45px; background: rgba(255,255,255,0.03); }
+        .otp-wrapper input { flex: 1; background: transparent; border: none; color: inherit; font-size: 16px; font-weight: bold; letter-spacing: 5px; text-align: center; outline: none; }
+        .btn-verify { background: var(--c-blue); color: #fff; border: none; padding: 0 15px; font-weight: bold; cursor: pointer; font-size: 11px; height: 100%; transition: 0.2s; letter-spacing: 1px; }
+        .btn-verify:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-verify:disabled { background: rgba(128,128,128,0.5); cursor: not-allowed; }
+        
+        .timer-text { font-size: 10px; color: var(--c-yellow); margin-top: 8px; font-weight: bold; display: block; letter-spacing: 1px; }
+
+        .doc-card { border: 1px dashed rgba(255,255,255,0.2); padding: 20px 15px; border-radius: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.02); position: relative; animation: fadeIn 0.4s ease; }
+        .doc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--c-blue); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; letter-spacing: 1px; }
+        .btn-delete { cursor: pointer; opacity: 0.5; transition: 0.3s; width: 16px; height: 16px; fill: var(--c-red); }
+        .btn-delete:hover { opacity: 1; transform: scale(1.1); }
+
+        .add-form-card { border: 1px solid var(--c-blue); background: rgba(0, 123, 255, 0.02); border-radius: 12px; padding: 20px 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,123,255,0.05); }
+        .add-form-title { font-size: 11px; font-weight: bold; color: var(--c-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; text-align: center; }
+
+        .custom-select-wrapper { display: flex; flex-direction: column; width: 100%; user-select: none; cursor: pointer; position: relative; z-index: 20; }
+        .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 0 15px; height: 48px; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-size: 12px; font-weight: bold; letter-spacing: 1px; color: inherit; transition: 0.3s; box-sizing: border-box; background: transparent; }
+        .custom-select-wrapper.open .custom-select-trigger { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .custom-select-trigger span { opacity: 0.5; font-weight: normal; transition: 0.3s; text-transform: uppercase; }
+        .custom-select-trigger.selected span { opacity: 1; font-weight: bold; }
+        .select-arrow { width: 16px; height: 16px; fill: var(--fg); opacity: 0.5; transition: transform 0.3s ease; }
+        .custom-select-wrapper.open .select-arrow { transform: rotate(180deg); fill: var(--c-blue); }
+        
+        .custom-options { position: absolute; top: 100%; left: 0; width: 100%; background-color: #111111; border-radius: 12px; opacity: 0; visibility: hidden; transition: all 0.3s ease; overflow-y: auto; max-height: 0; padding: 0; margin-top: 0; border: none; box-sizing: border-box; z-index: 20; }
+        .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; max-height: 220px; padding: 5px 0; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .custom-options::-webkit-scrollbar { width: 4px; }
+        .custom-options::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .custom-option { padding: 12px 15px; cursor: pointer; font-size: 11px; transition: 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: bold; text-transform: uppercase; line-height: 1.4; color: rgba(255,255,255,0.8); }
+        .custom-option:last-child { border-bottom: none; }
+        .custom-option:hover, .custom-option.selected { background-color: rgba(255,255,255,0.05); color: var(--c-blue); }
+
+        .btn-add-custom { width: 100%; padding: 14px; background: rgba(0, 123, 255, 0.1); border: 1px dashed var(--c-blue); color: var(--c-blue); border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 15px; }
+        .btn-add-custom:hover:not(:disabled) { background: var(--c-blue); color: #fff; border-style: solid; }
+        .btn-add-custom:disabled { opacity: 0.2; pointer-events: none; border-color: rgba(255,255,255,0.2); color: var(--fg); background: transparent; }
+        .btn-add-custom svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="emergency_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Document Vault</strong></h2>
+        <p class="desc">Synchronize your <strong>official identifiers</strong>. Document numbers require <strong>OTP verification</strong> for authentication.</p>
+
+        <div class="input-group" id="group-aadhaar">
+            <label><span>Aadhaar Number</span> <span style="color:var(--c-yellow); font-size:9px;">* MANDATORY</span></label>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="tel" id="val-aadhaar" maxlength="12" placeholder="12-DIGIT NUMBER" onkeypress="return event.charCode >= 48 && event.charCode <= 57" oninput="cleanInput(this, 'aadhaar'); reset('aadhaar')" autocomplete="off">
+                    <button type="button" class="btn-action" id="btn-aadhaar" onclick="send('aadhaar')">SEND OTP</button>
+                </div>
+                <span class="warning-text" id="warn-aadhaar">Aadhaar must be exactly 12 digits.</span>
+                <span class="char-count" id="count-aadhaar">0/12</span>
+            </div>
+            <div class="otp-box" id="box-aadhaar">
+                <div class="otp-wrapper">
+                    <input type="tel" id="otp-aadhaar" onkeypress="return event.charCode >= 48 && event.charCode <= 57" oninput="limitOTP(this)">
+                    <button type="button" id="vbtn-aadhaar" class="btn-verify" onclick="verify('aadhaar')">VERIFY</button>
+                </div>
+                <span class="timer-text" id="time-aadhaar">TIME REMAINING: 05:00</span>
+            </div>
+        </div>
+
+        <div id="otherDocsContainer"></div>
+
+        <div class="add-form-card" id="addFormCard">
+            <div class="add-form-title">Add Official Document</div>
+            
+            <div class="custom-select-wrapper" id="docSelect" onclick="toggleDocDropdown()">
+                <input type="hidden" id="docVal" value="">
+                <div class="custom-select-trigger">
+                    <span id="docSelectText">SELECT DOCUMENT TYPE</span>
+                    <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                </div>
+                <div class="custom-options" id="docOptions"></div>
+            </div>
+
+            <button class="btn-add-custom" id="btnAddDoc" onclick="addDocumentUI()" disabled>
+                <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+                ADD DOCUMENT
+            </button>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        // Set minimum expiry date to exactly 1 year from today
+        const dt = new Date();
+        dt.setFullYear(dt.getFullYear() + 1);
+        const minExpiryStr = dt.toISOString().split('T')[0];
+
+        const docMeta = {
+            'aadhaar': { name: 'Aadhaar Number', max: 12, type: 'tel', hasExpiry: false },
+            'pan': { name: 'PAN Card', max: 10, type: 'text', hasExpiry: false },
+            'dl': { name: 'Driving License', max: 20, type: 'text', hasExpiry: true },
+            'passport': { name: 'Passport', max: 15, type: 'text', hasExpiry: true },
+            'voter': { name: 'Voter ID', max: 10, type: 'text', hasExpiry: false }
+        };
+
+        let activeDocs = ['aadhaar'];
+        let state = { aadhaar: { v: false, t: 300, i: null } };
+
+        function updateCountDisplay(id, current, max) {
+            const countEl = document.getElementById(id);
+            if (countEl) {
+                if (current >= max) {
+                    countEl.innerHTML = `<span style="color: var(--c-red); margin-right: 4px;">MAX</span>${current}/${max}`;
+                } else {
+                    countEl.innerText = `${current}/${max}`;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'emergency_registration.html';
+
+            document.addEventListener('click', (e) => {
+                const select = document.getElementById('docSelect');
+                if (select && !select.contains(e.target)) select.classList.remove('open');
+            });
+
+            buildDocDropdown();
+
+            const s = brain.settings || {};
+            if (s.documents) {
+                const d = s.documents;
+                if (d.aadhaar) {
+                    document.getElementById('val-aadhaar').value = d.aadhaar;
+                    updateCountDisplay('count-aadhaar', d.aadhaar.length, 12);
+                    verifyLoaded('aadhaar');
+                }
+                ['pan', 'dl', 'passport', 'voter'].forEach(k => {
+                    if (d[k]) {
+                        addDocumentUI(k);
+                        document.getElementById('val-'+k).value = d[k];
+                        updateCountDisplay('count-'+k, d[k].length, docMeta[k].max);
+                        verifyLoaded(k);
+                        if (docMeta[k].hasExpiry && d[k+'Expiry']) {
+                            document.getElementById('exp-'+k).value = d[k+'Expiry'];
+                        }
+                    }
+                });
+            }
+
+            checkValidity();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && s.documents && s.documents.aadhaar) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function buildDocDropdown() {
+            const availableDocs = Object.keys(docMeta).filter(k => k !== 'aadhaar' && !activeDocs.includes(k));
+            const optsContainer = document.getElementById('docOptions');
+            optsContainer.innerHTML = '';
+            
+            availableDocs.forEach(k => {
+                const div = document.createElement('div');
+                div.className = 'custom-option';
+                div.innerText = docMeta[k].name;
+                div.onclick = (e) => selectDocOption(k, docMeta[k].name, e);
+                optsContainer.appendChild(div);
+            });
+            
+            if (availableDocs.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'custom-option';
+                div.style.opacity = '0.5';
+                div.style.pointerEvents = 'none';
+                div.innerText = 'NO MORE DOCUMENTS';
+                optsContainer.appendChild(div);
+            }
+        }
+
+        function toggleDocDropdown() {
+            document.getElementById('docSelect').classList.toggle('open');
+        }
+
+        function selectDocOption(val, text, e) {
+            if(e) e.stopPropagation();
+            document.getElementById('docVal').value = val;
+            const triggerText = document.getElementById('docSelectText');
+            triggerText.innerText = text;
+            triggerText.parentElement.classList.add('selected');
+            
+            document.querySelectorAll('#docOptions .custom-option').forEach(opt => opt.classList.remove('selected'));
+            if(e) e.target.classList.add('selected');
+            
+            document.getElementById('docSelect').classList.remove('open');
+            document.getElementById('btnAddDoc').removeAttribute('disabled');
+        }
+
+        function addDocumentUI(overrideKey = null) {
+            markUnsaved();
+            const key = overrideKey || document.getElementById('docVal').value;
+            if (!key || activeDocs.includes(key)) return;
+
+            activeDocs.push(key);
+            state[key] = { v: false, t: 300, i: null };
+
+            const meta = docMeta[key];
+            const container = document.getElementById('otherDocsContainer');
+            
+            let expHtml = '';
+            if (meta.hasExpiry) {
+                expHtml = `
+                <div class="input-group" style="margin-top: 25px; margin-bottom: 0;">
+                    <label>${meta.name} Expiry Date <span style="color:var(--c-yellow); font-size:9px; font-weight:normal;">* REQUIRED</span></label>
+                    <div class="input-wrapper">
+                        <input type="date" id="exp-${key}" class="date-input" min="${minExpiryStr}" oninput="markUnsaved(); checkValidity();">
+                    </div>
+                    <span style="display:block; margin-top:8px; font-size:9px; color:var(--c-yellow); font-weight:bold; letter-spacing:0.5px; line-height:1.3; text-transform:uppercase;">MINIMUM 1 YEAR VALIDITY REQUIRED. IF VALIDITY IS LESS THAN 1 YEAR, PLEASE ADD LATER.</span>
+                </div>`;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'doc-card';
+            card.id = `card-${key}`;
+            
+            const keyPressAttr = meta.type === 'tel' ? 'onkeypress="return event.charCode >= 48 && event.charCode <= 57"' : '';
+
+            card.innerHTML = `
+                <div class="doc-header">
+                    <span>${meta.name}</span>
+                    <svg class="btn-delete" onclick="removeDoc('${key}')" viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                </div>
+                <div class="input-group" style="margin-bottom: 25px;">
+                    <div class="input-container">
+                        <div class="input-wrapper">
+                            <input type="${meta.type}" id="val-${key}" maxlength="${meta.max}" placeholder="ENTER NUMBER" ${keyPressAttr} oninput="cleanInput(this, '${key}'); reset('${key}')" autocomplete="off">
+                            <button type="button" class="btn-action" id="btn-${key}" onclick="send('${key}')">SEND OTP</button>
+                        </div>
+                        <span class="warning-text" id="warn-${key}">PLEASE FILL VALID NUMBER</span>
+                        <span class="char-count" id="count-${key}">0/${meta.max}</span>
+                    </div>
+                    <div class="otp-box" id="box-${key}">
+                        <div class="otp-wrapper">
+                            <input type="tel" id="otp-${key}" onkeypress="return event.charCode >= 48 && event.charCode <= 57" oninput="limitOTP(this)">
+                            <button type="button" id="vbtn-${key}" class="btn-verify" onclick="verify('${key}')">VERIFY</button>
+                        </div>
+                        <span class="timer-text" id="time-${key}">TIME REMAINING: 05:00</span>
+                    </div>
+                </div>
+                ${expHtml}
+            `;
+            
+            container.appendChild(card);
+
+            document.getElementById('docVal').value = '';
+            document.getElementById('docSelectText').innerText = 'SELECT DOCUMENT TYPE';
+            document.getElementById('docSelectText').parentElement.classList.remove('selected');
+            document.getElementById('btnAddDoc').setAttribute('disabled', 'true');
+            buildDocDropdown();
+            checkValidity();
+        }
+
+        function removeDoc(key) {
+            markUnsaved();
+            clearInterval(state[key].i);
+            delete state[key];
+            activeDocs = activeDocs.filter(k => k !== key);
+            
+            const card = document.getElementById(`card-${key}`);
+            if (card) card.remove();
+            
+            buildDocDropdown();
+            checkValidity();
+        }
+
+        function cleanInput(el, key) {
+            if (key === 'aadhaar') {
+                el.value = el.value.replace(/[^0-9]/g, '');
+            } else {
+                el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            }
+            const metaMax = docMeta[key] ? docMeta[key].max : 12;
+            if (el.value.length > metaMax) el.value = el.value.substring(0, metaMax);
+            updateCountDisplay('count-' + key, el.value.length, metaMax);
+            checkValidity();
+        }
+
+        function limitOTP(e) { 
+            e.value = e.value.replace(/[^0-9]/g, '');
+            if (e.value.length > 6) e.value = e.value.slice(0, 6); 
+        }
+
+        function reset(k) { 
+            markUnsaved();
+            state[k].v = false; clearInterval(state[k].i); state[k].t = 300;
+            const b = document.getElementById('btn-'+k); 
+            b.classList.remove('verified'); b.innerText = 'SEND OTP'; b.style.pointerEvents = 'auto';
+            document.getElementById('val-'+k).disabled = false; 
+            document.getElementById('box-'+k).classList.remove('show');
+            document.getElementById('otp-'+k).value = '';
+            document.getElementById('time-'+k).innerText = 'TIME REMAINING: 05:00';
+            const warn = document.getElementById('warn-'+k);
+            if(warn) warn.classList.remove('show');
+            checkValidity();
+        }
+
+        function send(k) {
+            const v = document.getElementById('val-'+k).value.trim(); 
+            const warn = document.getElementById('warn-'+k);
+            
+            if (k === 'aadhaar' && v.length !== 12) { 
+                warn.classList.add('show'); return; 
+            }
+            if (k !== 'aadhaar' && v.length < 5) {
+                warn.classList.add('show'); return; 
+            }
+
+            if(warn) warn.classList.remove('show');
+            document.getElementById('btn-'+k).innerText = 'SENT';
+            document.getElementById('btn-'+k).style.pointerEvents = 'none';
+            document.getElementById('box-'+k).classList.add('show');
+            document.getElementById('otp-'+k).focus();
+            startTimer(k);
+        }
+
+        function startTimer(k) {
+            clearInterval(state[k].i);
+            state[k].t = 300;
+            state[k].i = setInterval(() => {
+                state[k].t--;
+                const m = Math.floor(state[k].t / 60), s = state[k].t % 60;
+                document.getElementById('time-'+k).innerText = `TIME REMAINING: 0${m}:${s < 10 ? '0' + s : s}`;
+                if (state[k].t <= 0) { 
+                    clearInterval(state[k].i); 
+                    document.getElementById('time-'+k).innerText = 'OTP EXPIRED';
+                    const b = document.getElementById('btn-'+k);
+                    b.innerText = 'RESEND'; 
+                    b.style.pointerEvents = 'auto';
+                }
+            }, 1000);
+        }
+
+        function verify(k) {
+            if (document.getElementById('otp-'+k).value.length === 6) {
+                state[k].v = true; clearInterval(state[k].i);
+                const b = document.getElementById('btn-'+k); 
+                b.classList.add('verified'); b.innerText = 'VERIFIED ✔';
+                document.getElementById('val-'+k).disabled = true; 
+                document.getElementById('box-'+k).classList.remove('show');
+                checkValidity();
+            }
+        }
+
+        function verifyLoaded(k) {
+            state[k].v = true;
+            const b = document.getElementById('btn-'+k); 
+            b.classList.add('verified'); b.innerText = 'VERIFIED ✔';
+            document.getElementById('val-'+k).disabled = true; 
+            document.getElementById('box-'+k).classList.remove('show');
+        }
+
+        function checkValidity() { 
+            let isValid = true;
+            
+            if (!state.aadhaar || !state.aadhaar.v) {
+                isValid = false;
+            }
+
+            activeDocs.forEach(k => {
+                if (k === 'aadhaar') return;
+                if (!state[k] || !state[k].v) isValid = false;
+                
+                if (docMeta[k].hasExpiry) {
+                    const exp = document.getElementById('exp-'+k);
+                    if (!exp || !exp.value) isValid = false;
+                }
+            });
+
+            const btnNext = document.getElementById('btnNext');
+            if (isValid) {
+                btnNext.classList.add('active');
+            } else {
+                btnNext.classList.remove('active');
+            }
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+            const btn = document.getElementById('btnNext');
+            btn.classList.add('saved'); btn.innerHTML = 'SAVED ✔';
+
+            const d = {};
+            if (state.aadhaar.v) d.aadhaar = document.getElementById('val-aadhaar').value;
+            
+            ['pan', 'dl', 'passport', 'voter'].forEach(k => {
+                if (activeDocs.includes(k) && state[k] && state[k].v) {
+                    d[k] = document.getElementById('val-'+k).value;
+                    if (docMeta[k].hasExpiry) {
+                        d[k+'Expiry'] = document.getElementById('exp-'+k).value;
+                    }
+                }
+            });
+
+            const userSettings = brain.settings || {};
+            userSettings.documents = d;
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'asset_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

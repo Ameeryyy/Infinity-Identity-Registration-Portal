@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Payment Receipt</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-green: #00C851; --c-yellow: #ffbb33; --c-red: #ff4444; }
+        
+        html { background-color: #000000; min-height: 100%; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            background-image: linear-gradient(rgba(128, 128, 128, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 128, 128, 0.1) 1px, transparent 1px);
+            background-size: 60px 60px;
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .container { width: 90%; max-width: 420px; animation: fadeIn 0.5s; text-align: center; margin: 40px auto; padding: 25px 20px; box-sizing: border-box; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; border: 1px dashed rgba(255,255,255,0.3); border-radius: 16px; }
+        
+        .invoice-area { 
+            padding: 30px 25px; 
+            background: #050505; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.15); 
+            margin-bottom: 20px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            aspect-ratio: 1 / 1.414; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 5px; }
+        h2 { font-weight: bold; margin: 0 0 15px 0; font-size: 18px; color: var(--fg); text-transform: uppercase; letter-spacing: 1px; }
+
+        .receipt-body { border-top: 1px dashed rgba(255,255,255,0.2); border-bottom: 1px dashed rgba(255,255,255,0.2); padding: 15px 0; margin-bottom: 0; text-align: left; }
+        
+        .row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 12px; align-items: center; }
+        .row:last-child { margin-bottom: 0; }
+        
+        .label { opacity: 0.6; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-weight: bold; color: var(--fg); letter-spacing: 0.5px; text-transform: uppercase; text-align: right; max-width: 60%; word-break: break-word; }
+        
+        .status-badge { background: rgba(0, 200, 81, 0.1); color: var(--c-green); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--c-green); font-size: 11px; font-weight: bold; letter-spacing: 1px; box-shadow: 0 0 10px rgba(0, 200, 81, 0.2); }
+
+        .total-row { display: flex; justify-content: space-between; padding-top: 15px; margin-top: 15px; align-items: center; }
+        .total-row .label { opacity: 0.8; font-size: 13px; font-weight: bold; text-transform: uppercase; }
+        .total-row .value { color: var(--c-green); font-size: 22px; font-weight: bold; text-shadow: 0 0 10px rgba(0,200,81,0.3); }
+
+        .btn-download { width: 100%; padding: 15px; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,0.4); border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .btn-download:hover { background: rgba(255,255,255,0.05); border-color: var(--fg); }
+        .btn-download:active { transform: scale(0.97); }
+        .btn-download svg { width: 18px; height: 18px; fill: currentColor; }
+        
+        .btn-download.success { background: var(--c-green); border-color: var(--c-green); color: #fff; pointer-events: none; }
+
+        .btn-home { width: 100%; padding: 16px; background: var(--c-blue); color: #fff; border: none; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; display: none; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
+        .btn-home.show { display: block; animation: slideUp 0.4s ease; }
+        .btn-home:active { transform: scale(0.97); }
+
+        /* Custom Modal CSS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); z-index: 1000; display: none; transition: background 0.3s ease; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
+        .modal-content { width: 90%; max-width: 340px; background: #161618; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); transform: scale(0.9) translateY(10px); opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 15px 40px rgba(0,0,0,0.9); padding: 30px 20px; align-items: center; text-align: center; }
+        .modal-overlay.show .modal-content { transform: scale(1) translateY(0); opacity: 1; }
+        .modal-title { font-weight: bold; font-size: 16px; margin-bottom: 15px; letter-spacing: 1px; color: #ffb74d; text-transform: uppercase; }
+        .modal-desc { font-size: 14px; opacity: 0.9; margin-bottom: 30px; line-height: 1.5; color: #ffffff; padding: 0 10px; }
+        
+        .btn-dismiss { width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #ffffff; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 13px; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-dismiss.filled { background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); }
+        .btn-dismiss:hover:not(.filled) { background: rgba(255,255,255,0.05); }
+        .btn-dismiss:active { transform: scale(0.96); }
+
+        /* New CSS classes for dynamic modal colors */
+        .modal-content.success .modal-title { color: var(--c-green) !important; text-shadow: 0 0 10px rgba(0, 200, 81, 0.4) !important; }
+        .modal-content.warning .modal-title { color: var(--c-yellow) !important; text-shadow: 0 0 10px rgba(255, 187, 51, 0.4) !important; }
+        .modal-content.danger .modal-title { color: var(--c-red) !important; text-shadow: 0 0 10px rgba(255, 68, 68, 0.4) !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .corner { opacity: 0.05; border-width: 1px; }
+            .corner-tl { top: 20px; left: 20px; }
+            .corner-tr { top: 20px; right: 20px; }
+            .corner-bl { bottom: 20px; left: 20px; }
+            .corner-br { bottom: 20px; right: 20px; }
+        }
+        @media (max-width: 320px) { .corner { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="container">
+        <div id="invoiceArea" class="invoice-area">
+            <div class="brand-title">INFINITY IDENTITY REGISTRY</div>
+            <h2>Official Tax Invoice</h2>
+
+            <div class="receipt-body">
+                <div class="row">
+                    <span class="label">Receipt No</span>
+                    <span class="value" id="recNo">REC-0000000</span>
+                </div>
+                <div class="row">
+                    <span class="label">Date</span>
+                    <span class="value" id="recDate">--/--/----</span>
+                </div>
+                <div class="row">
+                    <span class="label">Billed To</span>
+                    <span class="value" id="recName">NODE USER</span>
+                </div>
+                <div class="row">
+                    <span class="label">Description</span>
+                    <span class="value">Node Activation Fee</span>
+                </div>
+                <div class="row">
+                    <span class="label">Status</span>
+                    <span class="status-badge">PAID</span>
+                </div>
+                <div class="total-row">
+                    <span class="label">Total Amount</span>
+                    <span class="value">₹ 25.00</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-download" id="btnDownload" onclick="downloadBill()">
+            <svg viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
+            Download PDF
+        </button>
+
+        <button class="btn-home" id="btnNext" onclick="goToDashboard()">Proceed to Dashboard</button>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">WARNING</div>
+            <div class="modal-desc" id="modalDesc">Message goes here.</div>
+            <button class="btn-dismiss" id="modalBtn" onclick="closeModal(this)">DISMISS</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="brain.js"></script>
+    <script>
+        let redirectHome = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const settings = brain.settings || {};
+            const randomNum = Math.floor(1000000 + Math.random() * 9000000);
+            document.getElementById('recNo').innerText = 'REC-' + randomNum;
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            document.getElementById('recDate').innerText = dateStr;
+            if(settings.currentName) document.getElementById('recName').innerText = settings.currentName;
+        });
+
+        // Team modal control with dynamic coloring
+        function showModal(title, desc, type = 'warning', isFinal = false) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerText = desc;
+            redirectHome = isFinal;
+
+            const modalContent = document.querySelector('#customModal .modal-content');
+            modalContent.classList.remove('success', 'warning', 'danger');
+            modalContent.classList.add(type);
+
+            const modal = document.getElementById('customModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        function closeModal(btn) {
+            btn.classList.add('filled');
+            btn.style.pointerEvents = 'none';
+            const modal = document.getElementById('customModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                btn.classList.remove('filled');
+                btn.style.pointerEvents = 'auto';
+                if(redirectHome) window.location.href = 'home.html';
+            }, 300);
+        }
+
+        function goToDashboard() {
+            // Registration success, set Green color
+            showModal('REGISTRATION SUCCESS', 'Thank you for choosing Infinity Identity. Your registration process is now complete.', 'success', true);
+        }
+
+        function downloadBill() {
+            const btn = document.getElementById('btnDownload');
+            const nextBtn = document.getElementById('btnNext');
+            const invoice = document.getElementById('invoiceArea');
+            btn.innerHTML = 'GENERATING PDF...';
+            btn.style.pointerEvents = 'none';
+            const opt = {
+                margin: 0,
+                filename: 'Infinity_Node_Receipt.pdf',
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 2, backgroundColor: '#050505', useCORS: true },
+                jsPDF: { unit: 'in', format: 'a5', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(invoice).save().then(() => {
+                btn.innerHTML = 'DOWNLOADED ✔';
+                btn.classList.add('success');
+                nextBtn.classList.add('show');
+            }).catch(err => {
+                // Download failed, set Red color for danger situation
+                showModal('DOWNLOAD FAILED', 'An error occurred while generating the PDF document. Please try again.', 'danger');
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg> Download PDF';
+                btn.style.pointerEvents = 'auto';
+            });
+        }
+    </script>
+</body>
+</html>

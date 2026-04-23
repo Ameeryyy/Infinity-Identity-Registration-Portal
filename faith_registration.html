@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Faith Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { margin-bottom: clamp(20px, 5vw, 25px); position: relative; z-index: 1; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .flexible-grid { display: flex; flex-wrap: wrap; gap: clamp(6px, 2vw, 10px); }
+        .flexible-grid .card-btn { flex: 1 1 calc(33.33% - 10px); min-width: 90px; }
+        .grid-practice .card-btn { flex: 1 1 calc(45% - 10px); min-width: 120px; }
+
+        .card-btn { border: 1px solid var(--fg); padding: clamp(12px, 3vw, 15px) 5px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; user-select: none; text-transform: uppercase; letter-spacing: 1px; }
+        .card-btn:hover { opacity: 0.8; }
+        .card-btn.active { opacity: 1 !important; background: var(--c-blue) !important; color: #ffffff !important; border-color: var(--c-blue) !important; transform: scale(0.96); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
+
+        .hidden-section { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s ease-in-out; }
+        .hidden-section.show { max-height: 800px; opacity: 1; margin-top: 15px; overflow: visible; }
+
+        .checkbox-wrapper { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 15px; margin-bottom: 15px; user-select: none; width: fit-content; }
+        .checkbox-wrapper input { width: 16px; height: 16px; accent-color: var(--c-blue); cursor: pointer; }
+        .checkbox-wrapper span { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; transition: 0.3s; color: var(--c-yellow); }
+        .checkbox-wrapper input:checked + span { opacity: 1; color: var(--c-blue); }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 15px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+            .flexible-grid .card-btn { flex: 1 1 calc(45% - 10px); }
+        }
+        @media (max-width: 320px) { .flexible-grid .card-btn { flex: 1 1 100%; } }
+    </style>
+</head>
+<body>
+
+    <a href="relation_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Spiritual & Belief Systems</strong></h2>
+        <p class="desc">Define your <strong>religious alignment</strong>, <strong>sect</strong>, and <strong>level of practice</strong>.</p>
+
+        <div class="input-group">
+            <label>Current Religion / Belief</label>
+            <div class="flexible-grid" id="grid-religion">
+                <div class="card-btn" onclick="selectReligion('Islam')">Islam</div>
+                <div class="card-btn" onclick="selectReligion('Hinduism')">Hinduism</div>
+                <div class="card-btn" onclick="selectReligion('Christianity')">Christianity</div>
+                <div class="card-btn" onclick="selectReligion('Buddhism')">Buddhism</div>
+                <div class="card-btn" onclick="selectReligion('Secular')">Secular / Atheist</div>
+                <div class="card-btn" onclick="selectReligion('Other')">Other</div>
+            </div>
+        </div>
+
+        <div id="sectContainer" class="hidden-section">
+            <div class="input-group">
+                <label>Current Denomination / Sect</label>
+                <div class="flexible-grid" id="grid-sect">
+                </div>
+            </div>
+        </div>
+
+        <div id="practiceContainer" class="hidden-section">
+            <div class="input-group">
+                <label>Current Level of Practice</label>
+                <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-yellow);">* How actively do you follow religious rules?</span>
+                <div class="flexible-grid grid-practice" id="grid-practice">
+                    <div class="card-btn" onclick="selectPractice('Devout')">Devout / Strict</div>
+                    <div class="card-btn" onclick="selectPractice('Moderate')">Moderate</div>
+                    <div class="card-btn" onclick="selectPractice('Cultural')">Cultural / Non-Practicing</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="prevToggleWrapper" class="hidden-section" style="margin-top: 25px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px;">
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="checkPrev" onchange="togglePrev()">
+                <span>Previously followed a different belief system</span>
+            </label>
+        </div>
+
+        <div id="prevContainer" class="hidden-section">
+            <div class="input-group" style="margin-top: 10px;">
+                <label>Previous Religion / Belief</label>
+                <div class="flexible-grid" id="grid-prev-religion">
+                    <div class="card-btn" onclick="selectPrevReligion('Islam')">Islam</div>
+                    <div class="card-btn" onclick="selectPrevReligion('Hinduism')">Hinduism</div>
+                    <div class="card-btn" onclick="selectPrevReligion('Christianity')">Christianity</div>
+                    <div class="card-btn" onclick="selectPrevReligion('Buddhism')">Buddhism</div>
+                    <div class="card-btn" onclick="selectPrevReligion('Secular')">Secular / Atheist</div>
+                    <div class="card-btn" onclick="selectPrevReligion('Other')">Other</div>
+                </div>
+            </div>
+            
+            <div id="prevSectContainer" class="hidden-section">
+                <div class="input-group">
+                    <label>Previous Denomination / Sect</label>
+                    <div class="flexible-grid" id="grid-prev-sect">
+                    </div>
+                </div>
+            </div>
+
+            <div id="prevPracticeContainer" class="hidden-section">
+                <div class="input-group">
+                    <label>Previous Level of Practice</label>
+                    <div class="flexible-grid grid-practice" id="grid-prev-practice">
+                        <div class="card-btn" onclick="selectPrevPractice('Devout')">Devout / Strict</div>
+                        <div class="card-btn" onclick="selectPrevPractice('Moderate')">Moderate</div>
+                        <div class="card-btn" onclick="selectPrevPractice('Cultural')">Cultural / Non-Practicing</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const sectsData = {
+            'Islam': ['Sunni', 'Mujahid', 'Shia', 'Ahmadiyya', 'Sufi', 'Other'],
+            'Hinduism': ['Vaishnavism', 'Shaivism', 'Shaktism', 'Smartism', 'Reformist', 'Other'],
+            'Christianity': ['Catholic', 'Orthodox', 'Pentecostal', 'Protestant', 'Baptist', 'Other'],
+            'Buddhism': ['Theravada', 'Mahayana', 'Vajrayana', 'Zen', 'Other']
+        };
+
+        // Current State
+        let selectedReligion = '';
+        let selectedSect = '';
+        let selectedPractice = '';
+        
+        // Previous State
+        let hasPrev = false;
+        let selectedPrevReligion = '';
+        let selectedPrevSect = '';
+        let selectedPrevPractice = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'relation_registration.html';
+
+            const s = brain.settings || {};
+            
+            if (s.religion) {
+                selectReligion(s.religion, true);
+                if (s.denomination) {
+                    selectSect(s.denomination, true);
+                }
+                if (s.practiceLevel) {
+                    selectPractice(s.practiceLevel, true);
+                }
+                
+                if (s.previousReligion) {
+                    document.getElementById('checkPrev').checked = true;
+                    togglePrev(true);
+                    selectPrevReligion(s.previousReligion, true);
+                    if (s.previousDenomination) {
+                        selectPrevSect(s.previousDenomination, true);
+                    }
+                    if (s.previousPracticeLevel) {
+                        selectPrevPractice(s.previousPracticeLevel, true);
+                    }
+                }
+            }
+
+            validateForm();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && s.religion) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        // --- Current Selection Functions ---
+        function selectReligion(val, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            selectedReligion = val;
+            selectedSect = '';
+            
+            document.querySelectorAll('#grid-religion .card-btn').forEach(btn => {
+                const btnText = btn.innerText.trim().toUpperCase();
+                const searchVal = val.toUpperCase();
+                btn.classList.toggle('active', btnText === searchVal || btnText.includes(searchVal));
+            });
+
+            const sectContainer = document.getElementById('sectContainer');
+            const gridSect = document.getElementById('grid-sect');
+            const practiceContainer = document.getElementById('practiceContainer');
+            
+            gridSect.innerHTML = '';
+            
+            if (sectsData[val]) {
+                sectsData[val].forEach(sect => {
+                    const btn = document.createElement('div');
+                    btn.className = 'card-btn';
+                    btn.innerText = sect.toUpperCase();
+                    btn.onclick = () => selectSect(sect);
+                    gridSect.appendChild(btn);
+                });
+                sectContainer.classList.add('show');
+            } else {
+                sectContainer.classList.remove('show');
+                selectedSect = 'N/A';
+            }
+
+            practiceContainer.classList.add('show');
+            updatePrevReligionGrid(); // Disable corresponding exact matching fields
+            validateForm();
+        }
+
+        function selectSect(val, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            selectedSect = val;
+            document.querySelectorAll('#grid-sect .card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.trim().toUpperCase() === val.toUpperCase());
+            });
+            
+            // Re-render previous sects to disable exact match if they happen to change current sect
+            if (hasPrev && selectedPrevReligion === selectedReligion) {
+                selectPrevReligion(selectedPrevReligion, true); 
+            }
+            validateForm();
+        }
+
+        function selectPractice(val, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            selectedPractice = val;
+            document.querySelectorAll('#grid-practice .card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(val));
+            });
+            validateForm();
+        }
+
+        // --- Previous Selection Functions ---
+        function updatePrevReligionGrid() {
+            document.querySelectorAll('#grid-prev-religion .card-btn').forEach(btn => {
+                const btnVal = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+                
+                // If it's the exact same religion and has NO sects (e.g. Secular -> Secular), disable it
+                if (btnVal === selectedReligion && !sectsData[selectedReligion]) {
+                    btn.style.opacity = '0.15';
+                    btn.style.pointerEvents = 'none';
+                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                    
+                    if (selectedPrevReligion === btnVal) {
+                        selectedPrevReligion = '';
+                        btn.classList.remove('active');
+                        document.getElementById('prevSectContainer').classList.remove('show');
+                        document.getElementById('prevPracticeContainer').classList.remove('show');
+                    }
+                } else {
+                    btn.style.opacity = '';
+                    btn.style.pointerEvents = '';
+                    btn.style.borderColor = '';
+                }
+            });
+        }
+
+        function togglePrev(isLoad = false) {
+            if(!isLoad) markUnsaved();
+            hasPrev = document.getElementById('checkPrev').checked;
+            const prevCont = document.getElementById('prevContainer');
+            if (hasPrev) {
+                prevCont.classList.add('show');
+            } else {
+                prevCont.classList.remove('show');
+                selectedPrevReligion = '';
+                selectedPrevSect = '';
+                selectedPrevPractice = '';
+                document.querySelectorAll('#grid-prev-religion .card-btn, #grid-prev-sect .card-btn, #grid-prev-practice .card-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('prevSectContainer').classList.remove('show');
+                document.getElementById('prevPracticeContainer').classList.remove('show');
+            }
+            validateForm();
+        }
+
+        function selectPrevReligion(val, isLoad = false) {
+            if (val === selectedReligion && !sectsData[val]) return;
+
+            if(!isLoad) markUnsaved();
+            selectedPrevReligion = val;
+            selectedPrevSect = '';
+            
+            document.querySelectorAll('#grid-prev-religion .card-btn').forEach(btn => {
+                const btnText = btn.innerText.trim().toUpperCase();
+                const searchVal = val.toUpperCase();
+                btn.classList.toggle('active', btnText === searchVal || btnText.includes(searchVal));
+            });
+
+            const sectContainer = document.getElementById('prevSectContainer');
+            const gridSect = document.getElementById('grid-prev-sect');
+            const prevPracticeContainer = document.getElementById('prevPracticeContainer');
+            
+            gridSect.innerHTML = '';
+            
+            if (sectsData[val]) {
+                sectsData[val].forEach(sect => {
+                    const btn = document.createElement('div');
+                    btn.className = 'card-btn';
+                    btn.innerText = sect.toUpperCase();
+                    
+                    // DISABLE EXACT MATCH (e.g. Current Sunni -> Previous Sunni)
+                    if (val === selectedReligion && sect === selectedSect) {
+                        btn.style.opacity = '0.15';
+                        btn.style.pointerEvents = 'none';
+                        btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                    } else {
+                        btn.onclick = () => selectPrevSect(sect);
+                    }
+                    
+                    gridSect.appendChild(btn);
+                });
+                sectContainer.classList.add('show');
+            } else {
+                sectContainer.classList.remove('show');
+                selectedPrevSect = 'N/A';
+            }
+            
+            prevPracticeContainer.classList.add('show');
+            validateForm();
+        }
+
+        function selectPrevSect(val, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            selectedPrevSect = val;
+            document.querySelectorAll('#grid-prev-sect .card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.trim().toUpperCase() === val.toUpperCase());
+            });
+            validateForm();
+        }
+
+        function selectPrevPractice(val, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            selectedPrevPractice = val;
+            document.querySelectorAll('#grid-prev-practice .card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(val));
+            });
+            validateForm();
+        }
+
+        // --- Core Validation & Save ---
+        function validateForm() {
+            const btn = document.getElementById('btnNext');
+            const prevToggle = document.getElementById('prevToggleWrapper');
+            
+            let currentValid = (selectedReligion !== '' && selectedSect !== '' && selectedPractice !== '');
+            
+            // Show Previous section only after current is valid
+            if (currentValid) {
+                prevToggle.classList.add('show');
+            } else {
+                prevToggle.classList.remove('show');
+                if (hasPrev) {
+                    document.getElementById('checkPrev').checked = false;
+                    togglePrev(true);
+                }
+            }
+
+            let valid = currentValid;
+
+            if (valid && hasPrev) {
+                if (selectedPrevReligion === '' || selectedPrevSect === '' || selectedPrevPractice === '') {
+                    valid = false;
+                }
+            }
+
+            if (valid) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+
+            const btn = document.getElementById('btnNext');
+            btn.classList.add('saved');
+            btn.innerHTML = 'SAVED ✔';
+
+            const userSettings = brain.settings || {};
+            userSettings.religion = selectedReligion;
+            userSettings.denomination = selectedSect;
+            userSettings.practiceLevel = selectedPractice;
+            
+            if(hasPrev) {
+                userSettings.previousReligion = selectedPrevReligion;
+                userSettings.previousDenomination = selectedPrevSect;
+                userSettings.previousPracticeLevel = selectedPrevPractice;
+            } else {
+                delete userSettings.previousReligion;
+                delete userSettings.previousDenomination;
+                delete userSettings.previousPracticeLevel;
+            }
+
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'economic_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

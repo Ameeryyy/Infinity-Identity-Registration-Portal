@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Health Records</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { margin-bottom: clamp(20px, 5vw, 30px); position: relative; z-index: 1; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .flexible-grid { display: flex; flex-wrap: wrap; gap: clamp(6px, 2vw, 10px); }
+        .flexible-grid .card-btn { flex: 1 1 calc(33.33% - 10px); min-width: 90px; }
+
+        .card-btn { border: 1px solid var(--fg); padding: clamp(12px, 3vw, 15px) 5px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; user-select: none; text-transform: uppercase; letter-spacing: 1px; line-height: 1.3; }
+        .card-btn:hover { opacity: 0.8; }
+        .card-btn.active { opacity: 1 !important; background: var(--c-blue) !important; color: #ffffff !important; border-color: var(--c-blue) !important; transform: scale(0.96); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
+
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 48px; position: relative; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 13px; outline: none; font-family: inherit; font-weight: bold; height: 100%; min-width: 0; letter-spacing: 1px; text-transform: uppercase; }
+        .input-wrapper textarea { flex: 1; padding: 15px; background: transparent; border: none; color: inherit; font-size: 13px; outline: none; font-family: inherit; font-weight: bold; min-width: 0; letter-spacing: 1px; resize: none; line-height: 1.5; text-transform: uppercase; }
+        .input-wrapper input::placeholder, .input-wrapper textarea::placeholder { font-weight: normal; opacity: 0.3; letter-spacing: normal; }
+
+        .char-count { position: absolute; right: 5px; bottom: -20px; font-size: 10px; font-weight: bold; opacity: 0.5; letter-spacing: 1px; }
+
+        .hidden-section { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease-in-out; margin-top: 0; }
+        .hidden-section.show { max-height: 500px; opacity: 1; margin-top: 15px; overflow: visible; }
+
+        .btn-add-custom { width: 100%; padding: 14px; background: rgba(0, 123, 255, 0.1); border: 1px dashed var(--c-blue); color: var(--c-blue); border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+        .btn-add-custom:hover:not(:disabled) { background: var(--c-blue); color: #fff; border-style: solid; }
+        .btn-add-custom:disabled { opacity: 0.2; pointer-events: none; border-color: rgba(255,255,255,0.2); color: var(--fg); background: transparent; }
+        .btn-add-custom svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: 15px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+            .flexible-grid .card-btn { flex: 1 1 calc(45% - 10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="economic_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Health Records</strong></h2>
+        <p class="desc">Declare any existing <strong>chronic diseases</strong> or <strong>medical conditions</strong> for emergency registry.</p>
+
+        <div class="input-group">
+            <label>Chronic Diseases / Medical Conditions <span style="opacity:0.5; font-size:9px; font-weight:normal; margin-left:5px;">(MULTI-SELECT)</span></label>
+            <div class="flexible-grid" id="grid-disease">
+                <div class="card-btn" onclick="toggleDisease('Diabetes', this)">Diabetes<br><span style="font-size:8px; opacity:0.7;">(SUGAR)</span></div>
+                <div class="card-btn" onclick="toggleDisease('Hypertension', this)">Hypertension<br><span style="font-size:8px; opacity:0.7;">(BP)</span></div>
+                <div class="card-btn" onclick="toggleDisease('Cancer', this)">Cancer</div>
+                <div class="card-btn" onclick="toggleDisease('Asthma', this)">Asthma</div>
+                <div class="card-btn" onclick="toggleDisease('Heart Disease', this)">Heart Disease</div>
+                
+                <div class="card-btn" id="btnOtherDisease" onclick="toggleOther(this)">Other<br><span style="font-size:8px; opacity:0.7;">(ADD CUSTOM)</span></div>
+                <div class="card-btn" id="btnNoneDisease" onclick="selectNoneDisease(this)" style="flex-basis: 100%;">None / Healthy</div>
+            </div>
+        </div>
+
+        <div id="otherDiseaseContainer" class="hidden-section">
+            <div class="input-group">
+                <label>Disease Title</label>
+                <div style="position: relative; margin-bottom: 25px;">
+                    <div class="input-wrapper">
+                        <input type="text" id="otherDiseaseTitle" maxlength="50" placeholder="E.G. THYROID DISORDER" oninput="formatText(this, 'count-otherDiseaseTitle', 50)" autocomplete="off">
+                    </div>
+                    <span class="char-count" id="count-otherDiseaseTitle">0/50</span>
+                </div>
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+                <label>Description</label>
+                <div style="position: relative; margin-bottom: 25px;">
+                    <div class="input-wrapper" style="height: auto;">
+                        <textarea id="otherDiseaseDesc" rows="3" maxlength="150" placeholder="E.G. DIAGNOSED IN 2018, TAKING DAILY MEDICATION" oninput="formatText(this, 'count-otherDiseaseDesc', 150)" autocomplete="off"></textarea>
+                    </div>
+                    <span class="char-count" id="count-otherDiseaseDesc">0/150</span>
+                </div>
+            </div>
+            
+            <button class="btn-add-custom" id="btnAddDisease" onclick="addCustomDisease()" disabled>
+                <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+                ADD DISEASE
+            </button>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let selectedDiseases = [];
+        let customDiseasesList = [];
+        let isOtherActive = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'economic_registration.html';
+
+            const s = brain.settings || {};
+            if (s.health) {
+                if (s.health.standardDiseases && s.health.standardDiseases.length > 0) {
+                    if (s.health.standardDiseases.includes('None')) {
+                        selectNoneDisease(document.getElementById('btnNoneDisease'), true);
+                    } else {
+                        s.health.standardDiseases.forEach(val => {
+                            const btns = document.querySelectorAll('#grid-disease .card-btn');
+                            btns.forEach(b => {
+                                if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`toggleDisease('${val}'`)) {
+                                    toggleDisease(val, b, true);
+                                }
+                            });
+                        });
+                    }
+                }
+                
+                if (s.health.customDiseases && s.health.customDiseases.length > 0) {
+                    s.health.customDiseases.forEach(d => {
+                        customDiseasesList.push(d);
+                        addCustomDiseaseToDOM(d.title);
+                    });
+                }
+            }
+
+            validateForm();
+            const btn = document.getElementById('btnNext');
+            if (btn.classList.contains('active') && s.health && (s.health.standardDiseases.length > 0 || s.health.customDiseases.length > 0)) {
+                btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                btn.dataset.saved = 'true';
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function updateCountDisplay(id, current, max) {
+            const countEl = document.getElementById(id);
+            if (countEl) {
+                if (current >= max) {
+                    countEl.innerHTML = `<span style="color: var(--c-red); margin-right: 4px;">MAX</span>${current}/${max}`;
+                } else {
+                    countEl.innerText = `${current}/${max}`;
+                }
+            }
+        }
+
+        function formatText(el, countId, max) {
+            markUnsaved();
+            el.value = el.value.toUpperCase();
+            if (el.value.length > max) el.value = el.value.substring(0, max);
+            updateCountDisplay(countId, el.value.length, max);
+            validateForm();
+        }
+
+        function toggleDisease(val, el, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            const noneBtn = document.getElementById('btnNoneDisease');
+            noneBtn.classList.remove('active');
+
+            const index = selectedDiseases.indexOf(val);
+            if (index > -1) {
+                selectedDiseases.splice(index, 1);
+                el.classList.remove('active');
+            } else {
+                const noneIndex = selectedDiseases.indexOf('None');
+                if (noneIndex > -1) selectedDiseases.splice(noneIndex, 1);
+                
+                selectedDiseases.push(val);
+                el.classList.add('active');
+            }
+            validateForm();
+        }
+
+        function toggleOther(el, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            const noneBtn = document.getElementById('btnNoneDisease');
+            noneBtn.classList.remove('active');
+            
+            const noneIndex = selectedDiseases.indexOf('None');
+            if (noneIndex > -1) selectedDiseases.splice(noneIndex, 1);
+
+            isOtherActive = !isOtherActive;
+            const otherCont = document.getElementById('otherDiseaseContainer');
+
+            if (isOtherActive) {
+                el.classList.add('active');
+                otherCont.classList.add('show');
+                setTimeout(() => document.getElementById('otherDiseaseTitle').focus(), 100);
+            } else {
+                el.classList.remove('active');
+                otherCont.classList.remove('show');
+                document.getElementById('otherDiseaseTitle').value = '';
+                document.getElementById('otherDiseaseDesc').value = '';
+                updateCountDisplay('count-otherDiseaseTitle', 0, 50);
+                updateCountDisplay('count-otherDiseaseDesc', 0, 150);
+            }
+            validateForm();
+        }
+
+        function addCustomDiseaseToDOM(title) {
+            const grid = document.getElementById('grid-disease');
+            const btn = document.createElement('div');
+            btn.className = 'card-btn active';
+            btn.innerHTML = `${title}<br><span style="font-size: 8px; opacity: 0.7;">(TAP TO REMOVE)</span>`;
+            
+            btn.onclick = function() {
+                markUnsaved();
+                grid.removeChild(btn);
+                customDiseasesList = customDiseasesList.filter(d => d.title !== title);
+                validateForm();
+            };
+
+            const otherBtn = document.getElementById('btnOtherDisease');
+            grid.insertBefore(btn, otherBtn);
+        }
+
+        function addCustomDisease() {
+            markUnsaved();
+            const titleInput = document.getElementById('otherDiseaseTitle');
+            const descInput = document.getElementById('otherDiseaseDesc');
+            const title = titleInput.value.trim();
+            const desc = descInput.value.trim();
+
+            if (title.length < 3 || desc.length < 3) return;
+
+            customDiseasesList.push({ title, desc });
+            addCustomDiseaseToDOM(title);
+
+            // Reset Other Section
+            isOtherActive = false;
+            const otherBtn = document.getElementById('btnOtherDisease');
+            otherBtn.classList.remove('active');
+            document.getElementById('otherDiseaseContainer').classList.remove('show');
+            titleInput.value = '';
+            descInput.value = '';
+            updateCountDisplay('count-otherDiseaseTitle', 0, 50);
+            updateCountDisplay('count-otherDiseaseDesc', 0, 150);
+            
+            validateForm();
+        }
+
+        function selectNoneDisease(el, isLoad = false) {
+            if(!isLoad) markUnsaved();
+            selectedDiseases = ['None'];
+            customDiseasesList = [];
+            
+            document.querySelectorAll('#grid-disease .card-btn').forEach(btn => {
+                if(btn.id !== 'btnNoneDisease') btn.classList.remove('active');
+                if(!btn.id && !btn.getAttribute('onclick').includes('toggleDisease')) {
+                    btn.remove(); // Remove dynamically added custom disease buttons
+                }
+            });
+            el.classList.add('active');
+            
+            isOtherActive = false;
+            const otherCont = document.getElementById('otherDiseaseContainer');
+            otherCont.classList.remove('show');
+            document.getElementById('otherDiseaseTitle').value = '';
+            document.getElementById('otherDiseaseDesc').value = '';
+            updateCountDisplay('count-otherDiseaseTitle', 0, 50);
+            updateCountDisplay('count-otherDiseaseDesc', 0, 150);
+
+            validateForm();
+        }
+
+        function validateForm() {
+            const btnNext = document.getElementById('btnNext');
+            const btnAdd = document.getElementById('btnAddDisease');
+            
+            const title = document.getElementById('otherDiseaseTitle').value.trim();
+            const desc = document.getElementById('otherDiseaseDesc').value.trim();
+            
+            if (title.length >= 3 && desc.length >= 3) {
+                btnAdd.removeAttribute('disabled');
+            } else {
+                btnAdd.setAttribute('disabled', 'true');
+            }
+
+            let valid = false;
+            
+            if (isOtherActive) {
+                valid = false; // Block next while editing custom disease
+            } else if (selectedDiseases.length > 0 || customDiseasesList.length > 0) {
+                valid = true;
+            }
+
+            if (valid) {
+                btnNext.classList.add('active');
+            } else {
+                btnNext.classList.remove('active');
+            }
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+
+            const btn = document.getElementById('btnNext');
+            btn.classList.add('saved');
+            btn.innerHTML = 'SAVED ✔';
+
+            const userSettings = brain.settings || {};
+            userSettings.health = {
+                standardDiseases: selectedDiseases,
+                customDiseases: customDiseasesList
+            };
+
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'disability_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>

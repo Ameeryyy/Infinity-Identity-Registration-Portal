@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Security Check</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 85%; max-width: 400px; animation: fadeIn 0.6s ease-out; text-align: center; z-index: 10; padding: 30px; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); }
+        
+        .icon-box { width: clamp(60px, 15vw, 80px); height: clamp(60px, 15vw, 80px); border: 1px dashed var(--c-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; animation: pulse 2s infinite alternate; }
+        .icon-box svg { width: clamp(30px, 8vw, 40px); height: clamp(30px, 8vw, 40px); fill: var(--c-blue); }
+        
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); letter-spacing: 1px; text-transform: uppercase; }
+        p { font-size: clamp(12px, 3.5vw, 14px); opacity: 0.8; margin-top: 0; margin-bottom: 40px; line-height: 1.6; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .btn-verify { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-verify:hover { background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); }
+        .btn-verify:active { transform: scale(0.95); }
+
+        /* Custom Modal CSS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: var(--c-yellow); }
+        .modal-desc { font-size: 13px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        .modal-actions { display: flex; justify-content: center; width: 100%; }
+        .modal-btn { width: 100%; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 12px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: rgba(255,255,255,0.05); }
+        .modal-btn:active { transform: scale(0.95); }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); } 100% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="#" onclick="goBack(event)" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+    <div class="container">
+        <div class="icon-box">
+            <svg viewBox="0 0 24 24"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+        </div>
+        <h2><strong>Owner Verification</strong></h2>
+        <p>Infinity protocols require <strong>explicit device owner authentication</strong> to proceed with <strong>identity operations</strong>.</p>
+        <button class="btn-verify" onclick="verifyOwner()">Verify Identity</button>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">AUTHENTICATION FAILED</div>
+            <div class="modal-desc" id="modalDesc">System was unable to verify ownership.<br>Access denied.</div>
+            <div class="modal-actions" id="modalActions">
+                <button class="modal-btn" onclick="closeModal()">DISMISS</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get('source') || 'request';
+
+        function goBack(e) {
+            e.preventDefault();
+            if (source === 'profile') {
+                window.location.href = 'home.html';
+            } else {
+                window.location.href = 'agreement.html?type=' + source;
+            }
+        }
+
+        function showModal(title, desc) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerHTML = desc;
+            document.getElementById('customModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('show');
+        }
+
+        async function verifyOwner() {
+            try {
+                const publicKey = {
+                    challenge: new Uint8Array(32), rp: { name: "Infinity Identity" },
+                    user: { id: new Uint8Array(16), name: "Device Owner", displayName: "Device Owner" },
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                    authenticatorSelection: { userVerification: "required" },
+                    timeout: 60000, attestation: "none"
+                };
+                await navigator.credentials.create({ publicKey });
+                
+                if (source === 'accept' || source === 'saved') {
+                    window.location.href = 'save.html';
+                } else if (source === 'resume') {
+                    const target = localStorage.getItem('inf_resume_target') || 'resume.html';
+                    localStorage.removeItem('inf_resume_target');
+                    window.location.href = target;
+                } else if (source === 'profile') {
+                    window.location.href = 'profile.html';
+                } else {
+                    window.location.href = 'identity_registration.html';
+                }
+            } catch (error) {
+                showModal('AUTHENTICATION FAILED', 'System was unable to verify ownership.<br>Access denied.');
+            }
+        }
+    </script>
+</body>
+</html>

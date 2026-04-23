@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - DOB Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left svg { width: clamp(20px, 6vw, 24px); height: clamp(20px, 6vw, 24px); fill: currentColor; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { margin-bottom: clamp(20px, 5vw, 25px); position: relative; z-index: 1; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: border-color 0.3s, box-shadow 0.3s; background: transparent; position: relative; overflow: hidden; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { width: 100%; padding: clamp(12px, 3.5vw, 15px) 16px; background: transparent; border: none; color: inherit; font-size: clamp(14px, 4vw, 16px); outline: none; font-family: inherit; font-weight: bold; letter-spacing: 1px; color-scheme: dark; }
+        .input-wrapper input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: opacity 0.3s; filter: invert(1); }
+        .input-wrapper input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+        
+        .placeholder-info { text-align: center; font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; margin-top: 20px; line-height: 1.6; transition: opacity 0.3s, transform 0.3s; }
+        .placeholder-info.hide { opacity: 0; transform: translateY(-10px); pointer-events: none; position: absolute; visibility: hidden; }
+
+        .info-box { border: 1px dashed rgba(128,128,128,0.3); border-radius: 12px; padding: 20px 10px; margin-top: 15px; display: flex; justify-content: space-around; align-items: center; opacity: 0; transform: translateY(-10px); transition: all 0.4s ease; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); display: none; }
+        .info-box.show { display: flex; opacity: 1; transform: translateY(0); }
+        .info-item { text-align: center; flex: 1; }
+        .info-item:not(:last-child) { border-right: 1px solid rgba(128,128,128,0.2); }
+        .info-item span { display: block; font-size: clamp(8px, 2vw, 10px); opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: bold; color: var(--c-blue); }
+        .info-item div { font-size: clamp(13px, 3.5vw, 15px); font-weight: bold; white-space: nowrap; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: all 0.3s; margin-top: clamp(20px, 5vw, 25px); letter-spacing: 1px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; }
+        .btn-next.active:active { transform: scale(0.97); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green); border-color: var(--c-green); color: #ffffff; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="identity_registration.html" id="backBtn" class="top-left">
+        <svg viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/></svg>
+    </a>
+
+    <div class="container">
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Temporal Origin</strong></h2>
+        <p class="desc">Select your <strong>Date of Birth</strong>. The system strictly requires a minimum age of <strong>2.5 years</strong> to proceed.</p>
+
+        <div class="input-group">
+            <label>Date of Birth</label>
+            <div class="input-wrapper">
+                <input type="date" id="dobInput" oninput="markUnsaved()" onchange="calculateDetails()">
+            </div>
+        </div>
+
+        <div id="placeholderText" class="placeholder-info">
+            Please select a valid date from the calendar. Your temporal data, zodiac parameters, and exact age will be processed here.
+        </div>
+
+        <div class="info-box" id="infoBox">
+            <div class="info-item">
+                <span>Birth Day</span>
+                <div id="dayOutput">--</div>
+            </div>
+            <div class="info-item">
+                <span>Current Age</span>
+                <div id="ageOutput">--</div>
+            </div>
+            <div class="info-item">
+                <span>Zodiac Sign</span>
+                <div id="zodiacOutput">--</div>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">Next Step</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() - 2, today.getMonth() - 6, today.getDate());
+            const formattedMaxDate = maxDate.toISOString().split('T')[0];
+            document.getElementById('dobInput').setAttribute('max', formattedMaxDate);
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            document.getElementById('backBtn').href = isEdit ? 'edit.html' : 'identity_registration.html';
+
+            const s = brain.settings || {};
+            if(s.dateOfBirth) {
+                document.getElementById('dobInput').value = s.dateOfBirth;
+                calculateDetails();
+                
+                const btn = document.getElementById('btnNext');
+                if (btn.classList.contains('active')) {
+                    btn.innerHTML = 'SAVED ✔ • NEXT STEP';
+                    btn.dataset.saved = 'true';
+                }
+            }
+        });
+
+        function markUnsaved() {
+            const btn = document.getElementById('btnNext');
+            if (btn.dataset.saved === 'true') {
+                btn.dataset.saved = 'false';
+                btn.innerHTML = 'NEXT STEP';
+            }
+        }
+
+        function getZodiacSign(day, month) {
+            if ((month == 1 && day <= 20) || (month == 12 && day >= 22)) return "Capricorn";
+            if ((month == 1 && day >= 21) || (month == 2 && day <= 18)) return "Aquarius";
+            if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) return "Pisces";
+            if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return "Aries";
+            if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return "Taurus";
+            if ((month == 5 && day >= 21) || (month == 6 && day <= 20)) return "Gemini";
+            if ((month == 6 && day >= 21) || (month == 7 && day <= 22)) return "Cancer";
+            if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return "Leo";
+            if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return "Virgo";
+            if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) return "Libra";
+            if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) return "Scorpio";
+            if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) return "Sagittarius";
+            return "--";
+        }
+
+        function getExactAge(birthDate) {
+            const today = new Date();
+            let y = today.getFullYear() - birthDate.getFullYear();
+            let m = today.getMonth() - birthDate.getMonth();
+            let d = today.getDate() - birthDate.getDate();
+            
+            if (d < 0) {
+                m--;
+                const temp = new Date(today.getFullYear(), today.getMonth(), 0);
+                d += temp.getDate();
+            }
+            if (m < 0) {
+                y--;
+                m += 12;
+            }
+            
+            let ageString = `${y} Yrs`;
+            if (m > 0) ageString += `, ${m} Mo`;
+            return ageString;
+        }
+
+        function calculateDetails() {
+            markUnsaved();
+            const dobVal = document.getElementById('dobInput').value;
+            const btn = document.getElementById('btnNext');
+            const infoBox = document.getElementById('infoBox');
+            const placeholder = document.getElementById('placeholderText');
+            
+            if (dobVal) {
+                const dateObj = new Date(dobVal);
+                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                const day = dateObj.getDate();
+                const month = dateObj.getMonth() + 1;
+                
+                document.getElementById('dayOutput').innerText = dayName;
+                document.getElementById('ageOutput').innerText = getExactAge(dateObj);
+                document.getElementById('zodiacOutput').innerText = getZodiacSign(day, month);
+                
+                placeholder.classList.add('hide');
+                infoBox.classList.add('show');
+                btn.classList.add('active');
+            } else {
+                placeholder.classList.remove('hide');
+                infoBox.classList.remove('show');
+                btn.classList.remove('active');
+            }
+        }
+
+        function saveAndProceed() {
+            const btn = document.getElementById('btnNext');
+            const dobVal = document.getElementById('dobInput').value;
+
+            btn.classList.add('saved');
+            btn.innerHTML = 'SAVED ✔';
+
+            const userSettings = brain.settings || {};
+            userSettings.dateOfBirth = dobVal;
+            brain.saveSettings(userSettings);
+
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'gender_registration.html';
+            }, 800);
+        }
+    </script>
+</body>
+</html>
