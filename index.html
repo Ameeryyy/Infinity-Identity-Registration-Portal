@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - System Boot</title>
+    
+    <style>
+        :root { 
+            --bg: #000000; 
+            --fg: #ffffff; 
+            --c-blue: #007bff; 
+            --c-red: #ff4444; 
+            --c-green: #00C851; 
+            --c-yellow: #ffbb33; 
+            --c-cyan: #00e5ff; 
+        }
+        
+        @media (prefers-color-scheme: light) {
+            :root { 
+                --bg: #ffffff; 
+                --fg: #000000; 
+                --c-blue: #0056b3; 
+                --c-red: #cc0000; 
+                --c-green: #007e33; 
+                --c-yellow: #ff8800; 
+                --c-cyan: #0099cc; 
+            }
+        }
+
+        [data-theme="minimal-dark"] { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; --c-cyan: #00e5ff; }
+        [data-theme="minimal-light"] { --bg: #ffffff; --fg: #000000; --c-blue: #0056b3; --c-red: #cc0000; --c-green: #007e33; --c-yellow: #ff8800; --c-cyan: #0099cc; }
+        
+        html, body {
+            width: 100vw; height: 100dvh;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+            cursor: default; 
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--fg); 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+            opacity: 0;
+        }
+
+        .loader-wrapper {
+            position: relative;
+            width: clamp(80px, 18vmin, 220px); 
+            height: clamp(80px, 18vmin, 220px);
+            margin-bottom: clamp(40px, 8vmin, 80px);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .cyber-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            border: 2px dashed var(--fg);
+            opacity: 0.2;
+            border-radius: 50%;
+            animation: spin 6s linear infinite;
+            transition: border-color 0.5s ease;
+        }
+
+        .cyber-ring-inner {
+            position: absolute;
+            width: 70%; height: 70%;
+            border: 1.5px solid transparent;
+            border-top-color: var(--c-blue);
+            border-bottom-color: var(--c-blue);
+            opacity: 0.8;
+            border-radius: 50%;
+            animation: spinReverse 2s ease-in-out infinite;
+            transition: border-top-color 0.5s ease, border-bottom-color 0.5s ease;
+        }
+
+        .cyber-core {
+            position: absolute;
+            width: clamp(14px, 3vmin, 40px); 
+            height: clamp(14px, 3vmin, 40px);
+            background: var(--c-blue);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+            transition: background-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .brand-name {
+            font-size: clamp(18px, 4vmin, 50px);
+            font-weight: bold;
+            letter-spacing: clamp(5px, 1.2vmin, 18px);
+            text-transform: uppercase;
+            margin-bottom: clamp(15px, 3vmin, 30px);
+            text-align: center;
+            transition: color 0.5s ease;
+        }
+
+        .status-text {
+            font-size: clamp(11px, 2vmin, 24px);
+            font-weight: bold;
+            opacity: 0.8;
+            color: var(--c-blue);
+            letter-spacing: clamp(3px, 1vmin, 10px);
+            text-transform: uppercase;
+            animation: blink 1.2s infinite alternate;
+            text-align: center;
+            transition: color 0.5s ease;
+        }
+
+        .theme-warning {
+            position: absolute;
+            bottom: clamp(10px, 3vmin, 20px);
+            font-size: clamp(10px, 1.5vmin, 12px);
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+            opacity: 0.9;
+            transition: color 0.5s ease;
+        }
+
+        .wave-dots span {
+            display: inline-block;
+            animation: wave 1.2s infinite ease-in-out;
+        }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spinReverse { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
+        @keyframes pulse { 
+            0% { transform: scale(0.8); opacity: 0.7; box-shadow: 0 0 10px 2px var(--c-blue); } 
+            100% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 25px 5px var(--c-blue); } 
+        }
+        @keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="loader-wrapper">
+        <div class="cyber-ring"></div>
+        <div class="cyber-ring-inner"></div>
+        <div class="cyber-core"></div>
+    </div>
+    <div class="brand-name">Infinity Identity</div>
+    <div class="status-text">USER REGISTRATION</div>
+    
+    
+    <script>
+        setTimeout(() => {
+            document.body.style.opacity = '1';
+        }, 100);
+
+        const isLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+        const w = document.createElement("div");
+        w.className = "theme-warning";
+        const waveDots = '<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+        const netStatus = navigator.onLine 
+            ? ' | <span style="color: var(--c-green); font-weight: bold;">ONLINE</span>' 
+            : ' | <span style="color: var(--c-red); font-weight: bold;">OFFLINE</span>';
+        
+        if (isLight) {
+            w.style.color = "var(--c-yellow)";
+            w.innerHTML = `Please switch to Dark Theme${waveDots}${netStatus}`;
+        } else {
+            w.style.color = "var(--c-green)";
+            w.innerHTML = `Dark Theme Activated${waveDots}${netStatus}`;
+        }
+        document.body.appendChild(w);
+        
+        let delay = Math.floor(Math.random() * 5000) + 5000;
+        
+        setTimeout(() => {
+            document.body.style.opacity = '0';
+        }, delay - 1000);
+        
+        setTimeout(() => {
+            if (navigator.onLine) {
+                window.location.href = "landing.html";
+            } else {
+                window.location.href = "offline.html";
+            }
+        }, delay);
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

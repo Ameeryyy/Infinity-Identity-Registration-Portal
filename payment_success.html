@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Payment Status</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            /* Added smooth 1-second fade in/out transition matching other pages */
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+            user-select: none;
+        }
+
+        .container { width: 90%; max-width: 400px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .circle-loader { position: relative; width: 100px; height: 100px; margin-bottom: 30px; }
+        .success-circle { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--c-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); opacity: 0; box-shadow: 0 0 30px rgba(0, 200, 81, 0.5); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease; }
+        .success-circle svg { width: 50px; height: 50px; fill: none; stroke: #ffffff; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100; }
+        .success-circle.show { transform: scale(1); opacity: 1; }
+        .success-circle.show svg { animation: drawCheck 0.6s ease 0.2s forwards; }
+
+        .status-text { font-size: 18px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; color: var(--c-green); text-shadow: 0 0 10px rgba(0,200,81,0.4); opacity: 0; transform: translateY(10px); transition: 0.5s; }
+        .status-text.show { opacity: 1; transform: translateY(0); }
+
+        .details-wrapper { width: 100%; opacity: 0; transform: translateY(20px); transition: all 0.6s ease 0.4s; }
+        .details-wrapper.show { opacity: 1; transform: translateY(0); }
+
+        .amount-display { font-size: 48px; font-weight: bold; margin-bottom: 5px; color: var(--fg); }
+        .paid-to { font-size: 11px; opacity: 0.6; font-weight: bold; letter-spacing: 1px; margin-bottom: 30px; text-transform: uppercase; }
+
+        .receipt-card { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.2); border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 30px; backdrop-filter: blur(5px); }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 12px; }
+        .receipt-row:last-child { margin-bottom: 0; }
+        .r-label { opacity: 0.5; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .r-value { font-weight: bold; color: var(--fg); letter-spacing: 0.5px; text-transform: uppercase; }
+
+        .btn-done { width: 100%; padding: 16px; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.4s; text-transform: uppercase; letter-spacing: 1px; opacity: 0; transform: translateY(10px); pointer-events: none; }
+        .details-wrapper.show .btn-done { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        
+        .btn-done.filled { background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; box-shadow: 0 5px 20px rgba(0, 123, 255, 0.4); }
+
+        @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="circle-loader"><div class="success-circle" id="successCircle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+        <div class="status-text" id="statusText">Payment Successful</div>
+        <div class="details-wrapper" id="detailsWrapper">
+            <div class="amount-display" id="dispAmount">--</div>
+            <div class="paid-to">PAID TO INFINITY IDENTITY REGISTRY</div>
+            <div class="receipt-card">
+                <div class="receipt-row"><span class="r-label">Transaction ID</span><span class="r-value" id="txnId">--</span></div>
+                <div class="receipt-row"><span class="r-label">Date & Time</span><span class="r-value" id="txnTime">--</span></div>
+                <div class="receipt-row"><span class="r-label">Method</span><span class="r-value" id="txnMethod">--</span></div>
+            </div>
+            <button class="btn-done" id="btnDone" onclick="completePayment(this)">Continue to Transfer</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Smooth 1 Second Page Fade In
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+
+            // Generate Random Transaction ID for realism
+            const randomTxnId = 'TXN' + Math.floor(100000000000 + Math.random() * 900000000000) + 'IN';
+            
+            // Get Current Date and Formatted Time
+            const now = new Date();
+            const dateOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            const formattedTime = now.toLocaleDateString('en-IN', dateOptions).replace(',', ' |');
+            
+            // Detect Payment Method from URL (Passed from payment.html)
+            const urlParams = new URLSearchParams(window.location.search);
+            let methodParam = urlParams.get('method');
+            let displayMethod = 'UPI / BHIM / GPAY'; // Default
+            if (methodParam === 'qr') displayMethod = 'SCAN QR CODE';
+
+            // Get exact amount from Session Storage OR use default ₹ 10.00
+            const displayAmount = sessionStorage.getItem('feeAmount') || '₹ 10.00';
+
+            // Assign Dynamic Data to HTML
+            document.getElementById('txnId').innerText = randomTxnId;
+            document.getElementById('txnTime').innerText = formattedTime;
+            document.getElementById('txnMethod').innerText = displayMethod;
+            document.getElementById('dispAmount').innerText = displayAmount;
+
+            // Trigger Success Animations
+            setTimeout(() => {
+                document.getElementById('successCircle').classList.add('show');
+                document.getElementById('statusText').classList.add('show');
+                document.getElementById('detailsWrapper').classList.add('show');
+            }, 500);
+        });
+
+        function completePayment(btn) {
+            btn.classList.add('filled');
+            btn.style.pointerEvents = 'none';
+            
+            // Smooth Page Fade Out before redirecting
+            document.body.style.opacity = '0';
+            
+            setTimeout(() => { 
+                window.location.href = 'transfer.html'; 
+            }, 1000); // Waits exactly 1 second for the page to fully hide before navigation
+        }
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Security Check</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; font-size: 14px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        
+        .container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 85%; max-width: 400px; animation: fadeIn 0.6s ease-out; text-align: center; z-index: 10; padding: 30px; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 16px; background: color-mix(in srgb, var(--fg) 2%, transparent); backdrop-filter: blur(10px); }
+        
+        .icon-box { width: clamp(60px, 15vw, 80px); height: clamp(60px, 15vw, 80px); border: 1px dashed var(--c-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; animation: pulse 2s infinite alternate; }
+        .icon-box svg { width: clamp(30px, 8vw, 40px); height: clamp(30px, 8vw, 40px); fill: var(--c-blue); }
+        
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); letter-spacing: 1px; text-transform: uppercase; }
+        p { font-size: clamp(12px, 3.5vw, 14px); opacity: 0.8; margin-top: 0; margin-bottom: 40px; line-height: 1.6; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .btn-verify { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: clamp(14px, 4vw, 16px); font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: center; align-items: center; }
+        .btn-verify:hover { background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); }
+        .btn-verify:active { transform: scale(0.95); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: color-mix(in srgb, var(--bg) 95%, var(--fg)); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: var(--c-yellow); }
+        .modal-desc { font-size: 13px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); }
+        .modal-actions { display: flex; justify-content: center; width: 100%; }
+        .modal-btn { width: 100%; background: transparent; color: var(--fg); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 12px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .modal-btn:active { transform: scale(0.95); }
+        
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .loader-spinner { width: 24px; height: 24px; border: 3px solid rgba(0,200,81,0.2); border-top-color: var(--c-green); border-radius: 50%; animation: spin 1s linear infinite; margin: 15px auto 0 auto; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); } 100% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="#" onclick="goBack(event)" class="top-left">BACK</a>
+    <div class="container">
+        <div class="icon-box">
+            <svg viewBox="0 0 24 24"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+        </div>
+        <h2><strong>Owner Verification</strong></h2>
+        <p>Infinity protocols require <strong>explicit device owner authentication</strong> to proceed with <strong>identity operations</strong>.</p>
+        <button class="btn-verify" onclick="verifyOwner()">Verify Identity</button>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">AUTHENTICATION FAILED</div>
+            <div class="modal-desc" id="modalDesc">System was unable to verify ownership.<br>Access denied.</div>
+            <div class="modal-actions" id="modalActions">
+                <button class="modal-btn" onclick="closeModal()">DISMISS</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+        });
+
+        function goBack(e) {
+            e.preventDefault();
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = 'agreement.html'; }, 1000);
+        }
+
+        function showModal(title, desc) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerHTML = desc;
+            document.getElementById('customModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('show');
+        }
+
+        async function verifyOwner() {
+            const btn = document.querySelector('.btn-verify');
+            const originalText = btn.innerText;
+            
+            btn.innerHTML = 'AUTHENTICATING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+
+            try {
+                if (!window.PublicKeyCredential) {
+                    throw new Error("WebAuthn not supported");
+                }
+                
+                const challengeArray = new Uint8Array(32);
+                window.crypto.getRandomValues(challengeArray);
+                
+                const userIdArray = new Uint8Array(16);
+                window.crypto.getRandomValues(userIdArray);
+
+                const publicKey = {
+                    challenge: challengeArray,
+                    rp: { name: "Infinity Identity" },
+                    user: { id: userIdArray, name: "owner@infinity", displayName: "Device Owner" },
+                    pubKeyCredParams: [
+                        { type: "public-key", alg: -7 }, 
+                        { type: "public-key", alg: -257 }
+                    ],
+                    authenticatorSelection: { 
+                        authenticatorAttachment: "platform", 
+                        userVerification: "required" 
+                    },
+                    timeout: 60000,
+                    attestation: "none"
+                };
+                
+                await navigator.credentials.create({ publicKey });
+                
+                document.getElementById('modalTitle').innerText = 'VERIFIED';
+                document.getElementById('modalTitle').style.color = 'var(--c-green)';
+                document.getElementById('modalDesc').innerHTML = 'Device ownership verified securely.<br>Initializing registration protocol...<div class="loader-spinner"></div>';
+                document.querySelector('.modal-box').style.borderColor = 'rgba(0,200,81,0.3)';
+                document.querySelector('.icon-box svg').style.fill = 'var(--c-green)';
+                document.querySelector('.icon-box').style.borderColor = 'var(--c-green)';
+                document.getElementById('modalActions').style.display = 'none';
+                document.getElementById('customModal').classList.add('show');
+                
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => { 
+                        let targetSection = sessionStorage.getItem('targetSection');
+                        let targetPage = 'registration.html';
+                        if (targetSection && targetSection !== '1' && targetSection !== 'null') {
+                            targetPage = targetSection + 'registration.html';
+                        }
+                        window.location.href = targetPage; 
+                    }, 1000);
+                }, 2500);
+
+            } catch (error) {
+                btn.innerHTML = originalText;
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+
+                document.getElementById('modalTitle').innerText = 'AUTHENTICATION FAILED';
+                document.getElementById('modalTitle').style.color = 'var(--c-red)';
+                document.getElementById('modalDesc').innerHTML = 'System was unable to verify ownership.<br>Please ensure your device has a screen lock (PIN/Password/Biometric) enabled and you are using a secure connection (HTTPS or Localhost).';
+                document.querySelector('.modal-box').style.borderColor = 'rgba(255,68,68,0.3)';
+                document.getElementById('modalActions').style.display = 'flex';
+                document.getElementById('customModal').classList.add('show');
+            }
+        }
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

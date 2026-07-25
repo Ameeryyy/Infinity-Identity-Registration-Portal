@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - Registration Step 2</title>
+    
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+            user-select: none;
+        }
+
+        .container { 
+            width: 90%; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: clamp(40px, 8vh, 80px) 0; 
+            position: relative; 
+            z-index: 10; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 5px; font-size: clamp(22px, 6vw, 32px); text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        p.desc { font-size: clamp(12px, 3vw, 14px); opacity: 0.7; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; text-align: center; }
+
+        .card-box { border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: clamp(20px, 5vw, 35px); background: color-mix(in srgb, var(--fg) 3%, transparent); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 150px; opacity: 1; margin-bottom: 20px; overflow: visible; }
+        
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group.disabled { opacity: 0.5; pointer-events: none; }
+        .check-group input { display: none; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; user-select: none; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .btn-row { display: flex; width: 100%; margin-top: 30px; position: relative; height: 50px; }
+        
+        .btn-main { width: 100%; height: 50px; padding: 0 16px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, opacity 0.4s ease, transform 0.4s ease, height 0.3s ease; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; box-sizing: border-box; }
+        .btn-main:hover:not(.processing):not(:disabled) { background: var(--c-blue) !important; color: #ffffff !important; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); border-color: var(--c-blue) !important; }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-main.processing { opacity: 1 !important; pointer-events: none; }
+        .btn-main:disabled { opacity: 0.5; pointer-events: none; }
+
+        .parents-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; transition: all 0.5s ease; margin-bottom: 10px; }
+        .parent-info-card { background: color-mix(in srgb, var(--bg) 60%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 12px; padding: 25px 20px; text-align: left; position: relative; transition: border-color 0.3s, background-color 0.3s; display: flex; flex-direction: column; }
+        .parent-info-card h4 { margin: 0 0 20px 0; font-size: 14px; color: var(--c-blue); text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px dashed color-mix(in srgb, var(--fg) 15%, transparent); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .info-item { margin-bottom: 15px; font-size: 12px; display: flex; flex-direction: column; }
+        .info-item:last-child { margin-bottom: 0; }
+        .info-label { opacity: 0.5; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+        .info-val { font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; font-size: 13px; }
+        
+        .phone-highlight { color: var(--c-yellow) !important; letter-spacing: 1px; }
+
+        .card-header-action { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: bold; opacity: 0.8; cursor: pointer; transition: 0.3s; color: var(--fg); }
+        .card-header-action:hover { opacity: 1; color: var(--c-green); }
+
+        .hide-btn { opacity: 0 !important; pointer-events: none !important; z-index: 0; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #0a0a0a; border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: 30px; max-width: 420px; width: 85%; text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-title { font-size: 16px; font-weight: bold; color: var(--c-red); margin-bottom: 15px; letter-spacing: 2px; text-transform: uppercase; }
+        
+        /* Modal Description Paragraph: Slightly bigger for readability */
+        .modal-desc { font-size: 14px; opacity: 0.8; margin-bottom: 25px; line-height: 1.6; color: var(--fg); text-align: left; padding: 0 10px; }
+        
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        
+        /* Updated Modal Button: Cancel button to be white */
+        .modal-btn { padding: 12px 24px; background: transparent; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); color: var(--fg); border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
+        .modal-btn:hover:not(.danger) { background: #ffffff !important; color: #000000 !important; border-color: #ffffff !important; box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2); }
+        
+        .modal-btn.danger { border-color: var(--c-red); color: var(--c-red); }
+        .modal-btn.danger:hover { background: var(--c-red) !important; color: #ffffff !important; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-red) 30%, transparent); }
+
+        @media (max-width: 768px) {
+            .parents-grid { grid-template-columns: 1fr; }
+            .modal-desc { text-align: center; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="brand-title">STEP 2 OF 5</div>
+        <h2>VERIFY IDENTITIES</h2>
+        <p class="desc">Please confirm that the retrieved parental node records are strictly accurate.</p>
+        
+        <div class="card-box">
+            
+            <div class="parents-grid" id="parentsGrid">
+                <div class="parent-info-card" id="fCard">
+                    <h4>
+                        <span style="display:flex; align-items:center;">
+                            <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor; margin-right:6px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                            FATHER'S RECORD
+                        </span>
+                        <label class="card-header-action" id="fRecordGroup">
+                            <input type="checkbox" id="fRecordCheck" onchange="toggleRecordVerify()" style="cursor:pointer; width:14px; height:14px; margin:0;"> CONFIRM
+                        </label>
+                    </h4>
+                    <div class="info-item"><span class="info-label">Full Name</span><span class="info-val" id="fNameVal">AL AMEER</span></div>
+                    <div class="info-item"><span class="info-label">Infinity ID</span><span class="info-val" id="fIdDisplay" style="color: var(--c-blue); letter-spacing: 1px;">********0000</span></div>
+                    <div class="info-item"><span class="info-label">Date of Birth</span><span class="info-val" id="fDobVal">1990</span></div>
+                    <div class="info-item"><span class="info-label">Country</span><span class="info-val" id="fCountryVal">INDIA</span></div>
+                    <div class="info-item"><span class="info-label">State</span><span class="info-val" id="fStateVal">KERALA</span></div>
+                    <div class="info-item"><span class="info-label">Registered Mobile</span><span class="info-val phone-highlight" id="fPhoneVal">+91 ******0000</span></div>
+                </div>
+                
+                <div class="parent-info-card" id="mCard">
+                    <h4>
+                        <span style="display:flex; align-items:center;">
+                            <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor; margin-right:6px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                            MOTHER'S RECORD
+                        </span>
+                        <label class="card-header-action" id="mRecordGroup">
+                            <input type="checkbox" id="mRecordCheck" onchange="toggleRecordVerify()" style="cursor:pointer; width:14px; height:14px; margin:0;"> CONFIRM
+                        </label>
+                    </h4>
+                    <div class="info-item"><span class="info-label">Full Name</span><span class="info-val" id="mNameVal">SAFA FATHIMA</span></div>
+                    <div class="info-item"><span class="info-label">Infinity ID</span><span class="info-val" id="mIdDisplay" style="color: var(--c-blue); letter-spacing: 1px;">********0000</span></div>
+                    <div class="info-item"><span class="info-label">Date of Birth</span><span class="info-val" id="mDobVal">1994</span></div>
+                    <div class="info-item"><span class="info-label">Country</span><span class="info-val" id="mCountryVal">INDIA</span></div>
+                    <div class="info-item"><span class="info-label">State</span><span class="info-val" id="mStateVal">KERALA</span></div>
+                    <div class="info-item"><span class="info-label">Registered Mobile</span><span class="info-val phone-highlight" id="mPhoneVal">+91 ******9999</span></div>
+                </div>
+            </div>
+            
+            <div class="slide-down-wrapper" id="finalCheckWrapper">
+                <label class="check-group" style="margin-top: 20px;">
+                    <input type="checkbox" id="finalConfirmCheck" onchange="validateProceed()">
+                    <div class="custom-check">
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </div>
+                    <span class="check-label">I CONFIRM THE ABOVE RECORDS ARE ACCURATE</span>
+                </label>
+            </div>
+            
+            <div class="btn-row" id="actionBtnRow">
+                <button class="btn-main" id="btnEditId" onclick="showEditWarning()">
+                    EDIT ID NUMBER
+                </button>
+                <button class="btn-main hide-btn" id="btnProceed" onclick="proceedToNext()">
+                    PROCEED TO NEXT STEP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-box">
+            <div class="modal-title">WARNING</div>
+            <div class="modal-desc">
+                Please be advised that if you proceed to edit, both Parental Node records on this page will be cleared. This action cannot be undone, and you will need to re-verify the identities in Step 1.<br><br>
+                <strong>Do you want to proceed with the edit?</strong>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeEditWarning()">CANCEL</button>
+                <button class="modal-btn danger" onclick="confirmEditId()">CONFIRM EDIT</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <script>
+        document.addEventListener('paste', e => e.preventDefault());
+        document.addEventListener('drop', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+
+            // Fetch IDs from Step 1 (or brain.js if set) and apply basic masking
+            let fId = sessionStorage.getItem('fIdVal') || '000000000000';
+            let mId = sessionStorage.getItem('mIdVal') || '999999999999';
+            
+            document.getElementById('fIdDisplay').innerText = '********' + fId.slice(-4);
+            document.getElementById('mIdDisplay').innerText = '********' + mId.slice(-4);
+        });
+
+        function toggleRecordVerify() {
+            const fConf = document.getElementById('fRecordCheck').checked;
+            const mConf = document.getElementById('mRecordCheck').checked;
+            
+            const fCard = document.getElementById('fCard');
+            if(fConf) {
+                fCard.style.borderColor = 'var(--c-green)';
+                fCard.style.background = 'color-mix(in srgb, var(--c-green) 5%, transparent)';
+            } else {
+                fCard.style.borderColor = 'color-mix(in srgb, var(--fg) 15%, transparent)';
+                fCard.style.background = 'color-mix(in srgb, var(--fg) 3%, transparent)';
+            }
+
+            const mCard = document.getElementById('mCard');
+            if(mConf) {
+                mCard.style.borderColor = 'var(--c-green)';
+                mCard.style.background = 'color-mix(in srgb, var(--c-green) 5%, transparent)';
+            } else {
+                mCard.style.borderColor = 'color-mix(in srgb, var(--fg) 15%, transparent)';
+                mCard.style.background = 'color-mix(in srgb, var(--fg) 3%, transparent)';
+            }
+
+            // Both individual confirm checks must be true for the final confirm to appear
+            if(fConf && mConf) {
+                document.getElementById('finalCheckWrapper').classList.add('show');
+            } else {
+                document.getElementById('finalCheckWrapper').classList.remove('show');
+                document.getElementById('finalConfirmCheck').checked = false;
+                validateProceed(); // reset proceed buttons if final check is hidden
+            }
+        }
+
+        function validateProceed() {
+            const isChecked = document.getElementById('finalConfirmCheck').checked;
+            const btnEditId = document.getElementById('btnEditId');
+            const btnProceed = document.getElementById('btnProceed');
+            const fCheck = document.getElementById('fRecordCheck');
+            const mCheck = document.getElementById('mRecordCheck');
+            const fGroup = document.getElementById('fRecordGroup');
+            const mGroup = document.getElementById('mRecordGroup');
+
+            if(isChecked) {
+                // Disable card checks when final confirmation is checked
+                fCheck.disabled = true;
+                mCheck.disabled = true;
+                fGroup.style.opacity = '0.4';
+                fGroup.style.pointerEvents = 'none';
+                mGroup.style.opacity = '0.4';
+                mGroup.style.pointerEvents = 'none';
+
+                // Fade out edit button and smoothly fade in proceed button in same spot
+                btnEditId.classList.add('hide-btn');
+                btnProceed.classList.remove('hide-btn');
+                
+            } else {
+                // Reactivate card checks
+                fCheck.disabled = false;
+                mCheck.disabled = false;
+                fGroup.style.opacity = '0.8';
+                fGroup.style.pointerEvents = 'auto';
+                mGroup.style.opacity = '0.8';
+                mGroup.style.pointerEvents = 'auto';
+
+                btnProceed.classList.add('hide-btn');
+                btnEditId.classList.remove('hide-btn');
+            }
+        }
+
+        function proceedToNext() {
+            const btn = document.getElementById('btnProceed');
+            btn.classList.add('processing');
+            btn.style.pointerEvents = 'none';
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000';
+            btn.innerHTML = 'PROCEEDING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+
+            // Extract just the numbers from the phone highlight for storage
+            const fPhoneVal = document.getElementById('fPhoneVal').innerText.replace(/[^0-9+]/g, '');
+            const mPhoneVal = document.getElementById('mPhoneVal').innerText.replace(/[^0-9+]/g, '');
+            sessionStorage.setItem('fPhoneVal', fPhoneVal);
+            sessionStorage.setItem('mPhoneVal', mPhoneVal);
+
+            setTimeout(() => {
+                btn.style.background = 'var(--c-green)';
+                btn.style.borderColor = 'var(--c-green)';
+                btn.style.color = '#000';
+                btn.innerText = 'PROCEEDED'; // Confirmed by user: No Tick Mark.
+
+                // Delay for a short period in the green "PROCEEDED" state before moving on.
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    // Load registration3.html after fade-out. brain.js handles OTP retrieval based on phones set above.
+                    setTimeout(() => { window.location.href = 'registration3.html'; }, 1000);
+                }, 1500); // delay in the Proceeded state.
+            }, 3000); // Proceeding... dummy delay.
+        }
+
+        // Added functionality for Warning Modal Confirmation
+        function showEditWarning() {
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditWarning() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function confirmEditId() {
+            closeEditWarning();
+            // Clear essential step 1 verification markers if necessary in brain.js
+            sessionStorage.removeItem('authPassed'); // Force re-verification if user returns
+            document.body.style.opacity = '0';
+            // brain.js should detect 'clear=true' in registration.html on load.
+            setTimeout(() => { window.location.href = 'registration.html?clear=true'; }, 1000);
+        }
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Notifications</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .top-left { position: fixed; top: clamp(15px, 4vw, 25px); left: clamp(15px, 4vw, 25px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 100; background: var(--bg); padding: 5px; border-radius: 50%; font-size: 14px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        
+        .container { width: 90%; max-width: 600px; margin: clamp(60px, 10vh, 80px) auto clamp(40px, 8vh, 60px) auto; padding-bottom: 40px; text-align: left; z-index: 10; position: relative; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; letter-spacing: 1px; color: var(--c-blue); }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; text-align: center; }
+
+        .search-wrapper { display: flex; align-items: stretch; border: 1px dashed color-mix(in srgb, var(--fg) 30%, transparent); border-radius: 12px; margin-bottom: 10px; overflow: visible; background: color-mix(in srgb, var(--fg) 2%, transparent); transition: 0.3s; width: 100%; backdrop-filter: blur(5px); z-index: 20; position: relative; }
+        .search-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); background: color-mix(in srgb, var(--fg) 5%, transparent); }
+
+        .filter-dropdown { position: relative; display: flex; align-items: center; padding: 0 15px; cursor: pointer; border-right: 1px solid color-mix(in srgb, var(--fg) 10%, transparent); font-size: 11px; font-weight: bold; letter-spacing: 1px; color: var(--c-blue); user-select: none; white-space: nowrap; gap: 5px; transition: all 0.3s ease; }
+        
+        #filterLabel { display: inline-block; text-align: center; transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; white-space: nowrap; vertical-align: middle; }
+        
+        .filter-dropdown svg { width: 12px; height: 12px; fill: currentColor; }
+        .filter-dropdown-list { position: absolute; top: calc(100% + 5px); left: 0; background: color-mix(in srgb, var(--bg) 95%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 30%, transparent); border-radius: 8px; list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.5); min-width: 120px; overflow: hidden; z-index: 100; backdrop-filter: blur(10px); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .filter-dropdown-list.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .filter-dropdown-list li { padding: 12px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid color-mix(in srgb, var(--fg) 10%, transparent); color: var(--fg); text-transform: uppercase; font-size: 10px; }
+        .filter-dropdown-list li:last-child { border-bottom: none; }
+        .filter-dropdown-list li:hover { background: var(--c-blue); color: #ffffff; }
+
+        .search-icon { padding-left: 15px; opacity: 0.5; display: flex; align-items: center; justify-content: center; }
+        .search-icon svg { width: 18px; height: 18px; fill: currentColor; }
+        .search-wrapper input { flex: 1; width: 100%; padding: clamp(12px, 3vw, 14px) 15px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3.5vw, 14px); outline: none; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .search-wrapper input::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: 1px; }
+
+        .total-message-count { font-size: 10px; color: var(--c-blue); font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; text-align: right; }
+
+        .notif-list { display: flex; flex-direction: column; gap: 15px; }
+
+        .notif-card { border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: clamp(15px, 4vw, 20px); background: color-mix(in srgb, var(--fg) 2%, transparent); backdrop-filter: blur(10px); display: flex; gap: 15px; transition: all 0.3s ease; position: relative; overflow: hidden; cursor: pointer; }
+        .notif-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px color-mix(in srgb, var(--fg) 10%, transparent); }
+        .notif-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--fg); opacity: 0.5; }
+        
+        .notif-card.success { border-color: color-mix(in srgb, var(--c-green) 30%, transparent); background: color-mix(in srgb, var(--c-green) 5%, transparent); }
+        .notif-card.success::before { background: var(--c-green); opacity: 1; }
+        .notif-card.success .n-icon { color: var(--c-green); background: color-mix(in srgb, var(--c-green) 10%, transparent); }
+
+        .notif-card.danger { border-color: color-mix(in srgb, var(--c-red) 30%, transparent); background: color-mix(in srgb, var(--c-red) 5%, transparent); }
+        .notif-card.danger::before { background: var(--c-red); opacity: 1; }
+        .notif-card.danger .n-icon { color: var(--c-red); background: color-mix(in srgb, var(--c-red) 10%, transparent); }
+
+        .notif-card.warning { border-color: color-mix(in srgb, var(--c-yellow) 30%, transparent); background: color-mix(in srgb, var(--c-yellow) 5%, transparent); }
+        .notif-card.warning::before { background: var(--c-yellow); opacity: 1; }
+        .notif-card.warning .n-icon { color: var(--c-yellow); background: color-mix(in srgb, var(--c-yellow) 10%, transparent); }
+
+        .notif-card.info { border-color: color-mix(in srgb, var(--c-blue) 30%, transparent); background: color-mix(in srgb, var(--c-blue) 5%, transparent); }
+        .notif-card.info::before { background: var(--c-blue); opacity: 1; }
+        .notif-card.info .n-icon { color: var(--c-blue); background: color-mix(in srgb, var(--c-blue) 10%, transparent); }
+
+        .n-icon { width: clamp(35px, 10vw, 45px); height: clamp(35px, 10vw, 45px); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .n-icon svg { width: clamp(18px, 5vw, 22px); height: clamp(18px, 5vw, 22px); fill: currentColor; }
+
+        .n-content { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .n-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .n-title { font-size: clamp(13px, 3.5vw, 15px); font-weight: normal; margin: 0; text-transform: uppercase; letter-spacing: 1px; line-height: 1.2; }
+        .n-time { font-size: clamp(9px, 2.5vw, 10px); opacity: 0.5; white-space: nowrap; font-weight: bold; letter-spacing: 1px; }
+        
+        .n-desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; margin: 0; line-height: 1.5; font-weight: normal; }
+
+        @keyframes pop {
+            0% { transform: scale(1); box-shadow: 0 0 5px var(--c-blue); }
+            50% { transform: scale(1.2); box-shadow: 0 0 10px var(--c-blue); }
+            100% { transform: scale(1); box-shadow: 0 0 5px var(--c-blue); }
+        }
+
+        .notif-card.unread { border-color: color-mix(in srgb, var(--fg) 40%, transparent); background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .notif-card.unread .n-title { font-weight: 900; color: var(--fg); }
+        .notif-card.unread .n-desc { font-weight: 600; opacity: 1; color: var(--fg); }
+        .notif-card.unread::after { content: ''; position: absolute; right: 15px; top: clamp(15px, 4vw, 20px); width: 8px; height: 8px; background: var(--c-blue); border-radius: 50%; animation: pop 2s infinite ease-in-out; }
+        
+        .end-of-messages { text-align: center; font-size: 11px; font-weight: bold; opacity: 0.3; letter-spacing: 2px; text-transform: uppercase; margin-top: 40px; padding-bottom: 20px; display: block; transition: all 0.3s ease; }
+        .no-results { text-align: center; padding: 40px 20px; opacity: 0.5; font-size: 12px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; display: none; }
+
+        @media (max-width: 480px) {
+            .notif-card { padding: 12px; gap: 10px; }
+            .n-header { flex-direction: column; gap: 2px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="#" class="top-left" onclick="goBack(event)">BACK</a>
+    
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>System Logs</h2>
+        <p class="desc">Track your node registration status and critical system updates below.</p>
+        
+        <div class="search-wrapper">
+            <div class="filter-dropdown" onclick="toggleDropdown(event)">
+                <span id="filterLabel">ALL</span>
+                <svg viewBox="0 0 24 24"><path d="M7,10L12,15L17,10H7Z"/></svg>
+                <ul id="filterDropdown" class="filter-dropdown-list">
+                    <li onclick="setFilter('all', 'ALL', event)">ALL</li>
+                    <li onclick="setFilter('unread', 'UNREAD', event)">UNREAD</li>
+                    <li onclick="setFilter('read', 'READ', event)">READ</li>
+                    <li onclick="setFilter('welcome', 'WELCOME', event)">WELCOME</li>
+                </ul>
+            </div>
+            <div class="search-icon">
+                <svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+            </div>
+            <input type="text" id="searchInput" placeholder="SEARCH LOGS..." onkeyup="filterNotifications()" autocomplete="off">
+        </div>
+        
+        <div class="total-message-count" id="totalMessageCount">TOTAL LOGS: 0</div>
+
+        <div class="notif-list" id="notifList">
+        </div>
+        
+        <div class="end-of-messages" id="endOfMessages">-- NO MORE MESSAGES --</div>
+        <div class="no-results" id="noResults">NO LOGS FOUND FOR YOUR SEARCH.</div>
+    </div>
+    
+    
+    <script>
+        let currentSearchType = 'all';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            
+            const labelEl = document.getElementById('filterLabel');
+            labelEl.style.width = (labelEl.getBoundingClientRect().width + 8) + 'px';
+            
+            loadNotifications();
+        });
+
+        function goBack(e) {
+            if(e) e.preventDefault();
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = 'home.html'; }, 1000);
+        }
+
+        function smoothNavigate(url) {
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = url; }, 1000);
+        }
+
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('filterDropdown').classList.toggle('show');
+        }
+
+        function setFilter(type, label, e) {
+            e.stopPropagation();
+            currentSearchType = type;
+            const labelEl = document.getElementById('filterLabel');
+            
+            const temp = document.createElement('span');
+            temp.style.visibility = 'hidden';
+            temp.style.position = 'absolute';
+            temp.style.whiteSpace = 'nowrap';
+            temp.style.font = window.getComputedStyle(labelEl).font;
+            temp.innerText = label;
+            document.body.appendChild(temp);
+            const newWidth = temp.getBoundingClientRect().width + 8;
+            document.body.removeChild(temp);
+
+            labelEl.style.width = newWidth + 'px';
+            labelEl.innerText = label;
+
+            document.getElementById('filterDropdown').classList.remove('show');
+            filterNotifications();
+        }
+
+        document.addEventListener('click', () => {
+            const dropdown = document.getElementById('filterDropdown');
+            if(dropdown && dropdown.classList.contains('show')) dropdown.classList.remove('show');
+        });
+
+        function getFirstLoginTime() {
+            let firstLogin = localStorage.getItem('inf_first_login_time');
+            if (!firstLogin) {
+                const now = new Date();
+                let hours = now.getHours();
+                let minutes = now.getMinutes();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12; hours = hours ? hours : 12;
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                firstLogin = `${now.getDate()} ${now.toLocaleString('default', { month: 'short' }).toUpperCase()} ${now.getFullYear()} | ${hours}:${minutes} ${ampm}`;
+                localStorage.setItem('inf_first_login_time', firstLogin);
+            }
+            return firstLogin;
+        }
+
+        function loadNotifications() {
+            const welcomeNotif = {
+                id: 'welcome',
+                type: 'success',
+                title: 'SYSTEM INITIALIZED',
+                time: getFirstLoginTime(),
+                desc: 'Welcome to Infinity Identity. Your secure cryptographic node is active.',
+                icon: '<svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>'
+            };
+
+            const notifListContainer = document.getElementById('notifList');
+            const externalNotifs = JSON.parse(localStorage.getItem('inf_external_notifications') || '[]');
+            const allNotifs = [welcomeNotif, ...externalNotifs];
+            
+            const readList = JSON.parse(localStorage.getItem('inf_read_notifs') || '[]');
+            let html = '';
+
+            allNotifs.forEach(n => {
+                const isUnread = !readList.includes(n.id) ? 'unread' : '';
+                html += `
+                <div class="notif-card ${n.type} ${isUnread}" data-id="${n.id}" onclick="smoothNavigate('notification_view.html?id=${n.id}')">
+                    <div class="n-icon">${n.icon}</div>
+                    <div class="n-content">
+                        <div class="n-header">
+                            <h4 class="n-title">${n.title}</h4>
+                            <span class="n-time">${n.time}</span>
+                        </div>
+                        <p class="n-desc">${n.desc}</p>
+                    </div>
+                </div>
+                `;
+            });
+            notifListContainer.innerHTML = html;
+            
+            document.getElementById('totalMessageCount').innerText = `TOTAL LOGS: ${allNotifs.length}`;
+        }
+
+        function filterNotifications() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.notif-card');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const text = card.innerText.toLowerCase();
+                const isUnread = card.classList.contains('unread');
+                const isWelcome = card.getAttribute('data-id') === 'welcome';
+                
+                let matchesFilter = true;
+                if(currentSearchType === 'unread') matchesFilter = isUnread;
+                if(currentSearchType === 'read') matchesFilter = !isUnread;
+                if(currentSearchType === 'welcome') matchesFilter = isWelcome;
+
+                if (text.includes(query) && matchesFilter) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+            document.getElementById('endOfMessages').style.display = visibleCount === 0 ? 'none' : 'block';
+            document.getElementById('totalMessageCount').innerText = `SHOWING: ${visibleCount} / ${cards.length}`;
+        }
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

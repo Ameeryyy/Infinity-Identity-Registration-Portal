@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - Home</title>
+    <style>
+        :root, [data-theme="minimal-dark"] { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; --c-cyan: #00e5ff; }
+        [data-theme="pure-dark"] { --bg: #000000; --fg: #ffffff; --c-blue: #ffffff; --c-red: #ffffff; --c-green: #ffffff; --c-yellow: #ffffff; --c-cyan: #ffffff; }
+        [data-theme="pure-light"] { --bg: #ffffff; --fg: #000000; --c-blue: #000000; --c-red: #000000; --c-green: #000000; --c-yellow: #000000; --c-cyan: #000000; }
+        [data-theme="minimal-light"] { --bg: #ffffff; --fg: #000000; --c-blue: #0056b3; --c-red: #cc0000; --c-green: #007e33; --c-yellow: #ff8800; --c-cyan: #0099cc; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+        }
+
+        .top-header { position: fixed; top: clamp(20px, 5vw, 40px); left: clamp(5%, 5vw, 40px); right: clamp(5%, 5vw, 40px); z-index: 200; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+        .header-left { display: flex; flex-direction: column; gap: clamp(4px, 1vw, 8px); }
+        
+        .brand-name { font-size: clamp(14px, 4vw, 20px); font-weight: bold; text-transform: uppercase; letter-spacing: clamp(2px, 1vw, 4px); opacity: 0.9; }
+        .info-row { display: flex; align-items: center; gap: clamp(6px, 2vw, 12px); }
+        .live-time { font-size: clamp(12px, 3.5vw, 16px); font-weight: bold; letter-spacing: clamp(1px, 0.5vw, 2px); font-variant-numeric: tabular-nums; color: var(--c-blue); }
+        .separator { font-size: clamp(10px, 3vw, 14px); opacity: 0.4; }
+        .live-date { font-size: clamp(10px, 3vw, 14px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .weather-info { font-size: clamp(10px, 3vw, 14px); font-weight: bold; opacity: 0.6; letter-spacing: clamp(1px, 0.5vw, 2px); text-transform: uppercase; display: flex; align-items: center; gap: clamp(4px, 1vw, 8px); margin-top: 2px; }
+        .weather-info svg { width: clamp(12px, 3.5vw, 16px); height: clamp(12px, 3.5vw, 16px); fill: currentColor; }
+        
+        .header-right { pointer-events: auto; }
+        .notification-btn { display: flex; align-items: center; justify-content: center; width: clamp(35px, 10vw, 45px); height: clamp(35px, 10vw, 45px); border-radius: 50%; background: color-mix(in srgb, var(--fg) 5%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); cursor: pointer; transition: all 0.3s ease; color: var(--fg); text-decoration: none; position: relative; }
+        .notification-btn:hover { background: color-mix(in srgb, var(--fg) 10%, transparent); border-color: var(--c-blue); color: var(--c-blue); transform: scale(1.05); }
+        .notification-btn:active { transform: scale(0.95); }
+        .notification-btn svg { width: clamp(18px, 5vw, 22px); height: clamp(18px, 5vw, 22px); fill: currentColor; }
+        
+        .notification-badge { position: absolute; top: -2px; right: -2px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; background: var(--c-red); border-radius: 10px; box-shadow: 0 0 5px var(--c-red); display: none; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; border: 1px solid var(--bg); }
+
+        @keyframes ring {
+            0% { transform: rotate(0); }
+            15% { transform: rotate(15deg); }
+            30% { transform: rotate(-10deg); }
+            45% { transform: rotate(5deg); }
+            60% { transform: rotate(-5deg); }
+            75% { transform: rotate(2deg); }
+            100% { transform: rotate(0); }
+        }
+        .notification-btn.ringing svg { animation: ring 0.5s ease; fill: var(--c-blue); }
+
+        .main-container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: clamp(120px, 20vh, 150px) 5% clamp(80px, 15vh, 100px) 5%; box-sizing: border-box; overflow: hidden; width: 100%; }
+        
+        .terminal-log { position: fixed; bottom: clamp(90px, 14vh, 120px); left: 50%; transform: translateX(-50%); width: 100%; z-index: 90; font-family: monospace; font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; height: 15px; color: var(--c-blue); transition: opacity 0.4s; display: flex; justify-content: center; text-align: center; pointer-events: none; }
+
+        .tab-content { width: 100%; max-width: 900px; display: none; animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        .tab-content.active { display: block; }
+        
+        .section-head { margin-bottom: clamp(20px, 3vh, 30px); text-align: center; }
+        .section-head h2 { font-size: clamp(28px, 8vw, 42px); font-weight: bold; margin: 0; letter-spacing: 1px; line-height: 1.1; }
+        .section-head p { font-size: clamp(12px, 3.5vw, 16px); opacity: 0.5; margin: clamp(10px, 2vh, 15px) 0 0 0; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .slider-wrapper { position: relative; width: 100vw; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; }
+        .slider-container { display: flex; overflow-x: auto; scroll-behavior: smooth; scroll-snap-type: x mandatory; gap: 20px; width: 100%; padding: 40px calc(50vw - min(40vw, 300px)); scrollbar-width: none; -ms-overflow-style: none; align-items: center; }
+        .slider-container::-webkit-scrollbar { display: none; }
+
+        .slider-nav { position: absolute; top: 50%; transform: translateY(-50%); background: color-mix(in srgb, var(--c-blue) 15%, transparent); border: 1px solid var(--c-blue); color: var(--c-blue); width: clamp(40px, 10vw, 50px); height: clamp(40px, 10vw, 50px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; z-index: 50; transition: all 0.3s ease; backdrop-filter: blur(5px); }
+        .slider-nav:hover { background: var(--c-blue); color: #ffffff; transform: translateY(-50%) scale(1.1); box-shadow: 0 0 15px rgba(0, 123, 255, 0.4); }
+        .slider-nav:active { transform: translateY(-50%) scale(0.95); }
+        .slider-nav.left { left: clamp(10px, 3vw, 25px); }
+        .slider-nav.right { right: clamp(10px, 3vw, 25px); }
+
+        .big-card { flex: 0 0 clamp(280px, 80vw, 600px); width: auto; scroll-snap-align: center; margin: 0; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: clamp(16px, 4vw, 24px); padding: clamp(30px, 6vw, 50px); cursor: pointer; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease, opacity 0.5s ease, border-color 0.4s ease, box-shadow 0.4s ease, background-color 0.5s ease; position: relative; overflow: hidden; background: color-mix(in srgb, var(--fg) 8%, var(--bg)); backdrop-filter: blur(10px); display: flex; align-items: center; gap: clamp(20px, 5vw, 40px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box; text-decoration: none; color: inherit; }
+        
+        .blurred-card { filter: blur(6px); opacity: 0.3; transform: scale(0.85) !important; pointer-events: none; }
+
+        .big-card::after { content: ''; position: absolute; top: -50%; left: -60%; width: 20%; height: 200%; background: color-mix(in srgb, var(--fg) 10%, transparent); transform: rotate(30deg); transition: none; opacity: 0; }
+        @keyframes shine { 0% { left: -60%; opacity: 0; } 10% { opacity: 0.5; } 20% { left: 120%; opacity: 0; } 100% { left: 120%; opacity: 0; } }
+        .big-card.shining::after { animation: shine 3s infinite; transition: none; }
+
+        .big-card:hover { border-color: var(--c-blue); background: color-mix(in srgb, var(--fg) 3%, var(--bg)); transform: translateY(-5px); box-shadow: 0 20px 50px color-mix(in srgb, var(--fg) 5%, transparent); }
+        .big-card:hover::after { animation: none; opacity: 0; } 
+        
+        .big-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fg) 5%, transparent), transparent); transition: all 0.4s; }
+        .big-card:hover::before { left: 200%; transition: all 1.5s ease; }
+
+        .big-card:active { transform: scale(0.98) !important; }
+        .card-icon { width: clamp(50px, 12vw, 80px); height: clamp(50px, 12vw, 80px); fill: var(--c-blue); flex-shrink: 0; opacity: 0.8; transition: opacity 0.3s; }
+        .big-card:hover .card-icon { opacity: 1; }
+        .card-text { text-align: left; flex: 1; }
+        .card-text h3 { font-size: clamp(18px, 5vw, 28px); font-weight: bold; margin: 0 0 clamp(8px, 2vh, 15px) 0; letter-spacing: 1px; color: var(--fg); text-transform: capitalize; }
+        .card-text p { font-size: clamp(12px, 3.5vw, 15px); opacity: 0.6; margin: 0; line-height: 1.6; color: var(--fg); }
+
+        .slider-controls { display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 600px; margin: 15px auto 0 auto; gap: 15px; z-index: 50; position: relative; }
+        .slider-pagination { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .page-dot { width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--fg) 5%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 25%, transparent); display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; color: var(--fg); opacity: 0.8; }
+        .page-dot:hover { background: color-mix(in srgb, var(--fg) 15%, transparent); opacity: 1; }
+        .page-dot.active { opacity: 1; background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); transform: scale(1.1); box-shadow: 0 0 10px rgba(0, 123, 255, 0.4); }
+        
+        .progress-wrapper { display: flex; align-items: center; width: 100%; gap: 10px; max-width: 400px; }
+        .autoplay-toggle { background: transparent; border: none; color: var(--fg); cursor: pointer; opacity: 0.6; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; padding: 5px; }
+        .autoplay-toggle:hover { opacity: 1; color: var(--c-blue); }
+        .autoplay-toggle svg { width: 22px; height: 22px; fill: currentColor; }
+        
+        .progress-container { flex: 1; height: 4px; background: color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 2px; overflow: hidden; transition: opacity 0.5s ease; }
+        .progress-fill { height: 100%; width: 0%; background: var(--c-blue); border-radius: 2px; box-shadow: 0 0 8px var(--c-blue); }
+        
+        .saved-account-summary { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .sa-stat { display: flex; align-items: baseline; gap: 10px; }
+        .sa-count-large { font-size: clamp(28px, 8vw, 42px); font-weight: bold; color: var(--c-blue); line-height: 1; font-variant-numeric: tabular-nums; }
+        .sa-meta-large { font-size: clamp(10px, 3vw, 12px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
+
+        .bottom-nav { position: fixed; bottom: clamp(15px, 4vh, 30px); left: 50%; transform: translateX(-50%); width: clamp(280px, 90%, 400px); background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(20px); border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: clamp(25px, 6vw, 40px); display: flex; padding: clamp(4px, 1vw, 8px); z-index: 100; box-shadow: 0 10px 40px color-mix(in srgb, var(--bg) 80%, transparent); transition: background-color 0.5s ease, border-color 0.5s ease; }
+        .nav-btn { flex: 1; padding: clamp(10px, 3vh, 15px) 0; border-radius: clamp(20px, 5vw, 32px); display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1.5vw, 10px); color: var(--fg); opacity: 0.6; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; }
+        .nav-btn:hover { opacity: 0.9; }
+        
+        .nav-btn.active { opacity: 1; background: var(--c-blue); color: #ffffff; transform: scale(1.05); font-weight: bold; z-index: 10; box-shadow: 0 4px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .nav-btn svg { width: clamp(18px, 5vw, 22px); height: clamp(18px, 5vw, 22px); fill: currentColor; transition: transform 0.3s; }
+        .nav-btn.active svg { transform: translateY(-2px); fill: #ffffff; }
+        .nav-btn span { font-size: clamp(9px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: clamp(1px, 0.3vw, 1.5px); }
+        
+        @media (max-width: 768px) {
+            .big-card { flex-direction: column; align-items: flex-start; text-align: left; padding: 30px 25px; }
+            .nav-btn { flex-direction: column; gap: 4px; }
+            .nav-btn.active svg { transform: translateY(0); }
+            .slider-nav.left { left: 5px; }
+            .slider-nav.right { right: 5px; }
+        }
+
+        @media (max-width: 320px) {
+            .bottom-nav { border-radius: 20px; }
+            .nav-btn { padding: 8px 0; }
+        }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="top-header">
+        <div class="header-left">
+            <div class="brand-name">Infinity Identity</div>
+            <div class="info-row">
+                <div class="live-time" id="liveTime">00:00:00</div>
+                <div class="separator">|</div>
+                <div class="live-date" id="liveDate">SYNCING...</div>
+            </div>
+            
+            <div class="weather-info" id="liveWeather">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg>
+                <span>SYNCING...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="notification-btn" title="Notifications" onclick="openNotifications()">
+                <svg viewBox="0 0 24 24"><path d="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21M19.75,3.19L18.33,4.61C20.04,6.3 21,8.6 21,11H23C23,8.07 21.84,5.25 19.75,3.19M1,11H3C3,8.6 3.96,6.3 5.67,4.61L4.25,3.19C2.16,5.25 1,8.07 1,11Z"/></svg>
+                <div class="notification-badge"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="terminal-log" id="termLog">> WAITING FOR USER INPUT...</div>
+
+    <div class="main-container">
+        
+        <div id="tab-register" class="tab-content active">
+            <div class="section-head">
+                <h2>Registration Portal</h2>
+                <p>Establish a secure cryptographic presence</p>
+            </div>
+            
+            <div class="slider-wrapper">
+                <div class="slider-nav left" onclick="slideReg(-1)">&#10094;</div>
+                <div class="slider-container" id="regSlider">
+                    
+                    <div class="big-card shining" onclick="startRegistration(1)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Prenatal Identity Initialization</h3>
+                            <p>Initial registration establishing the prenatal node using parental identity hashes.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(2)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Birth Verification & Sync</h3>
+                            <p>Immediate instantiation of the individual identity core and birth chronstamp.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(3)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Early Childhood Update (2.5 - 3 Yrs)</h3>
+                            <p>Integration of primary baseline data prior to educational onboarding.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(4)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>First Biometric Lock (5 Yrs)</h3>
+                            <p>Initial cryptographic sealing of fingerprint, iris, and facial recognition data.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(5)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Biological Maturation (8 - 16 Yrs)</h3>
+                            <p>Mandatory tracking phase for adolescent physiological and health metrics.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(6)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Official Adulthood (18 Yrs)</h3>
+                            <p>Legal transition phase, recording legal adulthood status.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(7)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Full-Stack Activation (20 Yrs)</h3>
+                            <p>Complete elevation to active user status within the global framework.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(8)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Periodic Sync (25 - 45 Yrs)</h3>
+                            <p>Five mandatory node synchronizations occurring at ages 25, 30, 35, 40, and 45.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(9)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Mid-Life Update (50 Yrs)</h3>
+                            <p>Major recalibration of core physiological and professional datasets.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(10)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Senior Care Sync (75 Yrs)</h3>
+                            <p>First advanced age verification phase, conducted via specialized home service.</p>
+                        </div>
+                    </div>
+
+                    <div class="big-card shining" onclick="startRegistration(11)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Centenarian Sync (100 Yrs)</h3>
+                            <p>Exclusive secondary milestone verification, conducted via specialized home service.</p>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="slider-nav right" onclick="slideReg(1)">&#10095;</div>
+            </div>
+            
+            <div class="slider-controls">
+                <div class="slider-pagination" id="sliderPagination"></div>
+                <div class="progress-wrapper">
+                    <button class="autoplay-toggle" id="autoPlayBtn" onclick="toggleAutoPlay()">
+                        <svg viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
+                    </button>
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <div id="tab-saved" class="tab-content">
+            <div class="section-head">
+                <h2>Saved Identities</h2>
+                <p>Access your verified network nodes</p>
+            </div>
+            <div class="big-card shining" id="savedBtn" onclick="smoothNavigate('agreement.html')">
+                <svg class="card-icon" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,19.93A8,8 0 0,1 4.06,13H11V19.93M13,19.93V13H19.94A8,8 0 0,1 13,19.93M19.94,11H13V4.06A8,8 0 0,1 19.94,11M11,4.06V11H4.06A8,8 0 0,1 11,4.06Z"/></svg>
+                <div class="card-text" id="savedCardText">
+                    <h3>Active Identity Nodes</h3>
+                    <p id="savedPlaceholder">Finalized and authenticated identity cores stored on this device.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-profile" class="tab-content">
+            <div class="section-head">
+                <h2>Profile</h2>
+                <p>Manage your identity node details</p>
+            </div>
+            <div class="big-card shining" onclick="smoothNavigate('agreement.html')">
+                <svg class="card-icon" viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+                <div class="card-text">
+                    <h3>My Identity Node</h3>
+                    <p>View and manage your personal node parameters, biometric data, and recovery information.</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <div class="bottom-nav">
+        <div id="nav-register" class="nav-btn active" onclick="switchTab('register')">
+            <svg viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+            <span>Register</span>
+        </div>
+        <div id="nav-saved" class="nav-btn" onclick="switchTab('saved')">
+            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,19.93A8,8 0 0,1 4.06,13H11V19.93M13,19.93V13H19.94A8,8 0 0,1 13,19.93M19.94,11H13V4.06A8,8 0 0,1 19.94,11M11,4.06V11H4.06A8,8 0 0,1 11,4.06Z"/></svg>
+            <span>Saved</span>
+        </div>
+        <div id="nav-profile" class="nav-btn" onclick="switchTab('profile')">
+            <svg viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+            <span>Profile</span>
+        </div>
+    </div>
+    
+    
+    <script>
+        let currentSlide = 0;
+        const totalCards = 11;
+        let autoPlayTimer = null;
+        let autoPlayPlaying = true;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            checkUnreadNotifs();
+            
+            initSlider();
+            const regSlider = document.getElementById('regSlider');
+            if (regSlider) {
+                regSlider.addEventListener('scroll', () => requestAnimationFrame(updateCardBlur));
+                window.addEventListener('resize', () => requestAnimationFrame(updateCardBlur));
+                setTimeout(updateCardBlur, 100);
+            }
+        });
+
+        function smoothNavigate(url) {
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = url; }, 1000);
+        }
+
+        function initSlider() {
+            const pagContainer = document.getElementById('sliderPagination');
+            let html = '';
+            for(let i=0; i<totalCards; i++) {
+                html += `<div class="page-dot ${i===0?'active':''}" onclick="goToSlide(${i})">${i+1}</div>`;
+            }
+            if(pagContainer) pagContainer.innerHTML = html;
+            startAutoPlay();
+        }
+
+        function goToSlide(index) {
+            const slider = document.getElementById('regSlider');
+            const cards = slider.querySelectorAll('.big-card');
+            if(cards.length === 0) return;
+            const gap = parseInt(window.getComputedStyle(slider).gap) || 20;
+            const cardWidth = cards[0].offsetWidth + gap;
+            slider.scrollTo({ left: index * cardWidth, behavior: 'smooth' });
+            
+            if(currentSlide !== index) {
+                currentSlide = index;
+                updatePagination();
+                resetAutoPlay();
+            }
+        }
+
+        function slideReg(direction) {
+            let newIndex = (currentSlide + direction + totalCards) % totalCards;
+            goToSlide(newIndex);
+        }
+
+        function updateCardBlur() {
+            const slider = document.getElementById('regSlider');
+            if (!slider) return;
+            const cards = slider.querySelectorAll('.big-card');
+            const sliderCenter = slider.getBoundingClientRect().left + slider.offsetWidth / 2;
+            
+            let minDiff = Infinity;
+            let activeIdx = 0;
+
+            cards.forEach((card, index) => {
+                const rect = card.getBoundingClientRect();
+                const cardCenter = rect.left + rect.width / 2;
+                const diff = Math.abs(sliderCenter - cardCenter);
+                
+                if (diff < rect.width * 0.4) {
+                    card.classList.remove('blurred-card');
+                } else {
+                    card.classList.add('blurred-card');
+                }
+
+                if(diff < minDiff) {
+                    minDiff = diff;
+                    activeIdx = index;
+                }
+            });
+
+            if(currentSlide !== activeIdx) {
+                currentSlide = activeIdx;
+                updatePagination();
+                resetAutoPlay();
+            }
+        }
+
+        function updatePagination() {
+            document.querySelectorAll('.page-dot').forEach((dot, idx) => {
+                if(idx === currentSlide) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        }
+
+        function startAutoPlay() {
+            if(!autoPlayPlaying) return;
+            const bar = document.getElementById('progressFill');
+            if(!bar) return;
+            
+            bar.style.opacity = '1';
+            bar.style.transition = 'none';
+            bar.style.width = '0%';
+            
+            void bar.offsetWidth;
+
+            bar.style.transition = 'width 10s linear';
+            bar.style.width = '100%';
+
+            clearTimeout(autoPlayTimer);
+            autoPlayTimer = setTimeout(() => {
+                slideReg(1);
+            }, 10000);
+        }
+
+        function resetAutoPlay() {
+            if(autoPlayPlaying) startAutoPlay();
+        }
+
+        function toggleAutoPlay() {
+            autoPlayPlaying = !autoPlayPlaying;
+            const btn = document.getElementById('autoPlayBtn');
+            const bar = document.getElementById('progressFill');
+
+            if(autoPlayPlaying) {
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>';
+                startAutoPlay();
+            } else {
+                btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>';
+                clearTimeout(autoPlayTimer);
+                bar.style.transition = 'opacity 0.3s ease';
+                bar.style.opacity = '0';
+                setTimeout(() => {
+                    bar.style.transition = 'none';
+                    bar.style.width = '0%';
+                }, 300); 
+            }
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12; hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            document.getElementById('liveTime').innerText = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=9.4981&longitude=76.3388&current_weather=true');
+                const data = res.ok ? await res.json() : null;
+                if(data) {
+                    const temp = Math.round(data.current_weather.temperature);
+                    document.getElementById('liveWeather').innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg><span>${temp}°C ALAPPUZHA</span>`;
+                } else { throw new Error('Offline'); }
+            } catch (error) {
+                document.getElementById('liveWeather').innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg><span>WEATHER OFFLINE</span>`;
+            }
+        }
+        fetchWeather();
+
+        const logs = ["> SYSTEM ONLINE.", "> READY TO INITIALIZE NEW NODE.", "> ENCRYPTION MODULES STANDBY...", "> WAITING FOR USER INPUT..."];
+        let logIndex = 0;
+        setInterval(() => {
+            const term = document.getElementById('termLog');
+            if(term) {
+                term.style.opacity = '0';
+                setTimeout(() => { 
+                    term.innerText = logs[logIndex]; 
+                    term.style.opacity = '0.5'; 
+                    logIndex = (logIndex + 1) % logs.length;
+                }, 400);
+            }
+        }, 4000);
+
+        function checkUnreadNotifs() {
+            const badge = document.querySelector('.notification-badge');
+            let unreadCount = parseInt(localStorage.getItem('inf_unread_notifs')) || 0; 
+            
+            if(unreadCount > 0) {
+                badge.style.display = 'flex';
+                badge.innerText = unreadCount;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function openNotifications() {
+            const btn = document.querySelector('.notification-btn');
+            btn.classList.add('ringing');
+            setTimeout(() => { smoothNavigate('notification.html'); }, 500);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('nav-' + tabId).classList.add('active');
+            
+            if(tabId === 'saved') checkSavedData();
+            if(tabId === 'register') setTimeout(updateCardBlur, 50);
+        }
+
+        function startRegistration(sectionNum) {
+            sessionStorage.setItem('targetSection', sectionNum || 1);
+            smoothNavigate('agreement.html');
+        }
+
+        function formatTimeAgo(timestamp) {
+            const diff = Date.now() - timestamp;
+            const m = Math.floor(diff / 60000);
+            const h = Math.floor(diff / 3600000);
+            const d = Math.floor(diff / 86400000);
+            if (m < 1) return "Just now";
+            if (m < 60) return `${m} min ago`;
+            if (h < 24) return `${h} hr ago`;
+            if (d === 1) return "Yesterday";
+            return `${d} days ago`;
+        }
+
+        function checkSavedData() {
+            const cardTextContainer = document.getElementById('savedCardText');
+            const accounts = JSON.parse(localStorage.getItem('inf_finalized_accounts') || '[]');
+            
+            let htmlStr = `<h3>Active Identity Nodes</h3>`;
+
+            if(accounts.length > 0) {
+                htmlStr += `
+                <p>Tap button to view and authenticate with specialized node interfaces.</p>
+                <div class="saved-account-summary">
+                    <div class="sa-stat">
+                        <span class="sa-count-large">${accounts.length}</span>
+                        <span class="sa-meta-large">Authenticated profiles synced</span>
+                    </div>
+                    <div class="sa-meta-large">Last Node Finalized: ${formatTimeAgo(accounts[accounts.length - 1].date)}</div>
+                </div>`;
+            } else {
+                htmlStr += `<p>No finalized identity cores are currently stored on this secure node. Complete a new registration to establish an identity.</p>`;
+            }
+            cardTextContainer.innerHTML = htmlStr;
+        }
+
+        if(window.location.search.includes('success')) {
+            setTimeout(() => switchTab('saved'), 100);
+        }
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

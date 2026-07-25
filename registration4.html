@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - Registration Step 4</title>
+    
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+            user-select: none;
+        }
+
+        .container { 
+            width: 90%; 
+            max-width: 700px; 
+            margin: 0 auto; 
+            padding: clamp(40px, 8vh, 80px) 0; 
+            position: relative; 
+            z-index: 10; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 5px; font-size: clamp(22px, 6vw, 32px); text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        p.desc { font-size: clamp(12px, 3vw, 14px); opacity: 0.7; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; text-align: center; }
+
+        .card-box { border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: clamp(20px, 5vw, 35px); background: color-mix(in srgb, var(--fg) 3%, transparent); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: opacity 0.5s ease; }
+        
+        .form-group { margin-bottom: 25px; text-align: left; position: relative; }
+        .form-group label { display: block; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; opacity: 0.7; }
+        
+        /* Status Message Style (Imported from Registration 1) */
+        .status-msg { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-top: -2px; margin-bottom: 8px; height: 14px; opacity: 0; transition: opacity 0.3s ease; text-align: left; pointer-events: none; }
+        .status-msg.show { opacity: 1; }
+        .status-msg.error { color: var(--c-red); }
+        .status-msg.success { color: var(--c-green); }
+
+        .form-control { width: 100%; padding: 15px; background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 10px; color: var(--fg); font-size: 14px; font-weight: bold; letter-spacing: 1px; outline: none; transition: 0.3s; box-sizing: border-box; text-transform: uppercase; }
+        .form-control:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-blue) 20%, transparent); }
+        .form-control::placeholder { font-weight: normal; opacity: 0.3; text-transform: none; }
+        .form-control:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        /* Custom Select Theme */
+        .custom-select-wrapper { position: relative; width: 100%; }
+        .custom-select { width: 100%; padding: 15px; background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 10px; color: var(--fg); font-size: 14px; font-weight: bold; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; text-transform: uppercase; transition: 0.3s; }
+        .custom-select:hover { border-color: var(--c-blue); }
+        .custom-select.disabled { opacity: 0.4; pointer-events: none; }
+        
+        .custom-options { position: absolute; top: calc(100% + 5px); left: 0; width: 100%; background: color-mix(in srgb, var(--bg) 95%, var(--fg)); border: 1px solid var(--c-blue); border-radius: 8px; z-index: 100; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; padding: 0; margin: 0; list-style: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); scrollbar-width: thin; scrollbar-color: var(--c-blue) color-mix(in srgb, var(--bg) 90%, var(--fg)); }
+        .custom-options.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        
+        .custom-options::-webkit-scrollbar { width: 6px; }
+        .custom-options::-webkit-scrollbar-track { background: color-mix(in srgb, var(--bg) 90%, var(--fg)); border-radius: 4px; margin: 4px; }
+        .custom-options::-webkit-scrollbar-thumb { background: var(--c-blue); border-radius: 4px; }
+        .custom-options::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--c-blue) 80%, #fff); }
+
+        .custom-options li { padding: 12px 15px; cursor: pointer; transition: background 0.2s; font-size: 12px; font-weight: bold; letter-spacing: 1px; color: var(--fg); border-bottom: 1px solid color-mix(in srgb, var(--fg) 10%, transparent); text-transform: uppercase; }
+        .custom-options li:hover { background-color: var(--c-blue); color: #ffffff; }
+        .custom-select svg { width: 14px; height: 14px; fill: currentColor; transition: transform 0.3s ease; }
+        .custom-select.open svg { transform: rotate(180deg); }
+
+        .error-text { color: var(--c-red); font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: block; margin-top: 0; text-align: left; }
+        .error-text.show { max-height: 30px; opacity: 1; margin-top: 8px; }
+
+        .id-wrapper { display: flex; flex-wrap: wrap; gap: clamp(3px, 1vw, 6px); justify-content: flex-start; align-items: center; }
+        .id-box { width: calc(100% / 7); max-width: clamp(28px, 8vw, 42px); height: clamp(35px, 10vw, 45px); background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 6px; text-align: center; font-size: clamp(14px, 4vw, 18px); font-weight: bold; color: var(--fg); outline: none; transition: 0.3s; padding: 0; box-sizing: border-box; text-transform: uppercase; }
+        .id-box:focus { border-color: var(--c-blue); box-shadow: 0 0 8px color-mix(in srgb, var(--c-blue) 30%, transparent); transform: translateY(-2px); }
+        .id-box:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Lock Button CSS */
+        .id-lock { width: calc(100% / 7); max-width: clamp(28px, 8vw, 42px); height: clamp(35px, 10vw, 45px); background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.3; pointer-events: none; transition: 0.3s; color: var(--fg); margin: 0; box-sizing: border-box; }
+        .id-lock.ready { opacity: 0.9; pointer-events: auto; border-color: var(--c-yellow); color: var(--c-yellow); box-shadow: 0 0 8px color-mix(in srgb, var(--c-yellow) 30%, transparent); }
+        .id-lock.locked { opacity: 1; border-color: var(--c-green); color: var(--c-green); background: color-mix(in srgb, var(--c-green) 10%, transparent); box-shadow: none; pointer-events: auto; }
+        .id-lock svg { width: 18px; height: 18px; fill: currentColor; transition: 0.3s; }
+
+        /* General Lock state */
+        .locked-state { opacity: 0.4 !important; pointer-events: none !important; }
+
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 800px; opacity: 1; margin-bottom: 20px; overflow: visible; }
+        
+        .btn-row { display: flex; gap: 15px; margin-top: 30px; }
+        
+        /* Updated Smooth Background Hover Only */
+        .btn-check-id { flex: 1; padding: 16px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.4; pointer-events: none; text-align: center; display: flex; justify-content: center; align-items: center; }
+        .btn-check-id.active { opacity: 1; pointer-events: auto; }
+        .btn-check-id.active:hover:not(.processing) { background: var(--c-blue); color: var(--bg); box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .btn-check-id:active { transform: scale(0.97); }
+        .btn-check-id.processing { opacity: 1 !important; pointer-events: none; }
+
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group input { display: none; }
+        .check-group input:disabled + .custom-check { opacity: 0.4; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; user-select: none; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .verified-badge { color: var(--c-blue); font-weight: bold; font-size: 12px; letter-spacing: 1px; display: none; text-transform: uppercase; margin-bottom: 20px; animation: fadeIn 0.5s ease; }
+        .verified-badge svg { width: 16px; height: 16px; fill: currentColor; vertical-align: middle; margin-right: 5px; margin-bottom: 3px; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 600px) {
+            .btn-row { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="brand-title">STEP 4 OF 5</div>
+        <h2>PRENATAL DATA</h2>
+        <p class="desc">Enter the known prenatal details and consulting doctor identity to construct the node.</p>
+        
+        <div class="card-box" id="dataFormCard">
+            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label>Month of Pregnancy *</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="monthSelect" onclick="toggleCustomDropdown('monthOptions')">
+                            <span id="monthText">SELECT MONTH</span>
+                            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                        </div>
+                        <ul class="custom-options" id="monthOptions">
+                            <li onclick="selectOption('month', '1', '1ST MONTH')">1ST MONTH</li>
+                            <li onclick="selectOption('month', '2', '2ND MONTH')">2ND MONTH</li>
+                            <li onclick="selectOption('month', '3', '3RD MONTH')">3RD MONTH</li>
+                            <li onclick="selectOption('month', '4', '4TH MONTH')">4TH MONTH</li>
+                            <li onclick="selectOption('month', '5', '5TH MONTH')">5TH MONTH</li>
+                            <li onclick="selectOption('month', '6', '6TH MONTH')">6TH MONTH</li>
+                            <li onclick="selectOption('month', '7', '7TH MONTH')">7TH MONTH</li>
+                            <li onclick="selectOption('month', '8', '8TH MONTH')">8TH MONTH</li>
+                        </ul>
+                        <input type="hidden" id="pregMonth" value="">
+                    </div>
+                </div>
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label>Days (Optional)</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="daysSelect" onclick="toggleCustomDropdown('daysOptions')">
+                            <span id="daysText">SELECT DAYS</span>
+                            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                        </div>
+                        <ul class="custom-options" id="daysOptions"></ul>
+                        <input type="hidden" id="pregDays" value="">
+                    </div>
+                    <div style="margin-top: 8px; text-align: left;">
+                        <label style="display:inline-flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                            <input type="checkbox" id="daysUnknown" onchange="toggleUnknownField('days', 'SELECT DAYS')"> NOT KNOWN YET
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; justify-content: space-between;">
+                    <span>Proposed Name (Optional)</span>
+                    <span id="childNameCount" style="color: var(--c-blue);">0/50</span>
+                </label>
+                <input type="text" class="form-control name-input" id="childName" maxlength="50" placeholder="ENTER PROPOSED NAME" autocomplete="off">
+                <div id="childNameError" class="error-text">MINIMUM 3 CHARACTERS REQUIRED</div>
+                <div style="margin-top: 8px; text-align: left;">
+                    <label style="display:inline-flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                        <input type="checkbox" id="childNameUnknown" onchange="toggleUnknownField('childName', 'ENTER PROPOSED NAME')"> NOT KNOWN YET
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Gender (If Known / Optional)</label>
+                <div class="custom-select-wrapper">
+                    <div class="custom-select" id="genderSelect" onclick="toggleCustomDropdown('genderOptions')">
+                        <span id="genderText">SELECT GENDER</span>
+                        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                    <ul class="custom-options" id="genderOptions">
+                        <li onclick="selectOption('gender', 'MALE', 'MALE')">MALE</li>
+                        <li onclick="selectOption('gender', 'FEMALE', 'FEMALE')">FEMALE</li>
+                    </ul>
+                    <input type="hidden" id="childGender" value="">
+                </div>
+                <div style="margin-top: 8px; text-align: left;">
+                    <label style="display:inline-flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                        <input type="checkbox" id="genderUnknown" onchange="toggleUnknownField('gender', 'SELECT GENDER')"> NOT KNOWN YET
+                    </label>
+                </div>
+            </div>
+
+            <hr style="border: none; border-top: 1px dashed color-mix(in srgb, var(--fg) 15%, transparent); margin: 30px 0;">
+
+            <div class="form-group">
+                <label style="display: flex; justify-content: space-between;">
+                    <span>Consulting Doctor's Infinity ID</span>
+                    <span id="docCount" style="color: var(--c-blue);">0/12</span>
+                </label>
+                <div id="docStatusMsg" class="status-msg"></div>
+                <div class="id-wrapper" id="docIdWrapper"></div>
+            </div>
+
+            <div class="slide-down-wrapper" id="docVerifyBtnWrapper">
+                <button class="btn-check-id" id="btnDocVerifyId" disabled style="padding: 14px; font-size: 11px; width: 100%; margin-bottom: 20px;" onclick="verifyDoctorId()">VERIFY DOCTOR ID</button>
+            </div>
+
+            <div class="verified-badge" id="docIdVerified">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
+                DOCTOR AUTHORIZATION SECURED
+            </div>
+
+            <div class="slide-down-wrapper" id="formCheckWrapper">
+                <label class="check-group" style="margin-top: 20px;">
+                    <input type="checkbox" id="formConfirmCheck" onchange="validateForm()">
+                    <div class="custom-check">
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </div>
+                    <span class="check-label">I CONFIRM ALL ENTERED DETAILS ARE ACCURATE</span>
+                </label>
+            </div>
+
+            <div class="slide-down-wrapper" id="proceedWrapper">
+                <div class="btn-row" style="margin-top: 10px;">
+                    <button class="btn-check-id" id="btnProceedToStep5" disabled onclick="goToStep5()">PROCEED TO NEXT STEP</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        document.addEventListener('paste', e => e.preventDefault());
+        document.addEventListener('drop', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+
+        let verifyAttempts = 0; // Track failed verification attempt
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            
+            // Optional auth verification mapping for security
+            if (!document.referrer.includes('registration3.html') && !sessionStorage.getItem('authPassed')) {
+                // Additional error handling can be done here if needed
+            }
+            sessionStorage.setItem('authPassed', 'true');
+
+            setupSequentialInputs('.docId-box', 12);
+            populateDaysDropdown(31); // Populate default full days dropdown
+
+            document.querySelectorAll('.name-input').forEach(input => {
+                input.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^A-Za-z\s]/g, '').replace(/^\s/, '').replace(/\s{2,}/g, ' ').toUpperCase();
+                    const len = this.value.length;
+                    
+                    if (this.id === 'childName') {
+                        document.getElementById('childNameCount').innerText = `${len}/50`;
+                        const err = document.getElementById('childNameError');
+                        if(len > 0 && len < 3) showError(err, "MINIMUM 3 CHARACTERS REQUIRED");
+                        else hideError(err);
+                    }
+                    validateForm();
+                });
+            });
+        });
+
+        function populateDaysDropdown(maxDays) {
+            let daysHtml = '';
+            for(let i=1; i<=maxDays; i++) {
+                daysHtml += `<li onclick="selectOption('days', '${i}', '${i} DAYS')">${i} DAYS</li>`;
+            }
+            document.getElementById('daysOptions').innerHTML = daysHtml;
+        }
+
+        function toggleCustomDropdown(listId) {
+            document.querySelectorAll('.custom-options').forEach(el => { if(el.id !== listId) el.classList.remove('show'); });
+            document.querySelectorAll('.custom-select').forEach(el => { if(el.nextElementSibling.id !== listId) el.classList.remove('open'); });
+            
+            const list = document.getElementById(listId);
+            const select = list.previousElementSibling;
+            if(select.classList.contains('disabled')) return;
+            
+            list.classList.toggle('show');
+            select.classList.toggle('open');
+        }
+
+        function selectOption(field, value, text) {
+            document.getElementById(field + 'Text').innerText = text;
+            const inputMap = { 'month': 'pregMonth', 'days': 'pregDays', 'gender': 'childGender' };
+            document.getElementById(inputMap[field]).value = value;
+            
+            // Dynamic Days Check for 8TH MONTH requirement
+            if (field === 'month') {
+                const daysSelect = document.getElementById('daysSelect');
+                const daysText = document.getElementById('daysText');
+                document.getElementById('pregDays').value = ""; // Reset days selection
+                document.getElementById('daysUnknown').checked = false;
+                daysSelect.classList.remove('disabled');
+
+                if (value === '8') {
+                    daysText.innerText = "SELECT DAYS";
+                    populateDaysDropdown(8); // Only 1 to 8 days allowed
+                } else {
+                    daysText.innerText = "SELECT DAYS";
+                    populateDaysDropdown(31); // Restore full range up to 31 days
+                }
+            }
+
+            toggleCustomDropdown(field + 'Options');
+            validateForm();
+        }
+
+        document.addEventListener('click', function(e) {
+            if(!e.target.closest('.custom-select-wrapper')) {
+                document.querySelectorAll('.custom-options').forEach(el => el.classList.remove('show'));
+                document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('open'));
+            }
+        });
+
+        function setupSequentialInputs(selector, length) {
+            let html = '';
+            const wrapperId = 'docIdWrapper';
+            
+            for(let i=1; i<=length; i++) {
+                html += `<input type="text" class="id-box docId-box" maxlength="1" data-index="${i}">`;
+            }
+            
+            // Add Lock Icon after 12 boxes (like Step 1)
+            html += `<div class="id-lock" id="docIdLock" onclick="toggleLock('doc')" title="Click to Lock/Unlock">
+                        <svg id="docIconUnlock" viewBox="0 0 24 24"><path d="M12,17C10.89,17 10,16.1 10,15C10,13.89 10.89,13 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17M18,20V10H6V20H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10A2,2 0 0,1 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V7H15V6A3,3 0 0,0 12,3A3,3 0 0,0 9,6V8H18Z"/></svg>
+                        <svg id="docIconLock" viewBox="0 0 24 24" style="display:none;"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+                    </div>`;
+
+            document.getElementById(wrapperId).innerHTML = html;
+
+            const inputs = document.querySelectorAll(selector);
+            inputs.forEach((input, index) => {
+                input.addEventListener('focus', function(e) {
+                    let firstEmpty = -1;
+                    for(let i=0; i<inputs.length; i++) {
+                        if(inputs[i].value === '') { firstEmpty = i; break; }
+                    }
+                    if(firstEmpty !== -1 && index > firstEmpty) inputs[firstEmpty].focus();
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if(e.key === 'Backspace' && this.value === '' && index > 0) inputs[index - 1].focus();
+                });
+                
+                input.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    if(this.value.length === 1 && index < inputs.length - 1) inputs[index + 1].focus();
+                    
+                    const statusMsg = document.getElementById('docStatusMsg');
+                    if (statusMsg && statusMsg.classList.contains('error')) {
+                        statusMsg.className = 'status-msg';
+                        statusMsg.innerText = '';
+                    }
+
+                    checkDocFormState();
+                    validateForm();
+                });
+            });
+        }
+
+        function checkDocFormState() {
+            let docCount = 0; document.querySelectorAll('.docId-box').forEach(i => { if(i.value) docCount++; });
+            document.getElementById('docCount').innerText = `${docCount}/12`;
+            
+            const lockEl = document.getElementById('docIdLock');
+            const btnCheck = document.getElementById('btnDocVerifyId');
+            const docVerified = document.getElementById('docIdVerified').style.display === 'block';
+
+            if (!lockEl.classList.contains('locked')) {
+                if(docCount === 12) {
+                    lockEl.classList.add('ready'); // Unlocks the Lock button
+                } else {
+                    lockEl.classList.remove('ready');
+                    btnCheck.classList.remove('active');
+                    btnCheck.disabled = true;
+                }
+            }
+
+            if (docCount === 12 && !docVerified) {
+                document.getElementById('docVerifyBtnWrapper').classList.add('show');
+            } else if (docCount < 12) {
+                document.getElementById('docVerifyBtnWrapper').classList.remove('show');
+            }
+        }
+
+        function toggleLock(prefix) {
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            const iconUnlock = document.getElementById(prefix + 'IconUnlock');
+            const iconLock = document.getElementById(prefix + 'IconLock');
+            const btnCheck = document.getElementById('btnDocVerifyId');
+            const boxes = document.querySelectorAll(`.${prefix}Id-box`);
+            
+            if (lockEl.classList.contains('locked')) {
+                unlockId(prefix);
+            } else {
+                lockEl.classList.add('locked');
+                iconUnlock.style.display = 'none';
+                iconLock.style.display = 'block';
+                boxes.forEach(b => b.disabled = true);
+                
+                btnCheck.classList.add('active'); 
+                btnCheck.disabled = false;
+            }
+        }
+
+        function unlockId(prefix) {
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            const iconUnlock = document.getElementById(prefix + 'IconUnlock');
+            const iconLock = document.getElementById(prefix + 'IconLock');
+            const btnCheck = document.getElementById('btnDocVerifyId');
+            const boxes = document.querySelectorAll(`.${prefix}Id-box`);
+            
+            lockEl.classList.remove('locked');
+            iconUnlock.style.display = 'block';
+            iconLock.style.display = 'none';
+            boxes.forEach(b => b.disabled = false);
+            
+            btnCheck.classList.remove('active', 'verified');
+            btnCheck.disabled = true;
+            btnCheck.style.background = '';
+            btnCheck.style.borderColor = '';
+            btnCheck.style.color = '';
+            btnCheck.innerText = 'VERIFY DOCTOR ID';
+            
+            const statusMsg = document.getElementById('docStatusMsg');
+            if (statusMsg && statusMsg.classList.contains('success')) {
+                statusMsg.className = 'status-msg';
+                statusMsg.innerText = '';
+            }
+
+            checkDocFormState();
+            validateForm();
+        }
+
+        function toggleUnknownField(fieldId, defaultText) {
+            const isChecked = document.getElementById(fieldId + 'Unknown').checked;
+            
+            if (fieldId === 'childName') {
+                const input = document.getElementById(fieldId);
+                const countText = document.getElementById('childNameCount');
+                if (isChecked) {
+                    input.value = 'NOT KNOWN YET';
+                    input.disabled = true;
+                    countText.innerText = '🚫/50'; 
+                    hideError(document.getElementById('childNameError'));
+                } else {
+                    input.value = '';
+                    input.disabled = false;
+                    countText.innerText = '0/50';
+                    input.placeholder = defaultText;
+                }
+            } else {
+                const selectDiv = document.getElementById(fieldId + 'Select');
+                const textSpan = document.getElementById(fieldId + 'Text');
+                const hiddenInput = document.getElementById(fieldId === 'days' ? 'pregDays' : 'childGender');
+                
+                if (isChecked) {
+                    selectDiv.classList.add('disabled');
+                    textSpan.innerText = 'NOT KNOWN YET';
+                    hiddenInput.value = 'NOT KNOWN YET';
+                } else {
+                    selectDiv.classList.remove('disabled');
+                    textSpan.innerText = defaultText;
+                    hiddenInput.value = '';
+                }
+            }
+            validateForm();
+        }
+
+        function showError(el, msg) {
+            if(el) { el.innerText = msg; el.classList.add('show'); }
+        }
+
+        function hideError(el) {
+            if(el) el.classList.remove('show');
+        }
+
+        function verifyDoctorId() {
+            const btn = document.getElementById('btnDocVerifyId');
+            const statusMsg = document.getElementById('docStatusMsg');
+            const lockEl = document.getElementById('docIdLock');
+
+            if (btn.classList.contains('verified')) {
+                unlockId('doc');
+                return;
+            }
+
+            btn.classList.remove('active');
+            btn.classList.add('processing');
+            btn.style.pointerEvents = 'none';
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000';
+            btn.innerHTML = 'CHECKING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            
+            lockEl.style.pointerEvents = 'none';
+            statusMsg.className = 'status-msg';
+            statusMsg.innerText = '';
+
+            // Disable inputs during verification cycle
+            document.querySelectorAll('.custom-select, input[type="checkbox"]').forEach(el => el.disabled = true);
+            document.querySelectorAll('.custom-select').forEach(el => el.classList.add('disabled'));
+
+            setTimeout(() => {
+                lockEl.style.pointerEvents = 'auto'; 
+
+                if (verifyAttempts === 0) {
+                    // FIRST ATTEMPT: Always fail
+                    verifyAttempts++;
+                    btn.style.background = 'var(--c-red)';
+                    btn.style.borderColor = 'var(--c-red)';
+                    btn.style.color = '#fff';
+                    btn.innerHTML = 'INCORRECT';
+
+                    statusMsg.className = 'status-msg show error';
+                    statusMsg.innerText = 'DOCTOR NOT FOUND';
+                    
+                    setTimeout(() => {
+                        // Restore button state properly so it can be clicked again
+                        btn.classList.remove('processing');
+                        btn.style.background = '';
+                        btn.style.borderColor = '';
+                        btn.style.color = '';
+                        btn.innerText = 'VERIFY DOCTOR ID';
+                        btn.classList.add('active');
+                        btn.disabled = false;
+                        btn.style.pointerEvents = 'auto';
+                        
+                        // Re-enable other form fields
+                        document.querySelectorAll('.custom-select, input[type="checkbox"]').forEach(el => el.disabled = false);
+                        document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('disabled'));
+                    }, 3000);
+                } else {
+                    // SECOND ATTEMPT: Success
+                    btn.style.background = 'var(--c-green)';
+                    btn.style.borderColor = 'var(--c-green)';
+                    btn.style.color = '#000';
+                    btn.innerHTML = `<span style="display:flex; align-items:center; justify-content:center;"><svg class="anim-tick" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg> CORRECT</span>`;
+
+                    statusMsg.className = 'status-msg show success';
+                    statusMsg.innerHTML = `<span style="display:flex; align-items:center;"><svg class="anim-tick" style="width:14px; height:14px; margin-right:4px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg> CORRECT</span>`;
+
+                    setTimeout(() => {
+                        btn.classList.remove('processing');
+                        btn.classList.add('verified');
+                        btn.style.background = '';
+                        btn.style.borderColor = '';
+                        btn.style.color = '';
+                        btn.innerText = 'EDIT ID';
+                        btn.style.pointerEvents = 'auto';
+                        
+                        // Re-enable other form fields
+                        document.querySelectorAll('.custom-select, input[type="checkbox"]').forEach(el => el.disabled = false);
+                        document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('disabled'));
+
+                        setTimeout(() => {
+                            document.getElementById('docVerifyBtnWrapper').classList.remove('show');
+                            document.getElementById('docIdVerified').style.display = 'block';
+                            validateForm();
+                        }, 500); 
+                    }, 3000);
+                }
+            }, 3000);
+        }
+
+        function validateForm() {
+            const month = document.getElementById('pregMonth').value;
+            const cNameLen = document.getElementById('childName').value.trim().length;
+            const nameUnknown = document.getElementById('childNameUnknown').checked;
+            const docVerified = document.getElementById('docIdVerified').style.display === 'block';
+
+            let isFieldsFilled = true;
+            if(!month || month === 'NOT KNOWN YET') isFieldsFilled = false;
+            if(!nameUnknown && cNameLen > 0 && cNameLen < 3) isFieldsFilled = false;
+            if(!docVerified) isFieldsFilled = false;
+
+            const checkWrapper = document.getElementById('formCheckWrapper');
+            if(isFieldsFilled) {
+                checkWrapper.classList.add('show');
+            } else {
+                checkWrapper.classList.remove('show');
+                document.getElementById('formConfirmCheck').checked = false;
+            }
+
+            const isConfirmed = document.getElementById('formConfirmCheck').checked;
+            const btn = document.getElementById('btnProceedToStep5');
+            const proceedWrapper = document.getElementById('proceedWrapper');
+            
+            if(isConfirmed) {
+                proceedWrapper.classList.add('show');
+                btn.classList.add('active');
+                btn.disabled = false;
+            } else {
+                proceedWrapper.classList.remove('show');
+                btn.classList.remove('active');
+                btn.disabled = true;
+            }
+        }
+
+        function goToStep5() {
+            const btn = document.getElementById('btnProceedToStep5');
+            btn.classList.add('processing');
+            btn.style.pointerEvents = 'none';
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000';
+            btn.innerHTML = 'PROCEEDING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+
+            // SAVE DATA TO SESSION STORAGE FOR STEP 5
+            const month = document.getElementById('pregMonth').value;
+            const daysUnknown = document.getElementById('daysUnknown').checked;
+            const days = daysUnknown ? 'NOT KNOWN YET' : (document.getElementById('pregDays').value || 'NOT KNOWN YET');
+            const childNameUnknown = document.getElementById('childNameUnknown').checked;
+            const cName = childNameUnknown ? 'NOT KNOWN YET' : (document.getElementById('childName').value || 'NOT KNOWN YET');
+            const genderUnknown = document.getElementById('genderUnknown').checked;
+            const cGender = genderUnknown ? 'NOT KNOWN YET' : (document.getElementById('childGender').value || 'NOT KNOWN YET');
+            const docId = Array.from(document.querySelectorAll('.docId-box')).map(i => i.value).join('');
+
+            sessionStorage.setItem('pregMonth', month);
+            sessionStorage.setItem('pregDays', days);
+            sessionStorage.setItem('childName', cName);
+            sessionStorage.setItem('childGender', cGender);
+            sessionStorage.setItem('docId', docId);
+            sessionStorage.setItem('docName', 'DR. AMEER'); // Default fallback requested for step 5
+
+            setTimeout(() => {
+                btn.style.background = 'var(--c-green)';
+                btn.style.borderColor = 'var(--c-green)';
+                btn.style.color = '#000';
+                btn.innerHTML = 'PROCEEDED';
+
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => { window.location.href = 'registration5.html'; }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

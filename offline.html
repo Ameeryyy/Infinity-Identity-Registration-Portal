@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity - Network Offline</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        html, body {
+            width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            transition: opacity 1s ease-in-out, background-color 0.5s ease, color 0.5s ease;
+            opacity: 0;
+        }
+
+        #mainMenu, #statsMenu { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; z-index: 10; opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none; position: absolute; }
+        .active-menu { opacity: 1 !important; pointer-events: auto !important; position: relative !important; }
+        
+        .offline-icon { margin-bottom: 20px; opacity: 0.8; animation: pulse 2s infinite; }
+        .offline-icon svg { width: 64px; height: 64px; transition: fill 0.5s ease; }
+        .offline-text { font-size: 24px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; transition: color 0.5s ease; }
+        .sub-text { font-size: 11px; opacity: 0.6; margin-bottom: 40px; letter-spacing: 1px; text-transform: uppercase; max-width: 250px; line-height: 1.5; transition: color 0.5s ease; }
+        
+        .btn-custom {
+            width: 90%; max-width: 260px; padding: 16px 14px;
+            background: transparent;
+            border: 2px solid;
+            border-radius: 12px; cursor: pointer;
+            font-size: 12px; font-weight: bold;
+            transition: all 0.3s ease; text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 15px;
+            display: flex; justify-content: center; align-items: center;
+        }
+        
+        .c-blue { border-color: var(--c-blue); color: var(--c-blue); }
+        .c-blue:hover, .c-blue.hover-active { background: var(--c-blue); color: var(--bg); }
+        
+        .c-green { border-color: var(--c-green); color: var(--c-green); }
+        .c-green:hover, .c-green.hover-active { background: var(--c-green); color: var(--bg); }
+
+        .c-red { border-color: var(--c-red); color: var(--c-red); }
+        .c-red:hover, .c-red.hover-active { background: var(--c-red); color: var(--bg); }
+
+        .c-fg { border-color: var(--fg); color: var(--fg); }
+        .c-fg:hover, .c-fg.hover-active { background: var(--fg); color: var(--bg); }
+
+        .btn-custom:active { transform: scale(0.95); }
+        .btn-custom.loading { pointer-events: none; }
+        
+        .btn-custom.checking-active {
+            background: var(--c-yellow) !important;
+            border-color: var(--c-yellow) !important;
+            color: #000000 !important;
+        }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; max-width: 300px; margin-bottom: 25px; }
+        .stat-card { border: 1px dashed rgba(128, 128, 128, 0.3); padding: 15px 5px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); transition: background-color 0.5s ease, border-color 0.5s ease; }
+        .stat-card.highlight { grid-column: span 2; border-color: var(--c-blue); border-style: solid; background: rgba(128, 128, 128, 0.1); padding: 20px 5px; }
+        .stat-val { font-size: 28px; font-weight: bold; margin-bottom: 5px; color: var(--fg); transition: color 0.5s ease; }
+        .stat-card.highlight .stat-val { color: var(--c-blue); }
+        .stat-lbl { font-size: 9px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
+
+        .history-container { width: 90%; max-width: 300px; max-height: 120px; overflow-y: auto; border: 1px dashed rgba(128, 128, 128, 0.3); border-radius: 12px; margin-bottom: 25px; padding: 10px; box-sizing: border-box; backdrop-filter: blur(5px); }
+        .history-container::-webkit-scrollbar { width: 4px; }
+        .history-container::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 4px; }
+        .history-item { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; padding: 10px; border-bottom: 1px solid rgba(128, 128, 128, 0.2); letter-spacing: 1px; transition: border-color 0.5s ease; }
+        .history-item:last-child { border-bottom: none; }
+        .history-item span:first-child { opacity: 0.6; }
+
+        #fullScreenGame { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 1000; flex-direction: column; opacity: 0; transition: opacity 0.3s ease-out, background-color 0.5s ease; }
+        .game-top-bar { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 1001; pointer-events: none; }
+        .score-display { font-size: 14px; font-weight: bold; letter-spacing: 2px; color: var(--fg); transition: color 0.5s ease; }
+        .exit-btn { pointer-events: auto; background: transparent; border: 1px solid var(--c-red); color: var(--c-red); padding: 8px 20px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: transform 0.2s, background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease; }
+        .exit-btn:active { transform: scale(0.9); }
+        
+        #gameCanvas { flex: 1; width: 100%; height: 100%; object-fit: contain; display: block; touch-action: none; cursor: pointer; }
+        
+        .game-msg-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; transition: opacity 0.3s ease-out, color 0.5s ease; opacity: 0; text-align: center; }
+        .game-msg-overlay.show { opacity: 1; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s ease-out; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 25px 20px; border-radius: 16px; text-align: center; max-width: 320px; width: 85%; transform: translateY(20px); transition: transform 0.3s ease-out, background-color 0.5s ease, border-color 0.5s ease; }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; transition: color 0.5s ease; }
+        .modal-desc { font-size: 12px; opacity: 0.8; margin-bottom: 25px; line-height: 1.5; color: var(--fg); transition: color 0.5s ease; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--fg); border: 1px solid rgba(255,255,255,0.2); padding: 12px 10px; border-radius: 8px; font-weight: bold; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
+        .modal-btn:hover { background: rgba(255,255,255,0.1); }
+        .modal-btn:active { transform: scale(0.95); }
+        .modal-btn.danger { color: var(--c-red); border-color: rgba(255,68,68,0.4); background: rgba(255,68,68,0.1); }
+        .modal-btn.danger:hover { background: rgba(255,68,68,0.2); }
+
+        @keyframes pulse { 0% { opacity: 0.5; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0.5; transform: scale(0.95); } }
+    </style>
+</head>
+<body>
+    <div id="mainMenu" class="active-menu">
+        <div class="offline-icon">
+            <svg id="networkIcon" viewBox="0 0 24 24" style="fill: var(--c-red);">
+                <path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L5,8.09V15.91L12,19.85L19,15.91V8.09L12,4.15M12,10.5C11.17,10.5 10.5,11.17 10.5,12C10.5,12.83 11.17,13.5 12,13.5C12.83,13.5 13.5,12.83 13.5,12C13.5,11.17 12.83,10.5 12,10.5M16.5,12C16.5,14.48 14.48,16.5 12,16.5C9.52,16.5 7.5,14.48 7.5,12C7.5,9.52 9.52,7.5 12,7.5C14.48,7.5 16.5,9.52 16.5,12Z"/>
+            </svg>
+        </div>
+        <div class="offline-text" id="networkText" style="color: var(--c-red);">CONNECTION LOST</div>
+        <div class="sub-text" id="networkSubText">Server link broken. Please verify your network status.</div>
+        
+        <button class="btn-custom c-blue" id="btnCheck" data-default="CHECK CONNECTION" data-hover="VERIFY NETWORK" onclick="handleCheckConnection(this)">CHECK CONNECTION</button>
+        <button class="btn-custom c-green" id="btnProceed" style="display: none;" data-default="PROCEED TO PORTAL" data-hover="ENTER PORTAL" onclick="proceedToLanding(this)">PROCEED TO PORTAL</button>
+        <button class="btn-custom c-fg" data-default="PLAY GAME" data-hover="LAUNCH SIMULATOR" onclick="switchMenu('mainMenu', 'statsMenu')">PLAY GAME</button>
+    </div>
+
+    <div id="statsMenu">
+        <div class="offline-text" style="margin-bottom: 20px; font-size: 18px; color: var(--fg);">Node Simulator</div>
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-val" id="valHigh">0</div>
+                <div class="stat-lbl">High Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="valPlayed">0</div>
+                <div class="stat-lbl">Total Played</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="valLast">0</div>
+                <div class="stat-lbl">Last Score</div>
+            </div>
+        </div>
+        
+        <div class="history-container" id="historyList"></div>
+        
+        <button class="btn-custom c-red" data-default="RESET SCORE TABLE" data-hover="ERASE HISTORY" onclick="resetScoresPrompt()">RESET SCORE TABLE</button>
+        <button class="btn-custom c-blue" data-default="START GAME" data-hover="INITIATE" onclick="startFullscreenGame()">START GAME</button>
+        <button class="btn-custom c-fg" data-default="BACK TO MENU" data-hover="RETURN" onclick="switchMenu('statsMenu', 'mainMenu')">BACK TO MENU</button>
+    </div>
+
+    <div id="fullScreenGame">
+        <div class="game-top-bar">
+            <div class="score-display" id="liveScore">SCORE: 0</div>
+            <button class="exit-btn" onclick="exitGame()">Exit</button>
+        </div>
+        <div class="game-msg-overlay" id="gameMsgOverlay">
+            <div class="msg-title" id="msgTitle" style="font-size: 24px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0,0,0,0.8); color: var(--fg);">TAP TO START</div>
+            <div class="msg-sub" id="msgSub" style="font-size: 12px; opacity: 0.7; letter-spacing: 1px; text-transform: uppercase; color: var(--fg);">DODGE THE OBSTACLES</div>
+        </div>
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+    </div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Title</div>
+            <div class="modal-desc" id="modalDesc">Description...</div>
+            <div class="modal-actions" id="modalActions"></div>
+        </div>
+    </div>
+
+    
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            updateNetworkUI(navigator.onLine);
+        });
+
+        function updateNetworkUI(isOnline) {
+            const btnCheck = document.getElementById('btnCheck');
+            const btnProceed = document.getElementById('btnProceed');
+            const offText = document.getElementById('networkText');
+            const offIcon = document.getElementById('networkIcon');
+            const subText = document.getElementById('networkSubText');
+            
+            if (isOnline) {
+                btnCheck.style.display = 'none';
+                btnProceed.style.display = 'flex';
+                offText.innerText = 'NETWORK RESTORED';
+                offText.style.color = 'var(--c-green)';
+                offIcon.style.fill = 'var(--c-green)';
+                subText.innerText = 'Connection securely re-established. Proceed to portal.';
+            } else {
+                btnCheck.style.display = 'flex';
+                btnProceed.style.display = 'none';
+                offText.innerText = 'CONNECTION LOST';
+                offText.style.color = 'var(--c-red)';
+                offIcon.style.fill = 'var(--c-red)';
+                subText.innerText = 'Server link broken. Please verify your network status.';
+            }
+        }
+
+        window.addEventListener('online', () => updateNetworkUI(true));
+        window.addEventListener('offline', () => updateNetworkUI(false));
+
+        document.querySelectorAll('.btn-custom').forEach(btn => {
+            const def = btn.getAttribute('data-default');
+            const hov = btn.getAttribute('data-hover');
+            
+            const setHov = () => { if(!btn.classList.contains('loading')) btn.innerHTML = hov; };
+            const setDef = () => { if(!btn.classList.contains('loading')) btn.innerHTML = def; };
+            
+            btn.addEventListener('mouseenter', setHov);
+            btn.addEventListener('mouseleave', setDef);
+            btn.addEventListener('touchstart', setHov, {passive: true});
+            btn.addEventListener('touchend', setDef, {passive: true});
+        });
+
+        function handleCheckConnection(btn) {
+            if(btn.classList.contains('loading')) return;
+            btn.classList.add('loading', 'checking-active');
+            
+            const waveDots = '<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btn.innerHTML = `CHECKING${waveDots}`;
+            
+            let delay = Math.floor(Math.random() * 2000) + 3000;
+            
+            setTimeout(() => {
+                const isOnline = navigator.onLine;
+                updateNetworkUI(isOnline);
+                
+                if (!isOnline) {
+                    btn.classList.remove('checking-active');
+                    btn.style.background = 'var(--c-red)';
+                    btn.style.borderColor = 'var(--c-red)';
+                    btn.style.color = 'var(--bg)';
+                    btn.innerHTML = `OFFLINE`;
+                    
+                    setTimeout(() => {
+                        btn.classList.remove('loading');
+                        btn.style.background = '';
+                        btn.style.borderColor = '';
+                        btn.style.color = '';
+                        btn.innerHTML = btn.getAttribute('data-default');
+                    }, 3000);
+                } else {
+                    btn.classList.remove('loading', 'checking-active');
+                    btn.innerHTML = btn.getAttribute('data-default');
+                }
+            }, delay);
+        }
+
+        function proceedToLanding(btn) {
+            if(btn.classList.contains('loading')) return;
+            btn.classList.add('loading');
+            const waveDots = '<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btn.innerHTML = `REDIRECTING${waveDots}`;
+            
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                window.location.href = "landing.html";
+            }, 1000);
+        }
+
+        function switchMenu(hideId, showId) {
+            const hide = document.getElementById(hideId);
+            const show = document.getElementById(showId);
+            hide.classList.remove('active-menu');
+            setTimeout(() => {
+                if(showId === 'statsMenu') updateStatsUI();
+                show.classList.add('active-menu');
+            }, 300);
+        }
+
+        function startFullscreenGame() {
+            const stats = document.getElementById('statsMenu');
+            const game = document.getElementById('fullScreenGame');
+            stats.classList.remove('active-menu');
+            setTimeout(() => {
+                game.style.display = 'flex';
+                setTimeout(() => { game.style.opacity = '1'; resetGameState(); overlay.classList.add('show'); drawStatic(); }, 50);
+            }, 300);
+        }
+
+        function exitGame() {
+            const stats = document.getElementById('statsMenu');
+            const game = document.getElementById('fullScreenGame');
+            game.style.opacity = '0';
+            setTimeout(() => {
+                game.style.display = 'none';
+                cancelAnimationFrame(loopId);
+                updateStatsUI();
+                stats.classList.add('active-menu');
+            }, 300);
+        }
+
+        let highScore = parseInt(localStorage.getItem('inf_game_highscore')) || 0;
+        let totalPlayed = parseInt(localStorage.getItem('inf_game_played')) || 0;
+        let lastScore = parseInt(localStorage.getItem('inf_game_lastscore')) || 0;
+        let matchHistory = JSON.parse(localStorage.getItem('inf_game_history')) || [];
+
+        function updateStatsUI() {
+            document.getElementById('valHigh').innerText = highScore;
+            document.getElementById('valPlayed').innerText = totalPlayed;
+            document.getElementById('valLast').innerText = lastScore;
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = matchHistory.length === 0 ? '<div style="opacity:0.4; font-size:10px; padding:20px 0;">NO MATCH HISTORY</div>' : [...matchHistory].reverse().map((s, i) => `<div class="history-item"><span>MATCH ${matchHistory.length - i}</span><span style="color:var(--c-blue);">SCORE: ${s}</span></div>`).join('');
+        }
+
+        function showModal(title, desc, type, confirmCallback = null, btnText = 'DISMISS') {
+            const modal = document.getElementById('customModal');
+            document.getElementById('modalTitle').innerText = title;
+            
+            let titleColor = 'var(--c-yellow)';
+            if (type === 'danger') titleColor = 'var(--c-red)';
+            else if (type === 'success') titleColor = 'var(--c-green)';
+            document.getElementById('modalTitle').style.color = titleColor;
+            
+            document.getElementById('modalDesc').innerHTML = desc;
+            const actions = document.getElementById('modalActions');
+            
+            if (type === 'success' && confirmCallback) {
+                actions.innerHTML = `<button class="modal-btn" style="color:var(--c-green); border-color:rgba(0,200,81,0.4); background:rgba(0,200,81,0.1);" id="confirmBtn">${btnText}</button>`;
+                document.getElementById('confirmBtn').onclick = () => { closeModal(); confirmCallback(); };
+            } 
+            else if (type === 'danger' && confirmCallback) {
+                actions.innerHTML = `<button class="modal-btn" onclick="closeModal()">CANCEL</button><button class="modal-btn danger" id="confirmBtn">PROCEED</button>`;
+                document.getElementById('confirmBtn').onclick = () => { closeModal(); confirmCallback(); };
+            } 
+            else {
+                actions.innerHTML = `<button class="modal-btn" onclick="closeModal()">${btnText}</button>`;
+            }
+            modal.classList.add('show');
+        }
+
+        function closeModal() { document.getElementById('customModal').classList.remove('show'); }
+
+        function customConfirm(title, message, onConfirm) {
+            showModal(title, message, 'danger', onConfirm);
+        }
+
+        window.alert = function(title, message) {
+            let type = 'warning';
+            let btnText = 'DISMISS';
+            let callback = null;
+            if (title === 'NETWORK RESTORED') {
+                type = 'success'; 
+                btnText = 'ACKNOWLEDGE';
+                message = 'Connection securely re-established.<br>Please click acknowledge to redirect.';
+                callback = () => { proceedToLanding(); };
+            }
+            showModal(title, message, type, callback, btnText);
+        };
+
+        function resetScoresPrompt() {
+            if (matchHistory.length === 0 && highScore === 0) { 
+                showModal('INFORMATION', 'There is no score data or match history<br>available to reset at this moment.', 'warning'); 
+                return; 
+            }
+            customConfirm('WARNING', 'This action will permanently delete your High Score<br>and all match history. Do you want to proceed?', () => {
+                localStorage.removeItem('inf_game_highscore'); localStorage.removeItem('inf_game_played'); localStorage.removeItem('inf_game_lastscore'); localStorage.removeItem('inf_game_history');
+                highScore = 0; totalPlayed = 0; lastScore = 0; matchHistory = []; updateStatsUI();
+            });
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const liveScoreUI = document.getElementById('liveScore');
+        const overlay = document.getElementById('gameMsgOverlay');
+        const msgTitle = document.getElementById('msgTitle');
+        const msgSub = document.getElementById('msgSub');
+        let loopId, isPlaying = false, gameHasStarted = false, py = 300, vY = 0, g = 0.5, isJumping = false, obsX = 850, score = 0, speed = 5;
+
+        function resetGameState() { py = 300; vY = 0; isJumping = false; obsX = 850; score = 0; speed = 5; liveScoreUI.innerText = 'SCORE: 0'; gameHasStarted = false; isPlaying = false; }
+        function saveGameData() { totalPlayed++; lastScore = score; if(score > highScore) highScore = score; matchHistory.push(score); localStorage.setItem('inf_game_highscore', highScore); localStorage.setItem('inf_game_played', totalPlayed); localStorage.setItem('inf_game_lastscore', lastScore); localStorage.setItem('inf_game_history', JSON.stringify(matchHistory)); }
+        function handleInput(e) { if(e.target.tagName === 'BUTTON') return; e.preventDefault(); if (!gameHasStarted || !isPlaying) { if(gameHasStarted && !isPlaying) resetGameState(); gameHasStarted = true; isPlaying = true; overlay.classList.remove('show'); loop(); } if (isPlaying && !isJumping) { vY = -11; isJumping = true; } }
+        canvas.addEventListener('mousedown', handleInput); canvas.addEventListener('touchstart', handleInput, {passive: false});
+        function getVarColor(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#ffffff'; }
+        function drawStatic() { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = getVarColor('--fg'); ctx.fillRect(80, 300, 40, 40); ctx.fillRect(0, 340, 800, 2); }
+        function loop() { if (!isPlaying) return; ctx.clearRect(0, 0, canvas.width, canvas.height); py += vY; vY += g; if (py >= 300) { py = 300; isJumping = false; } obsX -= speed; if (obsX < -40) { obsX = 850; score++; speed += 0.2; liveScoreUI.innerText = 'SCORE: ' + score; } let fg = getVarColor('--fg'), cBlue = getVarColor('--c-blue'), cRed = getVarColor('--c-red'); if (obsX < 120 && obsX > 40 && py > 260) { isPlaying = false; saveGameData(); overlay.classList.add('show'); msgTitle.innerText = "CRASHED!"; msgTitle.style.color = cRed; msgSub.innerText = "TAP ANYWHERE TO RESTART"; } ctx.fillStyle = cBlue; ctx.fillRect(80, py, 40, 40); if (isPlaying || !gameHasStarted || overlay.classList.contains('show')) { ctx.fillStyle = cRed; ctx.fillRect(obsX, 300, 40, 40); } ctx.fillStyle = fg; ctx.fillRect(0, 340, 800, 2); if (isPlaying) loopId = requestAnimationFrame(loop); }
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

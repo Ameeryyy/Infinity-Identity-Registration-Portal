@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - Registration Step 5</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+    
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+            user-select: none;
+        }
+
+        .container { 
+            width: 90%; 
+            max-width: 700px; 
+            margin: 0 auto; 
+            padding: clamp(40px, 8vh, 80px) 0; 
+            position: relative; 
+            z-index: 10; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 5px; font-size: clamp(22px, 6vw, 32px); text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        p.desc { font-size: clamp(12px, 3vw, 14px); opacity: 0.7; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; text-align: center; }
+
+        .card-box { border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: clamp(20px, 5vw, 35px); background: color-mix(in srgb, var(--fg) 3%, transparent); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: opacity 0.5s ease; }
+        
+        .form-group { margin-bottom: 25px; text-align: left; position: relative; }
+        .form-group label { display: block; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; opacity: 0.7; }
+        
+        .form-control { width: 100%; padding: 15px; background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 10px; color: var(--fg); font-size: 14px; font-weight: bold; letter-spacing: 1px; outline: none; transition: 0.3s; box-sizing: border-box; text-transform: uppercase; }
+        .form-control:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-blue) 20%, transparent); }
+        .form-control:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .error-text { color: var(--c-red); font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: block; margin-top: 0; text-align: center; }
+        .error-text.show { max-height: 30px; opacity: 1; margin-top: 8px; }
+
+        .error-message-box { display: none; text-align: center; color: var(--c-red); padding: 30px 20px; animation: fadeIn 0.5s ease; }
+        .error-message-box svg { width: 50px; height: 50px; fill: currentColor; margin-bottom: 15px; }
+        .error-message-box h3 { margin: 0 0 25px 0; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; }
+
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 800px; opacity: 1; margin-bottom: 20px; overflow: visible; }
+        
+        .btn-row { display: flex; gap: 15px; margin-top: 30px; }
+        
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group input { display: none; }
+        .check-group input:disabled + .custom-check { opacity: 0.4; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; user-select: none; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .doctor-auth-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed color-mix(in srgb, var(--fg) 15%, transparent); padding-bottom: 20px; margin-bottom: 20px; }
+        .doc-info-side { text-align: left; }
+        .doc-phone-side { text-align: right; }
+        .doc-info-side .lbl, .doc-phone-side .lbl { font-size: 10px; opacity: 0.5; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; color: var(--c-green); }
+        .doc-info-side .val-name { font-size: 14px; font-weight: bold; color: var(--c-blue); text-transform: uppercase; margin-bottom: 3px; }
+        .doc-info-side .val-id { font-size: 11px; opacity: 0.8; font-family: monospace; letter-spacing: 1px; }
+        .doc-phone-side .val-phone { font-size: 20px; font-weight: bold; color: var(--fg); letter-spacing: 2px; }
+
+        /* Lock and Action Row Styles added for Step 5 */
+        .action-row { display: flex; gap: 10px; width: 100%; margin-top: 15px; align-items: center; }
+        .action-row .btn-check-id { margin-top: 0; }
+        .id-lock { width: 50px; height: 50px; background: transparent; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.3; pointer-events: none; transition: 0.3s; color: var(--fg); box-sizing: border-box; flex-shrink: 0; }
+        .id-lock.ready { opacity: 0.9; pointer-events: auto; border-color: var(--c-yellow); color: var(--c-yellow); box-shadow: 0 0 8px color-mix(in srgb, var(--c-yellow) 30%, transparent); }
+        .id-lock.locked { opacity: 1; border-color: var(--c-green); color: var(--c-green); background: color-mix(in srgb, var(--c-green) 10%, transparent); box-shadow: none; pointer-events: auto; }
+        .id-lock svg { width: 20px; height: 20px; fill: currentColor; transition: 0.3s; }
+
+        /* Full Width Action Buttons without Text Swap Animation */
+        .btn-check-id { width: 100%; height: 50px; padding: 0 16px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.4; pointer-events: none; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-top: 15px; box-sizing: border-box; }
+        .btn-check-id.active { opacity: 1; pointer-events: auto; }
+        .btn-check-id.active:hover:not(.processing) { background: var(--c-blue) !important; color: #ffffff !important; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); border-color: var(--c-blue) !important; }
+        .btn-check-id:active { transform: scale(0.97); }
+        .btn-check-id.processing { opacity: 1 !important; pointer-events: none; }
+
+        .otp-wrapper { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .otp-box { width: clamp(40px, 10vw, 55px); height: clamp(45px, 12vw, 65px); background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 8px; text-align: center; font-size: 24px; font-weight: bold; color: var(--fg); outline: none; transition: 0.3s; padding: 0; box-sizing: border-box; }
+        .otp-box:focus { border-color: var(--c-blue); box-shadow: 0 0 10px color-mix(in srgb, var(--c-blue) 30%, transparent); transform: translateY(-2px); }
+        .otp-box:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .timer-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .hl-blue { color: var(--c-blue); font-weight: bold; }
+        .clickable { cursor: pointer; transition: 0.3s; }
+        .clickable:hover { opacity: 0.7; }
+        .clickable.disabled { opacity: 0.3; pointer-events: none; }
+
+        .verified-badge { color: var(--c-green); font-weight: bold; text-align: center; font-size: 14px; letter-spacing: 1px; display: none; text-transform: uppercase; animation: fadeIn 0.5s ease; margin-bottom: 20px; }
+        .verified-badge svg { width: 20px; height: 20px; fill: currentColor; vertical-align: middle; margin-right: 5px; margin-bottom: 3px; }
+
+        .success-text { color: var(--c-green); font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease; text-align: center; margin: 0; }
+        .success-text.show { max-height: 30px; opacity: 1; margin-bottom: 10px; margin-top: 8px; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: color-mix(in srgb, var(--bg) 95%, var(--fg)); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); padding: 30px 20px; border-radius: 16px; text-align: center; max-width: 380px; width: 85%; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        
+        .modal-title { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; color: var(--c-yellow); }
+        .modal-actions { display: flex; justify-content: center; gap: 10px; width: 100%; margin-top: 25px; }
+        .modal-btn { flex: 1; background: transparent; color: var(--fg); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); padding: 14px 10px; border-radius: 8px; font-weight: bold; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .modal-btn:hover { background: color-mix(in srgb, var(--fg) 10%, transparent); }
+        .modal-btn.confirm { color: var(--c-green); border-color: var(--c-green); }
+        .modal-btn.confirm:hover { background: var(--c-green); color: #000; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-green) 40%, transparent); }
+        .modal-btn.danger { color: var(--c-red); border-color: var(--c-red); }
+        .modal-btn.danger:hover { background: var(--c-red); color: #fff; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-red) 40%, transparent); }
+        
+        .loader-spinner { width: 30px; height: 30px; border: 3px solid color-mix(in srgb, var(--c-yellow) 20%, transparent); border-top-color: var(--c-yellow); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px auto; }
+        
+        .payment-amount { font-size: 28px; font-weight: bold; color: var(--c-green); margin: 15px 0; letter-spacing: 1px; animation: fadeIn 0.5s ease; }
+        
+        .security-warning { color: var(--c-red); font-size: 10px; font-weight: bold; line-height: 1.6; letter-spacing: 1px; text-transform: uppercase; opacity: 0.9; margin: 15px 0 20px 0; animation: fadeIn 0.5s ease; }
+
+        .iti { width: 100%; display: block; position: relative; }
+        .iti__flag-container { position: absolute; top: 0; left: 0; bottom: 0; width: 90px; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); background: color-mix(in srgb, var(--bg) 50%, transparent); border-radius: 10px; display: flex; justify-content: center; align-items: center; }
+        .iti__selected-flag { padding: 0 !important; background: transparent !important; }
+        .iti__arrow { border-top-color: var(--fg) !important; transition: transform 0.3s ease; }
+        .iti__arrow--up { border-bottom-color: var(--fg) !important; transform: rotate(180deg); }
+        
+        .iti__country-list { 
+            background: color-mix(in srgb, var(--bg) 95%, var(--fg)) !important; 
+            border: 1px solid var(--c-blue) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            font-size: 12px; 
+            border-radius: 8px; 
+            z-index: 100; 
+            white-space: nowrap; 
+            max-height: 220px !important;
+            scrollbar-width: thin;
+            scrollbar-color: var(--c-blue) transparent;
+            display: block !important; 
+            opacity: 1; 
+            visibility: visible; 
+            transform: translateY(0); 
+            pointer-events: auto;
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease !important;
+        }
+        .iti__country-list.iti__hide { 
+            opacity: 0 !important; 
+            visibility: hidden !important; 
+            transform: translateY(-10px) !important; 
+            pointer-events: none !important; 
+        }
+        
+        .iti__country { padding: 10px !important; transition: background 0.2s; }
+        .iti__country:hover { background-color: var(--c-blue) !important; color: #ffffff !important; }
+        
+        .iti__country-list::-webkit-scrollbar { width: 6px; }
+        .iti__country-list::-webkit-scrollbar-track { background: color-mix(in srgb, var(--bg) 90%, var(--fg)); border-radius: 4px; margin: 4px; }
+        .iti__country-list::-webkit-scrollbar-thumb { background: var(--c-blue); border-radius: 4px; }
+        .iti__country-list::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--c-blue) 80%, #fff); }
+
+        .phone-intl { width: calc(100% - 100px) !important; margin-left: 100px !important; padding-left: 15px !important; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 600px) {
+            .btn-row { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div id="errorCard" style="display: none;">
+            <div class="brand-title">STEP 5 OF 5</div>
+            <h2>VERIFY DOCTOR COMMUNICATION</h2>
+            <p class="desc">Authenticate the consulting doctor's communication channel to construct the node securely.</p>
+            <div class="card-box">
+                <div class="error-message-box" id="noRecordError">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><br>
+                    <h3>FATHER AND MOTHER RECORD NOT FOUND</h3>
+                    <button class="btn-check-id active" onclick="window.location.href='registration.html'" style="max-width: 280px; margin: 0 auto;">
+                        ENTER THE ID
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainContentWrapper">
+            <div class="brand-title">STEP 5 OF 5</div>
+            <h2>VERIFY DOCTOR COMMUNICATION</h2>
+            <p class="desc">Authenticate the consulting doctor's communication channel to construct the node securely.</p>
+            
+            <div class="card-box" id="dataFormCard">
+                
+                <div class="doctor-auth-header">
+                    <div class="doc-info-side">
+                        <div class="lbl">
+                            <svg viewBox="0 0 24 24" style="width:12px; height:12px; fill:currentColor; vertical-align:middle; margin-right:2px; margin-bottom:2px;"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
+                            DOCTOR VERIFIED
+                        </div>
+                        <div class="val-name" id="dispDoctorName">DR. AMEER</div>
+                        <div class="val-id" id="dispDoctorId">ID: ********9012</div>
+                    </div>
+                    <div class="doc-phone-side">
+                        <div class="lbl">Registered Mobile</div>
+                        <div class="val-phone" id="docPhoneDisplay">+91 ******1111</div>
+                    </div>
+                </div>
+
+                <div class="verified-badge" id="docOtpVerified" style="display:none;">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
+                    DOCTOR AUTHORIZATION SECURED
+                </div>
+                
+                <div class="verified-badge" id="docPhoneVerified" style="display:none; color:var(--c-blue);">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
+                    PHONE NUMBER VERIFIED
+                </div>
+
+                <div id="docPhoneSecWrapper" class="slide-down-wrapper show">
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label style="display: flex; justify-content: space-between;">
+                            <span>Full Phone Number</span>
+                            <span id="docPhoneCount" style="color: var(--c-blue);">0/10</span>
+                        </label>
+                        <input type="tel" id="docPhone" class="form-control phone-intl" placeholder="1111111111" autocomplete="off" oninput="handlePhoneInput('doc')">
+                    </div>
+                    <div class="error-text" id="docPhoneError"></div>
+                    
+                    <div class="action-row">
+                        <div class="id-lock" id="docIdLock" onclick="toggleLock('doc')" title="Click to Lock/Unlock">
+                            <svg id="docIconUnlock" viewBox="0 0 24 24"><path d="M12,17C10.89,17 10,16.1 10,15C10,13.89 10.89,13 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17M18,20V10H6V20H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10A2,2 0 0,1 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+                            <svg id="docIconLock" viewBox="0 0 24 24" style="display:none;"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+                        </div>
+                        <button class="btn-check-id" id="btnDocVerifyPhone" disabled onclick="verifyPhoneAction('doc', '1111111111')">
+                            VERIFY NUMBER
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="docSendOtpWrapper" class="slide-down-wrapper" style="display:none;">
+                    <button class="btn-check-id active" id="btnDocSendOtp" style="border-color: var(--c-blue); color: var(--c-blue);" onclick="triggerSendOtp('doc')">
+                        SEND OTP
+                    </button>
+                </div>
+
+                <div id="docOtpSecWrapper" class="slide-down-wrapper" style="display:none;">
+                    <div style="background: color-mix(in srgb, var(--bg) 60%, transparent); border: 1px dashed color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 12px; padding: 20px;">
+                        <div style="margin-bottom: 15px; font-size: 11px; text-align: center; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">ENTER 6-DIGIT OTP SENT TO DOCTOR'S NUMBER</div>
+                        <div class="otp-wrapper">
+                            <input type="text" class="otp-box docOtp-box" maxlength="1" data-index="1">
+                            <input type="text" class="otp-box docOtp-box" maxlength="1" data-index="2">
+                            <input type="text" class="otp-box docOtp-box" maxlength="1" data-index="3">
+                            <input type="text" class="otp-box docOtp-box" maxlength="1" data-index="4">
+                            <input type="text" class="otp-box docOtp-box" maxlength="1" data-index="5">
+                            <input type="text" class="otp-box docOtp-box" maxlength="1" data-index="6">
+                        </div>
+                        <div class="timer-row">
+                            <span id="docTimer" style="color: var(--c-green);">05:00</span>
+                            <span class="hl-blue clickable" id="btnDocResendOtp" onclick="resendOTP('doc')">RESEND OTP</span>
+                        </div>
+                        <div class="success-text" id="docResendSuccess">OTP RESENT SUCCESSFULLY</div>
+                        <div class="error-text" id="docOtpError" style="margin-bottom: 10px;"></div>
+                        
+                        <div class="action-row">
+                            <div class="id-lock" id="docOtpIdLock" onclick="toggleOtpLock('doc')" title="Click to Lock/Unlock">
+                                <svg id="docOtpIconUnlock" viewBox="0 0 24 24"><path d="M12,17C10.89,17 10,16.1 10,15C10,13.89 10.89,13 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17M18,20V10H6V20H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10A2,2 0 0,1 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+                                <svg id="docOtpIconLock" viewBox="0 0 24 24" style="display:none;"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+                            </div>
+                            <button class="btn-check-id" id="btnDocVerifyOtp" disabled style="border-color: var(--c-blue); color: var(--c-blue);" onclick="verifyOtpAction('doc')">
+                                VERIFY OTP
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide-down-wrapper" id="formCheckWrapper" style="display:none;">
+                    <label class="check-group" style="margin-top: 20px;">
+                        <input type="checkbox" id="formConfirmCheck" onchange="validateForm()">
+                        <div class="custom-check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        </div>
+                        <span class="check-label">I CONFIRM ALL ENTERED DETAILS ARE ACCURATE</span>
+                    </label>
+                </div>
+
+                <div class="btn-row" id="confirmButtonRow" style="display:none; opacity: 0; transition: opacity 0.5s ease;">
+                    <button class="btn-check-id" id="btnReviewDetails" disabled onclick="showPaymentPopup()">
+                        CONFIRM
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-box">
+            
+            <div id="payProcessing">
+                <div class="loader-spinner"></div>
+                <div class="modal-title" style="margin-bottom: 0;">GENERATING PAYMENT<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span></div>
+            </div>
+
+            <div id="payResult" style="display: none;">
+                <svg viewBox="0 0 24 24" style="width:40px; height:40px; fill:var(--c-green); margin-bottom:10px;"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
+                <div class="payment-amount" style="margin-bottom: 5px;">FEE AMOUNT: ₹ 10.00</div>
+                
+                <div class="security-warning">
+                    DUE TO SECURITY PROTOCOLS, YOU CANNOT EDIT OR VIEW THIS DATA AFTER CONFIRMATION.<br><br>IF YOU HAVE ANY DOUBTS, CLICK <strong>RESTART</strong> TO CANCEL AND DO IT FROM THE BEGINNING.
+                </div>
+            </div>
+
+            <div class="modal-actions" id="payActions" style="display: none;">
+                <button class="modal-btn danger" onclick="restartProcess()">RESTART</button>
+                <button class="modal-btn confirm" onclick="confirmPayment()">CONFIRM</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="restartConfirmModal">
+        <div class="modal-box">
+            <div class="modal-title" style="color: var(--c-red);">RESTART CONFIRMATION</div>
+            <div class="security-warning" style="margin-bottom: 25px; color: var(--fg); font-size: 13px;">Are you sure you want to restart? All progress will be lost.</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeRestartConfirm()">CANCEL</button>
+                <button class="modal-btn danger" onclick="executeRestart()">RESTART</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="proceedConfirmModal">
+        <div class="modal-box">
+            <div class="modal-title" style="color: var(--c-green);">FINAL CONFIRMATION</div>
+            <div class="security-warning" style="margin-bottom: 25px; color: var(--fg); font-size: 13px;">Do you want to finalize the payment and proceed?</div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeProceedConfirm()">CANCEL</button>
+                <button class="modal-btn confirm" onclick="executeProceed()">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <script src="brain.js"></script>
+    <script>
+        document.addEventListener('paste', e => e.preventDefault());
+        document.addEventListener('drop', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+
+        let docTimerInterval;
+        let docFailedAttempts = 0; // Added attempts tracker
+
+        function getDoctorPhoneMeta() {
+            const input = document.getElementById('docPhone');
+            const iti = input && input._iti ? input._iti : null;
+            const selected = iti ? iti.getSelectedCountryData() : null;
+            const dialCode = selected && selected.dialCode ? `+${selected.dialCode}` : '+91';
+            const iso2 = selected && selected.iso2 ? selected.iso2.toLowerCase() : 'in';
+            let maxLength = 10;
+
+            const fallbackLengths = {
+                in: 10, us: 10, ca: 10, gb: 10, ae: 9, sg: 8, jp: 10, fr: 9, de: 11, nl: 9, es: 9,
+                it: 10, be: 9, se: 10, no: 8, dk: 8, ch: 9, at: 9, ie: 9, pt: 9, fi: 10, pl: 9,
+                nz: 10, au: 9, za: 9, ng: 11, ke: 9, pk: 9, bd: 10, lk: 9, my: 9, ph: 10, id: 11,
+                th: 9, vn: 9, hk: 8, tw: 9, kr: 10, cn: 11, br: 11, mx: 10, ar: 10, cl: 9, co: 9,
+                pe: 9, tr: 10, ru: 10, ua: 9, cz: 9, gr: 10, ro: 10, hu: 9, bg: 9, hr: 9, si: 9,
+                sk: 9, lu: 8, mt: 8, cy: 8, ee: 8, lv: 8, lt: 8, is: 7, li: 7, al: 8, ba: 8, me: 8,
+                mk: 8, rs: 9, md: 8, by: 9, kz: 10, uz: 9, kg: 9, tj: 9, tm: 9, az: 9, ge: 9, am: 9,
+                il: 9, np: 10, mv: 7, qa: 8, om: 8, kw: 8, bh: 8, jo: 9, lb: 8, ir: 10, iq: 8,
+                sy: 9, ye: 9, ma: 8, tn: 8, dz: 9, ly: 8, sd: 9, et: 9, ug: 9, tz: 9, rw: 9, zm: 9,
+                na: 9, bw: 8, mz: 8, mg: 9, mu: 8, sc: 7, cm: 9, gh: 9, ci: 10, sn: 9, ml: 9, bf: 9,
+                ne: 8, bj: 8, tg: 8, cg: 9, cd: 9, ao: 9, bi: 8, dj: 8, er: 7, so: 8
+            };
+
+            if (fallbackLengths[iso2]) maxLength = fallbackLengths[iso2];
+            return { dialCode, maxLength };
+        }
+
+        function updateDoctorPhoneDisplay() {
+            const display = document.getElementById('docPhoneDisplay');
+            const meta = getDoctorPhoneMeta();
+            if (display) {
+                display.innerText = `${meta.dialCode} ******1111`;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            
+            setupSequentialInputs('.docOtp-box', 6);
+
+            const savedDocName = sessionStorage.getItem('docName') || 'DR. AMEER';
+            const savedDocId = sessionStorage.getItem('docId') || '123456789012';
+            document.getElementById('dispDoctorName').innerText = savedDocName;
+            document.getElementById('dispDoctorId').innerText = 'ID: ********' + savedDocId.slice(-4);
+
+            const phoneInputs = document.querySelectorAll('.phone-intl');
+            phoneInputs.forEach(input => {
+                const iti = window.intlTelInput(input, {
+                    separateDialCode: true,
+                    preferredCountries: ["in", "us", "gb", "ae"],
+                    allowDropdown: true,
+                    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+                });
+                input._iti = iti;
+                input.addEventListener('countrychange', () => {
+                    updateDoctorPhoneDisplay();
+                    handlePhoneInput('doc');
+                });
+                updateDoctorPhoneDisplay();
+            });
+            
+            validateForm();
+
+            document.body.addEventListener('click', function(e) {
+                document.querySelectorAll('.iti__country-list').forEach(list => {
+                    const flagContainer = list.previousElementSibling;
+                    const arrow = flagContainer ? flagContainer.querySelector('.iti__arrow') : null;
+                    if (arrow) {
+                        if (!list.classList.contains('iti__hide')) {
+                            list.classList.add('iti__show');
+                            arrow.classList.add('iti__arrow--up');
+                        } else {
+                            list.classList.remove('iti__show');
+                            arrow.classList.remove('iti__arrow--up');
+                        }
+                    }
+                });
+            });
+        });
+
+        function setupSequentialInputs(selector, length) {
+            const inputs = document.querySelectorAll(selector);
+            inputs.forEach((input, index) => {
+                input.addEventListener('focus', function(e) {
+                    let firstEmpty = -1;
+                    for(let i=0; i<inputs.length; i++) {
+                        if(inputs[i].value === '') {
+                            firstEmpty = i;
+                            break;
+                        }
+                    }
+                    if(firstEmpty !== -1 && index > firstEmpty) {
+                        inputs[firstEmpty].focus();
+                    }
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if(e.key === 'Backspace' && this.value === '' && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+                
+                input.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    if(this.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                    
+                    validateOtpInputs(selector.includes('docOtp') ? 'doc' : 'doc');
+                });
+            });
+        }
+
+        function validateOtpInputs(prefix) {
+            let filledCount = 0;
+            document.querySelectorAll('.' + prefix + 'Otp-box').forEach(i => { if(i.value) filledCount++; });
+            
+            const lockEl = document.getElementById(prefix + 'OtpIdLock');
+            const capPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+            const btn = document.getElementById('btn' + capPrefix + 'VerifyOtp');
+            
+            if (!lockEl.classList.contains('locked')) {
+                if(filledCount === 6) {
+                    lockEl.classList.add('ready');
+                } else {
+                    lockEl.classList.remove('ready');
+                    btn.classList.remove('active');
+                    btn.disabled = true;
+                }
+            }
+        }
+
+        function toggleLock(prefix) {
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            const iconUnlock = document.getElementById(prefix + 'IconUnlock');
+            const iconLock = document.getElementById(prefix + 'IconLock');
+            const capPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+            const btn = document.getElementById('btn' + capPrefix + 'VerifyPhone');
+            const input = document.getElementById(prefix + 'Phone');
+            const flagContainer = input.closest('.iti').querySelector('.iti__flag-container');
+            
+            if (lockEl.classList.contains('locked')) {
+                lockEl.classList.remove('locked');
+                lockEl.style.pointerEvents = 'auto';
+                iconUnlock.style.display = 'flex';
+                iconLock.style.display = 'none';
+                input.disabled = false;
+                if(flagContainer) flagContainer.style.pointerEvents = 'auto';
+                
+                btn.classList.remove('active');
+                btn.disabled = true;
+            } else {
+                lockEl.classList.add('locked');
+                iconUnlock.style.display = 'none';
+                iconLock.style.display = 'flex';
+                input.disabled = true;
+                if(flagContainer) flagContainer.style.pointerEvents = 'none';
+                
+                btn.classList.add('active');
+                btn.disabled = false;
+            }
+        }
+
+        function toggleOtpLock(prefix) {
+            const lockEl = document.getElementById(prefix + 'OtpIdLock');
+            const iconUnlock = document.getElementById(prefix + 'OtpIconUnlock');
+            const iconLock = document.getElementById(prefix + 'OtpIconLock');
+            const capPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+            const btn = document.getElementById('btn' + capPrefix + 'VerifyOtp');
+            const inputs = document.querySelectorAll(`.${prefix}Otp-box`);
+            
+            if (lockEl.classList.contains('locked')) {
+                lockEl.classList.remove('locked');
+                lockEl.style.pointerEvents = 'auto';
+                iconUnlock.style.display = 'flex';
+                iconLock.style.display = 'none';
+                
+                const timerEl = document.getElementById(prefix + 'Timer');
+                if (timerEl && timerEl.innerText !== 'EXPIRED') {
+                    inputs.forEach(i => i.disabled = false);
+                }
+                
+                btn.classList.remove('active');
+                btn.disabled = true;
+            } else {
+                lockEl.classList.add('locked');
+                iconUnlock.style.display = 'none';
+                iconLock.style.display = 'flex';
+                inputs.forEach(i => i.disabled = true);
+                
+                btn.classList.add('active');
+                btn.disabled = false;
+            }
+        }
+
+        function showError(el, msg) {
+            if(el) { el.innerText = msg; el.classList.add('show'); }
+        }
+
+        function hideError(el) {
+            if(el) el.classList.remove('show');
+        }
+
+        function handlePhoneInput(prefix) {
+            const input = document.getElementById(prefix + 'Phone');
+            const countEl = document.getElementById(prefix + 'PhoneCount');
+            const capPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+            const btn = document.getElementById('btn' + capPrefix + 'VerifyPhone');
+            const errorEl = document.getElementById(prefix + 'PhoneError');
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            const meta = getDoctorPhoneMeta();
+            
+            let val = input.value.replace(/\D/g, '');
+            if(val.length > meta.maxLength) val = val.substring(0, meta.maxLength);
+            input.value = val;
+            countEl.innerText = `${val.length}/${meta.maxLength}`;
+            
+            if (errorEl && errorEl.classList.contains('show')) {
+                hideError(errorEl);
+            }
+            
+            if (!lockEl.classList.contains('locked')) {
+                if(val.length === meta.maxLength) {
+                    lockEl.classList.add('ready');
+                } else {
+                    lockEl.classList.remove('ready');
+                    btn.classList.remove('active');
+                    btn.disabled = true;
+                }
+            }
+        }
+
+        function verifyPhoneAction(prefix, expected) {
+            const capPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+            const btn = document.getElementById('btn' + capPrefix + 'VerifyPhone');
+            const input = document.getElementById(prefix + 'Phone');
+            const errorEl = document.getElementById(prefix + 'PhoneError');
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            const val = input.value.replace(/\D/g, '');
+            const meta = getDoctorPhoneMeta();
+            const normalizedExpected = expected.slice(0, meta.maxLength);
+            
+            if(val.length < meta.maxLength) {
+                btn.classList.add('processing');
+                btn.style.background = 'var(--c-red)';
+                btn.style.borderColor = 'var(--c-red)';
+                btn.style.color = '#fff';
+                btn.innerHTML = 'INCOMPLETE NUMBER';
+                showError(errorEl, `PLEASE ENTER FULL ${meta.maxLength}-DIGIT NUMBER`);
+                
+                setTimeout(() => {
+                    btn.classList.remove('processing');
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    btn.innerHTML = 'VERIFY NUMBER';
+                }, 2000);
+                return;
+            }
+
+            lockEl.style.pointerEvents = 'none';
+            btn.classList.add('processing');
+            btn.style.pointerEvents = 'none';
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000';
+            btn.innerHTML = 'CHECKING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            hideError(errorEl);
+
+            let waitTime = Math.floor(Math.random() * 2000) + 2000; 
+
+            setTimeout(() => {
+                if(val === normalizedExpected) {
+                    btn.style.background = 'var(--c-green)';
+                    btn.style.borderColor = 'var(--c-green)';
+                    btn.style.color = '#000';
+                    btn.innerHTML = 'VERIFIED';
+                    
+                    setTimeout(() => {
+                        const phoneSec = document.getElementById(prefix + 'PhoneSecWrapper');
+                        phoneSec.classList.remove('show');
+                        
+                        setTimeout(() => {
+                            phoneSec.style.display = 'none';
+                            document.getElementById(prefix + 'PhoneVerified').style.display = 'block';
+                            
+                            const sendWrapper = document.getElementById(prefix + 'SendOtpWrapper');
+                            sendWrapper.style.display = 'block';
+                            setTimeout(() => sendWrapper.classList.add('show'), 50);
+
+                            btn.classList.remove('processing');
+                            btn.style.background = '';
+                            btn.style.borderColor = '';
+                            btn.style.color = '';
+                            btn.innerHTML = 'VERIFY NUMBER';
+                            btn.style.pointerEvents = 'auto';
+                        }, 500);
+                    }, 1000);
+                } else {
+                    btn.style.background = 'var(--c-red)';
+                    btn.style.borderColor = 'var(--c-red)';
+                    btn.style.color = '#fff';
+                    btn.innerHTML = 'NUMBER MISMATCH';
+                    showError(errorEl, "NUMBER MISMATCH. ENTER CORRECT REGISTERED NUMBER.");
+                    
+                    setTimeout(() => {
+                        btn.classList.remove('processing');
+                        btn.style.background = '';
+                        btn.style.borderColor = '';
+                        btn.style.color = '';
+                        btn.innerHTML = 'VERIFY NUMBER';
+                        btn.style.pointerEvents = 'auto';
+                        
+                        lockEl.style.pointerEvents = 'auto';
+                        if(lockEl.classList.contains('locked')) {
+                            toggleLock(prefix);
+                        }
+                    }, 3000);
+                }
+            }, waitTime);
+        }
+
+        function triggerSendOtp(prefix) {
+            const capPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+            const btn = document.getElementById('btn' + capPrefix + 'SendOtp');
+            btn.classList.add('processing');
+            btn.style.pointerEvents = 'none';
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000';
+            btn.innerHTML = 'SENDING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+
+            setTimeout(() => {
+                btn.style.background = 'var(--c-green)';
+                btn.style.borderColor = 'var(--c-green)';
+                btn.style.color = '#000';
+                btn.innerHTML = 'SENT SUCCESSFULLY';
+
+                const sendWrapper = document.getElementById(prefix + 'SendOtpWrapper');
+                sendWrapper.classList.remove('show');
+                
+                setTimeout(() => {
+                    sendWrapper.style.display = 'none';
+
+                    const otpSec = document.getElementById(prefix + 'OtpSecWrapper');
+                    otpSec.style.display = 'block';
+                    setTimeout(() => otpSec.classList.add('show'), 50);
+                    
+                    startTimer(prefix);
+                    setTimeout(() => document.querySelector(`.${prefix}Otp-box[data-index="1"]`).focus(), 500);
+                    
+                    btn.classList.remove('processing');
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    btn.innerHTML = 'SEND OTP';
+                    btn.style.pointerEvents = 'auto';
+                }, 500);
+            }, 1000);
+        }
+
+        function startTimer(prefix) {
+            let timeLeft = 300; 
+            const display = document.getElementById(prefix + 'Timer');
+            display.style.color = 'var(--c-green)';
+            clearInterval(docTimerInterval);
+            
+            const interval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                display.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                
+                if(timeLeft > 150) {
+                    display.style.color = 'var(--c-green)';
+                } else if(timeLeft > 60) {
+                    display.style.color = 'var(--c-yellow)';
+                } else {
+                    display.style.color = 'var(--c-red)';
+                }
+
+                if(timeLeft <= 0) {
+                    clearInterval(interval);
+                    display.innerText = 'EXPIRED';
+                    display.style.color = 'var(--c-red)';
+                    
+                    document.querySelectorAll(`.${prefix}Otp-box`).forEach(i => i.disabled = true);
+                    
+                    const errorEl = document.getElementById(prefix + 'OtpError');
+                    errorEl.style.color = 'var(--c-yellow)';
+                    showError(errorEl, "OTP EXPIRED. PLEASE RESEND OTP.");
+                    
+                    const lockEl = document.getElementById(prefix + 'OtpIdLock');
+                    if(lockEl && lockEl.classList.contains('locked')) {
+                        toggleOtpLock(prefix);
+                    }
+                    if(lockEl) {
+                        lockEl.classList.remove('ready');
+                        lockEl.style.pointerEvents = 'none';
+                        lockEl.style.opacity = '0.3';
+                    }
+                }
+            }, 1000);
+            docTimerInterval = interval;
+        }
+
+        function resendOTP(prefix) {
+            const errorEl = document.getElementById(prefix + 'OtpError');
+            errorEl.style.color = ''; 
+            hideError(errorEl);
+            
+            const lockEl = document.getElementById(prefix + 'OtpIdLock');
+            if(lockEl) {
+                lockEl.style.pointerEvents = 'auto';
+                lockEl.classList.remove('ready');
+                if(lockEl.classList.contains('locked')) {
+                    toggleOtpLock(prefix);
+                }
+            }
+            
+            document.querySelectorAll(`.${prefix}Otp-box`).forEach(i => {
+                i.value = '';
+                i.disabled = false;
+            });
+            
+            validateOtpInputs(prefix);
+            
+            const capPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+            const btn = document.getElementById('btn' + capPrefix + 'VerifyOtp');
+            if(btn) {
+                btn.classList.remove('active'); 
+                btn.disabled = true;
+            }
+
+            const successText = document.getElementById(prefix + 'ResendSuccess');
+            successText.classList.add('show');
+            setTimeout(() => successText.classList.remove('show'), 3000);
+
+            startTimer(prefix);
+            document.querySelector(`.${prefix}Otp-box[data-index="1"]`).focus();
+        }
+
+        function verifyOtpAction(prefix) {
+            const capPrefix = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+            const btn = document.getElementById('btn' + capPrefix + 'VerifyOtp');
+            let otp = Array.from(document.querySelectorAll(`.${prefix}Otp-box`)).map(i => i.value).join('');
+            const errorEl = document.getElementById(prefix + 'OtpError');
+            const lockEl = document.getElementById(prefix + 'OtpIdLock');
+            
+            if (otp.length < 6) {
+                btn.classList.add('processing');
+                btn.style.background = 'var(--c-red)';
+                btn.style.borderColor = 'var(--c-red)';
+                btn.style.color = '#fff';
+                btn.innerHTML = 'INCOMPLETE OTP';
+                errorEl.style.color = 'var(--c-red)';
+                showError(errorEl, "ENTER 6-DIGIT OTP");
+                
+                setTimeout(() => {
+                    btn.classList.remove('processing');
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    btn.innerHTML = 'VERIFY OTP';
+                }, 2000);
+                return;
+            }
+
+            const resendBtn = document.getElementById('btnDocResendOtp');
+            if(resendBtn) resendBtn.style.pointerEvents = 'none';
+
+            lockEl.style.pointerEvents = 'none';
+            btn.classList.add('processing');
+            btn.style.pointerEvents = 'none';
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000';
+            btn.innerHTML = 'CHECKING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            hideError(errorEl);
+
+            let waitTime = Math.floor(Math.random() * 2000) + 2000; 
+
+            setTimeout(() => {
+                // First attempt will fail, Second attempt will pass with ANY number
+                if (docFailedAttempts === 0) {
+                    docFailedAttempts++;
+                    
+                    btn.style.background = 'var(--c-red)';
+                    btn.style.borderColor = 'var(--c-red)';
+                    btn.style.color = '#fff';
+                    btn.innerHTML = 'INCORRECT OTP';
+                    errorEl.style.color = 'var(--c-red)';
+                    showError(errorEl, "INCORRECT OTP. PLEASE TRY AGAIN.");
+                    
+                    setTimeout(() => {
+                        btn.classList.remove('processing');
+                        btn.style.background = '';
+                        btn.style.borderColor = 'var(--c-blue)';
+                        btn.style.color = 'var(--c-blue)';
+                        btn.innerHTML = 'VERIFY OTP';
+                        btn.style.pointerEvents = 'auto';
+                        
+                        lockEl.style.pointerEvents = 'auto';
+                        if(lockEl.classList.contains('locked')) {
+                            toggleOtpLock(prefix);
+                        }
+                        
+                        document.querySelectorAll('.docOtp-box').forEach(b => { b.disabled = false; b.value = ''; });
+                        if(resendBtn) resendBtn.style.pointerEvents = 'auto';
+                        
+                        document.querySelector(`.${prefix}Otp-box[data-index="1"]`).focus();
+                        validateOtpInputs(prefix);
+                    }, 3000);
+                } else {
+                    btn.style.background = 'var(--c-green)';
+                    btn.style.borderColor = 'var(--c-green)';
+                    btn.style.color = '#000';
+                    btn.innerHTML = 'ACCEPTED';
+                    
+                    setTimeout(() => {
+                        const otpSec = document.getElementById(prefix + 'OtpSecWrapper');
+                        otpSec.classList.remove('show');
+                        
+                        setTimeout(() => {
+                            otpSec.style.display = 'none';
+                            
+                            document.getElementById(prefix + 'OtpVerified').style.display = 'block';
+                            clearInterval(docTimerInterval);
+                            
+                            btn.classList.remove('processing');
+                            btn.style.background = '';
+                            btn.style.borderColor = '';
+                            btn.style.color = '';
+                            btn.innerHTML = 'VERIFY OTP';
+                            btn.style.pointerEvents = 'auto';
+
+                            const checkWrap = document.getElementById('formCheckWrapper');
+                            const confirmRow = document.getElementById('confirmButtonRow');
+                            if (checkWrap) {
+                                checkWrap.style.display = 'block';
+                                setTimeout(() => checkWrap.classList.add('show'), 50);
+                            }
+                            if (confirmRow) {
+                                confirmRow.style.display = 'flex';
+                                setTimeout(() => confirmRow.style.opacity = '1', 50);
+                            }
+
+                            const confirmBox = document.getElementById('formConfirmCheck');
+                            if (confirmBox) {
+                                confirmBox.checked = false;
+                            }
+                            validateForm();
+                        }, 500);
+                    }, 1000);
+                }
+            }, waitTime);
+        }
+
+        function validateForm() {
+            const checkBox = document.getElementById('formConfirmCheck');
+            const isConfirmed = checkBox ? checkBox.checked : false;
+            const btn = document.getElementById('btnReviewDetails');
+            const row = document.getElementById('confirmButtonRow');
+            const authSecured = document.getElementById('docOtpVerified').style.display === 'block';
+
+            if (row) {
+                row.style.display = authSecured ? 'flex' : 'none';
+            }
+
+            if(btn) {
+                if(authSecured && isConfirmed) {
+                    btn.classList.add('active');
+                    btn.disabled = false;
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
+                } else {
+                    btn.classList.remove('active');
+                    btn.disabled = true;
+                    btn.style.pointerEvents = 'none';
+                    btn.style.opacity = '0.4';
+                }
+            }
+        }
+
+        function showPaymentPopup() {
+            document.getElementById('paymentModal').classList.add('show');
+            
+            document.getElementById('payProcessing').style.display = 'block';
+            document.getElementById('payResult').style.display = 'none';
+            document.getElementById('payActions').style.display = 'none';
+            
+            setTimeout(() => {
+                document.getElementById('payProcessing').style.display = 'none';
+                document.getElementById('payResult').style.display = 'block';
+                document.getElementById('payActions').style.display = 'flex';
+            }, 4000); 
+        }
+
+        function restartProcess() {
+            document.getElementById('restartConfirmModal').classList.add('show');
+        }
+
+        function closeRestartConfirm() {
+            document.getElementById('restartConfirmModal').classList.remove('show');
+        }
+
+        function executeRestart() {
+            document.getElementById('restartConfirmModal').classList.remove('show');
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = 'registration.html'; }, 1000);
+        }
+
+        function confirmPayment() {
+            document.getElementById('proceedConfirmModal').classList.add('show');
+        }
+
+        function closeProceedConfirm() {
+            document.getElementById('proceedConfirmModal').classList.remove('show');
+        }
+
+        function executeProceed() {
+            document.getElementById('proceedConfirmModal').classList.remove('show');
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = 'saving.html'; }, 1000);
+        }
+
+    </script>
+</body>
+</html>

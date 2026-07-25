@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity - Registration Portal</title>
+
+    <link rel="icon" href="logo.png">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        :root, [data-theme="minimal-dark"] { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; --c-cyan: #00e5ff; }
+        [data-theme="pure-dark"] { --bg: #000000; --fg: #ffffff; --c-blue: #ffffff; --c-red: #ffffff; --c-green: #ffffff; --c-yellow: #ffffff; --c-cyan: #ffffff; }
+        [data-theme="pure-light"] { --bg: #ffffff; --fg: #000000; --c-blue: #000000; --c-red: #000000; --c-green: #000000; --c-yellow: #000000; --c-cyan: #000000; }
+        [data-theme="minimal-light"] { --bg: #ffffff; --fg: #000000; --c-blue: #0056b3; --c-red: #cc0000; --c-green: #007e33; --c-yellow: #ff8800; --c-cyan: #0099cc; }
+        
+        html, body {
+            width: 100vw; height: 100dvh;
+            margin: 0; padding: 0;
+            overflow: hidden !important;
+            overscroll-behavior: none;
+        }
+
+        body { 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            display: flex; justify-content: center; align-items: center; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            opacity: 0; 
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+        }
+
+        .top-left { 
+            position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); 
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(11px, 3vw, 14px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; 
+            background: rgba(128, 128, 128, 0.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(128, 128, 128, 0.2); padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px); 
+            border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            transition: width 0.4s ease, min-width 0.4s ease, border-color 0.5s ease, background-color 0.5s ease, color 0.5s ease;
+            cursor: pointer; z-index: 20; color: var(--fg); overflow: hidden; height: 20px; white-space: nowrap;
+        }
+        
+        .net-header { display: flex; align-items: center; width: 100%; pointer-events: none; justify-content: center; }
+        .status-dot { width: clamp(8px, 2vw, 12px); height: clamp(8px, 2vw, 12px); border-radius: 50%; margin-right: 10px; background-color: var(--c-green); box-shadow: 0 0 8px var(--c-green); transition: background-color 0.5s ease, box-shadow 0.5s ease; }
+        
+        .spinner { 
+            width: clamp(8px, 2vw, 12px); height: clamp(8px, 2vw, 12px); 
+            border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan);
+            border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px;
+            display: none; transition: border-color 0.5s ease;
+        }
+
+        #statusText { transition: opacity 0.2s ease-in-out, color 0.5s ease; }
+        
+        .offline.top-left { border-color: rgba(128, 128, 128, 0.4); opacity: 0.7; pointer-events: none; }
+        .offline .status-dot { background-color: var(--c-red); box-shadow: 0 0 8px var(--c-red); }
+        .offline #statusText { color: var(--c-red); }
+        
+        .top-right { 
+            position: absolute; top: clamp(15px, 4vw, 30px); right: clamp(15px, 4vw, 30px); 
+            cursor: pointer; opacity: 0.6; color: inherit; 
+            width: clamp(28px, 8vw, 40px); height: clamp(28px, 8vw, 40px); display: block; z-index: 20; 
+            transition: opacity 0.3s, color 0.5s ease;
+        }
+        .top-right:hover { opacity: 1; color: var(--c-blue); }
+        
+        .gear { width: 100%; height: 100%; fill: currentColor; transform-origin: center; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), fill 0.5s ease; }
+        
+        .top-right.spin-active .gear { transform: rotate(360deg); }
+        
+        .center-content { display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 600px; animation: fadeIn 0.8s ease-out; text-align: center; z-index: 10; padding: 20px; }
+        
+        .brand-title { font-size: clamp(12px, 3vw, 16px); font-weight: bold; text-transform: uppercase; letter-spacing: 5px; opacity: 0.5; margin-bottom: clamp(12px, 3.5vw, 18px); color: var(--fg); transition: color 0.5s ease; }
+        h1 { font-size: clamp(32px, 8vw, 50px); font-weight: bold; margin: 0 0 clamp(15px, 4vw, 25px) 0; letter-spacing: 1px; transition: color 0.5s ease; }
+        
+        p { font-size: clamp(14px, 4vw, 18px); color: var(--fg); opacity: 0.35; margin-bottom: clamp(30px, 8vw, 50px); line-height: 1.6; transition: color 0.5s ease; }
+        
+        .btn-main { 
+            width: 100%; max-width: 350px; 
+            height: clamp(55px, 14vw, 65px); 
+            padding: 0 20px; box-sizing: border-box;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent; color: var(--c-blue); border: 2px solid var(--c-blue); 
+            border-radius: 14px; cursor: pointer; font-size: clamp(14px, 4vw, 18px); 
+            font-weight: bold; margin-bottom: clamp(20px, 5vw, 30px); 
+            transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease, transform 0.2s ease; 
+            text-transform: uppercase; letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-main:hover:not(.processing) { background: var(--c-blue); color: var(--bg); }
+        .btn-main:active { transform: scale(0.95); }
+        
+        /* New CSS rule to prevent clicking and maintain visual state during processing */
+        .btn-main.processing { 
+            pointer-events: none !important; 
+            opacity: 1 !important; 
+            cursor: default; 
+        }
+
+        /* Smooth Hover Animation Styles */
+        .btn-text-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .btn-text-default, .btn-text-hover {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-text-default {
+            transform: translateY(0);
+        }
+        .btn-text-hover {
+            transform: translateY(100%);
+        }
+        .btn-main:hover:not(.processing) .btn-text-default {
+            transform: translateY(-100%);
+        }
+        .btn-main:hover:not(.processing) .btn-text-hover {
+            transform: translateY(0);
+        }
+        
+        .info-carousel { font-size: clamp(11px, 2.5vw, 14px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out, color 0.5s ease; pointer-events: none; height: 20px; }
+        
+        .footer-new { position: absolute; bottom: clamp(15px, 4vw, 30px); font-size: clamp(8px, 1.8vw, 11px); opacity: 0.8; letter-spacing: 3px; pointer-events: none; text-transform: uppercase; font-weight: bold; z-index: 20; display: flex; align-items: center; justify-content: center; color: var(--c-green); transition: color 0.5s ease; }
+        .breathing-dot-footer { width: 8px; height: 8px; border-radius: 50%; background-color: var(--c-green); margin-right: 10px; box-shadow: 0 0 10px var(--c-green); animation: breath 2s infinite ease-in-out; transition: background-color 0.5s ease, box-shadow 0.5s ease; }
+        
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Animated SVG Icons */
+        .anim-icon { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: drawIcon 0.5s ease 0.1s forwards; vertical-align: middle; margin-right: 8px; flex-shrink: 0; }
+
+        @keyframes drawIcon { to { stroke-dashoffset: 0; } }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes breath { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 320px) {
+            .center-content { padding: 10px; }
+            .top-left { padding: 4px 10px; letter-spacing: 1px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-left" id="networkStatus" onclick="toggleNetwork(this)">
+        <div class="net-header">
+            <div class="status-dot" id="statusDot"></div>
+            <div class="spinner" id="statusSpinner"></div>
+            <span id="statusText">ONLINE</span>
+        </div>
+    </div>
+
+    <a href="#" class="top-right" id="settingsBtn" onclick="openSettings(event)">
+        <svg class="gear" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+    </a>
+
+    <div class="center-content">
+        <div class="brand-title">Infinity Identity</div>
+        <h1>Registration Portal</h1>
+        <p>Establish your secure cryptographic presence. Experience <span class="hl-blue clickable" onclick="window.showInfo('Absolute Control', 'You hold the exclusive cryptographic keys to your personal data, ensuring complete ownership.')">absolute control</span> and <span class="hl-blue clickable" onclick="window.showInfo('Uncompromised Security', 'State-of-the-art AES-GCM encryption ensures your data remains completely private and immune to unauthorized access.')">uncompromised security</span>.</p>
+        
+        <button class="btn-main" id="btnInit" onclick="initIdentity(this)">
+            <span class="btn-text-wrapper">
+                <span class="btn-text-default">INITIALIZE IDENTITY</span>
+                <span class="btn-text-hover">COMMENCE SECURE BOOT</span>
+            </span>
+        </button>
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified</div>
+    </div>
+
+    <div class="footer-new">
+        <div class="breathing-dot-footer"></div>
+        SECURED BY INFINITY NETWORK
+    </div>
+
+    
+    <script src="script.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+        });
+
+        function smoothNavigate(url) {
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = url; }, 1000);
+        }
+
+        let netState = 0;
+        let netResetTimer;
+
+        function toggleNetwork(el) {
+            if(!navigator.onLine) return;
+            
+            netState = (netState + 1) % 4;
+            
+            const textEl = document.getElementById('statusText');
+            const dotEl = document.getElementById('statusDot');
+            const spinEl = document.getElementById('statusSpinner');
+            
+            textEl.style.opacity = '0';
+            
+            setTimeout(() => {
+                if(netState === 0) {
+                    textEl.innerText = 'ONLINE';
+                    dotEl.style.display = 'block';
+                    spinEl.style.display = 'none';
+                    el.style.borderColor = 'rgba(128, 128, 128, 0.2)';
+                    el.style.background = 'rgba(128, 128, 128, 0.08)';
+                } else {
+                    dotEl.style.display = 'none';
+                    spinEl.style.display = 'block';
+                    el.style.borderColor = 'var(--c-cyan)';
+                    el.style.background = 'rgba(0, 229, 255, 0.1)';
+                    
+                    if (netState === 1) textEl.innerText = 'LATENCY: ' + (Math.floor(Math.random() * 60 + 15) + 'ms');
+                    if (netState === 2) textEl.innerText = 'BANDWIDTH: ' + (Math.floor(Math.random() * 150 + 50) + ' Mbps');
+                    if (netState === 3) {
+                        const types = ['AES-GCM', 'TLS 1.3', 'SECURE', 'CRYPTO-TUNNEL'];
+                        textEl.innerText = 'SECURITY: ' + types[Math.floor(Math.random() * types.length)];
+                    }
+                }
+                textEl.style.opacity = '1';
+            }, 200);
+
+            clearTimeout(netResetTimer);
+            if (netState !== 0) {
+                netResetTimer = setTimeout(() => {
+                    netState = -1; 
+                    toggleNetwork(el); 
+                }, 5000);
+            }
+        }
+
+        function updateNetworkStatus() {
+            const statusDiv = document.getElementById('networkStatus');
+            const statusText = document.getElementById('statusText');
+            const dotEl = document.getElementById('statusDot');
+            const spinEl = document.getElementById('statusSpinner');
+
+            if (navigator.onLine) {
+                statusDiv.classList.remove('offline');
+                netState = 0;
+                statusText.innerText = 'ONLINE';
+                dotEl.style.display = 'block';
+                spinEl.style.display = 'none';
+                statusDiv.style.borderColor = 'rgba(128, 128, 128, 0.2)';
+                statusDiv.style.background = 'rgba(128, 128, 128, 0.08)';
+            } else {
+                clearTimeout(netResetTimer);
+                statusDiv.classList.add('offline');
+                statusText.innerText = 'OFFLINE';
+                dotEl.style.display = 'block'; 
+                spinEl.style.display = 'none';
+                statusDiv.style.background = 'rgba(128, 128, 128, 0.08)';
+            }
+        }
+        
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+        updateNetworkStatus();
+
+        function openSettings(e) {
+            e.preventDefault();
+            document.getElementById('settingsBtn').classList.add('spin-active');
+            smoothNavigate('settings.html');
+        }
+
+        let initClickCount = 0;
+
+        function initIdentity(btn) {
+            if(btn.classList.contains('processing')) return;
+            btn.classList.add('processing');
+            initClickCount++;
+            
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000000';
+            
+            const waveDots = '<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btn.innerHTML = `ACCEPTING${waveDots}`;
+            
+            setTimeout(() => {
+                if (initClickCount === 1) {
+                    btn.style.background = 'var(--c-red)';
+                    btn.style.borderColor = 'var(--c-red)';
+                    btn.style.color = '#ffffff';
+                    btn.innerHTML = `<svg class="anim-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>ACCESS DENIED`;
+                    
+                    setTimeout(() => {
+                        btn.classList.remove('processing');
+                        btn.style.background = '';
+                        btn.style.borderColor = '';
+                        btn.style.color = '';
+                        btn.innerHTML = `<span class="btn-text-wrapper"><span class="btn-text-default">INITIALIZE IDENTITY</span><span class="btn-text-hover">COMMENCE SECURE BOOT</span></span>`;
+                    }, 3000);
+                } else {
+                    btn.style.background = 'var(--c-green)';
+                    btn.style.borderColor = 'var(--c-green)';
+                    btn.style.color = '#000000';
+                    btn.innerHTML = `<svg class="anim-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>ACCEPTED`;
+                    
+                    setTimeout(() => {
+                        smoothNavigate('home.html');
+                    }, 1000); 
+                }
+            }, 3000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            el.style.opacity = '0';
+            setTimeout(() => {
+                infoIndex = (infoIndex + 1) % archInfo.length;
+                el.innerText = archInfo[infoIndex];
+                el.style.opacity = '0.6';
+            }, 500);
+        }, 3000);
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

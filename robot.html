@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Human Verification</title>
+    
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0; transition: opacity 1s ease-in-out;
+            user-select: none;
+        }
+
+        .container { text-align: center; animation: fadeIn 0.5s; z-index: 10; display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 400px; }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; color: var(--c-blue); }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(24px, 7vw, 32px); text-transform: uppercase; letter-spacing: 1px; }
+        p.desc { font-size: 12px; opacity: 0.7; margin-bottom: 30px; line-height: 1.6; padding: 0 10px; }
+
+        .captcha-container {
+            background: color-mix(in srgb, var(--bg) 60%, transparent);
+            border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent);
+            border-radius: 16px; padding: 25px; width: 100%; box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .canvas-wrap {
+            background: color-mix(in srgb, var(--bg) 80%, var(--fg)); 
+            border: 1px solid var(--c-blue); 
+            border-radius: 8px;
+            margin-bottom: 20px; overflow: hidden; display: flex; justify-content: center;
+            position: relative; height: 70px;
+        }
+
+        canvas { width: 100%; height: 100%; letter-spacing: 5px; }
+
+        .refresh-btn {
+            position: absolute; right: 5px; top: 5px; background: color-mix(in srgb, var(--bg) 80%, transparent); 
+            border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); color: var(--fg); 
+            cursor: pointer; width: 28px; height: 28px; border-radius: 5px; display: flex; align-items: center; justify-content: center;
+            opacity: 0.7; transition: 0.3s;
+        }
+        .refresh-btn:hover { opacity: 1; color: var(--c-blue); border-color: var(--c-blue); transform: rotate(180deg); }
+        .refresh-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .captcha-input {
+            width: 100%; padding: 15px; background: color-mix(in srgb, var(--bg) 50%, transparent);
+            border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 10px;
+            color: var(--fg); font-size: 16px; font-weight: bold; letter-spacing: 3px; text-align: center;
+            outline: none; transition: 0.3s; text-transform: uppercase; box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .captcha-input:focus { border-color: var(--c-blue); box-shadow: 0 0 10px color-mix(in srgb, var(--c-blue) 30%, transparent); }
+        .captcha-input::placeholder { color: var(--fg); font-weight: normal; opacity: 0.3; letter-spacing: 1px; font-size: 12px; }
+        .captcha-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .error-text { color: var(--c-red); font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; display: block; margin-top: 0; text-align: center; }
+        .error-text.show { max-height: 30px; opacity: 1; margin-bottom: 8px; }
+
+        .attempts-text { color: var(--c-blue); font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px; text-align: center; transition: color 0.3s; }
+        .attempts-text.warning { color: var(--c-yellow); }
+        .attempts-text.danger { color: var(--c-red); }
+
+        .btn-verify {
+            width: 100%; height: 50px; background: transparent; color: var(--c-blue);
+            border: 1px solid var(--c-blue); border-radius: 12px; font-weight: bold; font-size: 13px;
+            text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; transition: all 0.4s ease;
+            position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-verify:hover:not(.processing):not(.success):not(.failed):not(:disabled) { background: var(--c-blue); color: #ffffff; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .btn-verify:active { transform: scale(0.97); }
+        
+        .btn-verify:disabled { opacity: 0.4; pointer-events: none; }
+        .btn-verify.processing { pointer-events: none; }
+        .btn-verify.success { background: var(--c-green) !important; color: #000 !important; border-color: var(--c-green) !important; box-shadow: none; pointer-events: none; }
+        .btn-verify.failed { pointer-events: none; }
+
+        .status-msg { font-size: 12px; font-weight: bold; letter-spacing: 2px; opacity: 0; text-transform: uppercase; transition: 0.5s; height: 20px; color: var(--c-green); margin-top: 25px; display: flex; align-items: center; justify-content: center; }
+        .status-msg.show { opacity: 1; transform: scale(1.05); }
+        .status-msg svg { width: 18px; height: 18px; fill: currentColor; margin-right: 8px; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } }
+        .shake-anim { animation: shake 0.4s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2 id="titleMain">VERIFY IDENTITY</h2>
+        <p class="desc" id="descMain">Solve the cryptographic captcha below to prove your physical presence and finalize the node.</p>
+
+        <div class="captcha-container" id="captchaBox">
+            <div class="canvas-wrap">
+                <canvas id="captchaCanvas" width="280" height="70"></canvas>
+                <button class="refresh-btn" id="btnRefresh" onclick="generateCaptcha()" title="Reload Captcha">
+                    <svg viewBox="0 0 24 24"><path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/></svg>
+                </button>
+            </div>
+            
+            <input type="text" id="captchaInput" class="captcha-input" placeholder="ENTER CAPTCHA CODE" autocomplete="off" spellcheck="false" maxlength="6">
+            
+            <div class="error-text" id="captchaError">INCORRECT CODE. PLEASE TRY AGAIN.</div>
+            <div class="attempts-text" id="attemptsMsg">ATTEMPTS LEFT: 3</div>
+            
+            <button class="btn-verify" id="btnVerify" onclick="verifyCaptcha()" disabled>VERIFY</button>
+        </div>
+
+        <div class="status-msg" id="statusMsg">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg>
+            HUMAN ENTITY CONFIRMED
+        </div>
+    </div>
+
+    <script>
+        let captchaCode = "";
+        let attemptsLeft = 3;
+        let isBlocked = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            generateCaptcha();
+            updateAttemptsMsg();
+        });
+
+        // Input validation to enable/disable VERIFY button
+        document.getElementById("captchaInput").addEventListener("input", function() {
+            const btn = document.getElementById("btnVerify");
+            if (this.value.length === 6 && !isBlocked) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        });
+
+        function updateAttemptsMsg() {
+            const msg = document.getElementById("attemptsMsg");
+            if (isBlocked) return; 
+            
+            msg.innerText = `ATTEMPTS LEFT: ${attemptsLeft}`;
+            if (attemptsLeft === 3) {
+                msg.className = "attempts-text";
+            } else if (attemptsLeft === 2) {
+                msg.className = "attempts-text warning";
+            } else {
+                msg.className = "attempts-text danger";
+            }
+        }
+
+        function generateCaptcha() {
+            if(isBlocked) return;
+            
+            const canvas = document.getElementById("captchaCanvas");
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; 
+            captchaCode = "";
+            for(let i = 0; i < 6; i++) {
+                captchaCode += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+
+            for(let i = 0; i < 20; i++) {
+                ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+                ctx.lineWidth = Math.random() * 2;
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                ctx.stroke();
+            }
+
+            for(let i = 0; i < 50; i++) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.font = "bold 32px monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            for(let i = 0; i < captchaCode.length; i++) {
+                ctx.save();
+                let x = 40 + (i * 38);
+                let y = 35 + (Math.random() * 10 - 5);
+                let angle = (Math.random() * 0.6) - 0.3; 
+                
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+                
+                const colors = ['#007bff', '#00C851', '#ffbb33', '#ffffff'];
+                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                
+                ctx.fillText(captchaCode[i], 0, 0);
+                ctx.restore();
+            }
+            
+            const input = document.getElementById("captchaInput");
+            input.value = "";
+            input.focus();
+            document.getElementById("captchaError").classList.remove("show");
+            document.getElementById("btnVerify").disabled = true;
+        }
+
+        document.getElementById("captchaInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                if (this.value.length === 6 && !isBlocked) {
+                    verifyCaptcha();
+                }
+            }
+        });
+
+        function verifyCaptcha() {
+            if (isBlocked) return;
+            
+            const inputField = document.getElementById("captchaInput");
+            const input = inputField.value.toUpperCase().trim();
+            const err = document.getElementById("captchaError");
+            const btn = document.getElementById("btnVerify");
+            const status = document.getElementById("statusMsg");
+            const box = document.getElementById("captchaBox");
+            const refreshBtn = document.getElementById("btnRefresh");
+            const attemptsMsg = document.getElementById("attemptsMsg");
+
+            if (btn.classList.contains("processing") || btn.classList.contains("success") || btn.classList.contains("failed")) return;
+            if (input.length < 6) return;
+
+            // Trigger CHECKING state & Lock Input
+            btn.classList.add("processing");
+            btn.style.background = "var(--c-yellow)";
+            btn.style.borderColor = "var(--c-yellow)";
+            btn.style.color = "#000";
+            btn.innerHTML = 'CHECKING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            
+            inputField.disabled = true;
+            refreshBtn.style.pointerEvents = "none";
+            err.classList.remove("show");
+
+            // 2 seconds delay for checking simulation
+            setTimeout(() => {
+                if(input === captchaCode) {
+                    btn.classList.remove("processing");
+                    btn.classList.add("success");
+                    btn.style.background = ""; 
+                    btn.style.borderColor = ""; 
+                    btn.style.color = "";
+                    btn.innerHTML = "VERIFIED";
+                    status.classList.add("show");
+                    attemptsMsg.style.display = 'none';
+                    
+                    setTimeout(() => {
+                        document.body.style.opacity = '0';
+                        setTimeout(() => { window.location.href = 'payment.html'; }, 1000);
+                    }, 1500);
+                } else {
+                    attemptsLeft--;
+                    updateAttemptsMsg();
+
+                    btn.classList.remove("processing");
+                    btn.classList.add("failed");
+                    btn.style.background = "var(--c-red)";
+                    btn.style.borderColor = "var(--c-red)";
+                    btn.style.color = "#fff";
+                    btn.innerHTML = "INCORRECT";
+                    
+                    err.classList.add("show");
+                    box.classList.remove("shake-anim");
+                    void box.offsetWidth; 
+                    box.classList.add("shake-anim");
+
+                    if(attemptsLeft > 0) {
+                        err.innerText = "INCORRECT CODE. PLEASE TRY AGAIN.";
+                        
+                        setTimeout(() => {
+                            btn.classList.remove('failed');
+                            btn.style.background = ""; 
+                            btn.style.borderColor = ""; 
+                            btn.style.color = ""; 
+                            btn.innerHTML = "VERIFY";
+                            
+                            inputField.disabled = false;
+                            refreshBtn.style.pointerEvents = "auto";
+                            generateCaptcha();
+                        }, 2500);
+                    } else {
+                        isBlocked = true;
+                        err.innerText = "MAX ATTEMPTS REACHED. BLOCKED FOR 1 MINUTE.";
+                        btn.innerHTML = "BLOCKED";
+                        
+                        let timeLeft = 60;
+                        attemptsMsg.className = "attempts-text warning"; // Changed to yellow (warning)
+                        attemptsMsg.innerText = `BLOCKED: ${timeLeft}s REMAINING`;
+                        
+                        const blockTimer = setInterval(() => {
+                            timeLeft--;
+                            attemptsMsg.innerText = `BLOCKED: ${timeLeft}s REMAINING`;
+                            
+                            if(timeLeft <= 0) {
+                                clearInterval(blockTimer);
+                                isBlocked = false;
+                                attemptsLeft = 3;
+                                updateAttemptsMsg();
+                                
+                                err.classList.remove("show");
+                                err.innerText = "INCORRECT CODE. PLEASE TRY AGAIN.";
+                                
+                                btn.classList.remove('failed');
+                                btn.style.background = ""; 
+                                btn.style.borderColor = ""; 
+                                btn.style.color = ""; 
+                                btn.innerHTML = "VERIFY";
+                                
+                                inputField.disabled = false;
+                                refreshBtn.style.pointerEvents = "auto";
+                                generateCaptcha();
+                            }
+                        }, 1000);
+                    }
+                }
+            }, 2000);
+        }
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

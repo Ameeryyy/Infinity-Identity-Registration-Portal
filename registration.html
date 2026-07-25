@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - Registration Step 1</title>
+    
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+            user-select: none;
+        }
+
+        .container { 
+            width: 90%; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: clamp(40px, 8vh, 80px) 0; 
+            position: relative; 
+            z-index: 10; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 5px; font-size: clamp(22px, 6vw, 32px); text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        p.desc { font-size: clamp(12px, 3vw, 14px); opacity: 0.7; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; text-align: center; }
+
+        .step-container { display: none; opacity: 0; transition: opacity 1s ease-in-out; width: 100%; }
+        .step-container.active { display: block; opacity: 1; }
+
+        .card-box { border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: clamp(20px, 5vw, 35px); background: color-mix(in srgb, var(--fg) 3%, transparent); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .parents-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; transition: all 0.5s ease; margin-bottom: 10px; }
+        .parent-info-card { background: color-mix(in srgb, var(--bg) 60%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 12px; padding: 25px 20px; text-align: left; position: relative; transition: border-color 0.3s, background-color 0.3s; display: flex; flex-direction: column; }
+        .parent-info-card h4 { margin: 0 0 20px 0; font-size: 14px; color: var(--c-blue); text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px dashed color-mix(in srgb, var(--fg) 15%, transparent); padding-bottom: 15px; display: flex; align-items: center; justify-content: center; text-align: center; }
+        
+        .form-group { margin-bottom: 15px; text-align: left; position: relative; }
+        .form-group label { display: block; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; opacity: 0.7; }
+        
+        .status-msg { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-top: -2px; margin-bottom: 8px; height: 20px; opacity: 0; transition: opacity 0.5s ease; text-align: left; pointer-events: none; display: flex; align-items: center; }
+        .status-msg.show { opacity: 1; }
+        .status-msg.error { color: var(--c-red); }
+        .status-msg.success { color: var(--c-green); }
+
+        .id-wrapper { display: flex; flex-wrap: wrap; gap: clamp(3px, 1vw, 6px); justify-content: flex-start; align-items: center; }
+        .id-box { width: calc(100% / 6 - 4px); max-width: clamp(28px, 8vw, 42px); height: clamp(35px, 10vw, 45px); background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 6px; text-align: center; font-size: clamp(14px, 4vw, 18px); font-weight: bold; color: var(--fg); outline: none; transition: 0.3s; padding: 0; box-sizing: border-box; text-transform: uppercase; }
+        .id-box:focus { border-color: var(--c-blue); box-shadow: 0 0 8px color-mix(in srgb, var(--c-blue) 30%, transparent); transform: translateY(-2px); }
+        .id-box:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .action-row { display: flex; gap: 10px; width: 100%; margin-top: auto; align-items: center; }
+
+        .id-lock { width: 45px; height: 45px; background: transparent; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.3; pointer-events: none; transition: 0.3s; color: var(--fg); box-sizing: border-box; flex-shrink: 0; }
+        .id-lock.ready { opacity: 0.9; pointer-events: auto; border-color: var(--c-yellow); color: var(--c-yellow); box-shadow: 0 0 8px color-mix(in srgb, var(--c-yellow) 30%, transparent); }
+        .id-lock.locked { opacity: 1; border-color: var(--c-green); color: var(--c-green); background: color-mix(in srgb, var(--c-green) 10%, transparent); box-shadow: none; pointer-events: auto; }
+        .id-lock svg { width: 18px; height: 18px; fill: currentColor; transition: 0.3s; }
+
+        .locked-state { opacity: 0.4 !important; pointer-events: none !important; }
+
+        .btn-main { flex: 1; height: 45px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 10px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.4; pointer-events: none; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .btn-main.active { opacity: 1; pointer-events: auto; }
+        .btn-main.active:hover:not(.processing):not(.locked-state):not(.confirmed-btn) { background: var(--c-blue) !important; color: #ffffff !important; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); border-color: var(--c-blue) !important; }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-main.processing { opacity: 1 !important; pointer-events: none !important; }
+        .btn-main.verified { opacity: 1 !important; pointer-events: auto; border-color: var(--c-blue); color: var(--c-blue); }
+        
+        .btn-main.confirmed-btn { background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000 !important; opacity: 1 !important; pointer-events: none !important; }
+
+        .btn-check-id { flex: 1; height: 50px; padding: 0 16px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 1.5px; opacity: 1; pointer-events: auto; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; width: 100%; }
+        .btn-check-id:hover:not(.processing) { background: var(--c-blue) !important; color: #ffffff !important; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .btn-check-id:active { transform: scale(0.97); }
+        .btn-check-id.processing { opacity: 1 !important; pointer-events: none; }
+
+        .btn-row { display: flex; opacity: 0; max-height: 0; overflow: hidden; transition: max-height 0.6s ease, opacity 0.6s ease, margin-top 0.6s ease; margin-top: 0; width: 100%; }
+        .btn-row.show { opacity: 1; max-height: 80px; margin-top: 20px; overflow: visible; }
+
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 150px; opacity: 1; margin-bottom: 20px; overflow: visible; }
+        
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group.disabled { opacity: 0.5; pointer-events: none; }
+        .check-group input { display: none; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; user-select: none; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        .loader-ring-done { width: 15px; height: 15px; border: 1.5px solid var(--c-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(0, 200, 81, 0.3); color: var(--c-green); margin-right: 6px; flex-shrink: 0; font-weight: bold; font-size: 9px; }
+        .loader-ring-fail { width: 15px; height: 15px; border: 1.5px solid var(--c-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(255, 68, 68, 0.3); color: var(--c-red); margin-right: 6px; flex-shrink: 0; font-weight: bold; font-size: 9px; }
+
+        @media (max-width: 768px) {
+            .parents-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <div id="step1" class="step-container active">
+            <div class="brand-title">STEP 1 OF 5</div>
+            <h2>LINK PARENTAL NODES</h2>
+            <p class="desc">Enter the verified 12-digit Infinity Identity numbers of both parents.</p>
+            
+            <div class="card-box">
+                
+                <div class="parents-grid" id="parentsGrid">
+                    
+                    <div class="parent-info-card" id="fCard">
+                        <h4>
+                            <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor; margin-right:6px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                            FATHER'S NODE
+                        </h4>
+                        <div class="form-group">
+                            <label style="display: flex; justify-content: space-between;">
+                                <span>12-Digit Infinity ID</span>
+                                <span id="fCount" style="color: var(--c-blue);">0/12</span>
+                            </label>
+                            <div id="fStatusMsg" class="status-msg"></div>
+                            <div class="id-wrapper" id="fIdWrapper"></div>
+                        </div>
+                        
+                        <div class="action-row">
+                            <div class="id-lock" id="fIdLock" onclick="toggleLock('f')" title="Click to Lock/Unlock">
+                                <svg id="fIconUnlock" viewBox="0 0 24 24"><path d="M12,17C10.89,17 10,16.1 10,15C10,13.89 10.89,13 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17M18,20V10H6V20H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10A2,2 0 0,1 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V7H15V6A3,3 0 0,0 12,3A3,3 0 0,0 9,6V8H18Z"/></svg>
+                                <svg id="fIconLock" viewBox="0 0 24 24" style="display:none;"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+                            </div>
+                            <button id="btnCheckF" class="btn-main" disabled onclick="checkIndividualId('f')">
+                                CHECK ID
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="parent-info-card" id="mCard">
+                        <h4>
+                            <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor; margin-right:6px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                            MOTHER'S NODE
+                        </h4>
+                        <div class="form-group">
+                            <label style="display: flex; justify-content: space-between;">
+                                <span>12-Digit Infinity ID</span>
+                                <span id="mCount" style="color: var(--c-blue);">0/12</span>
+                            </label>
+                            <div id="mStatusMsg" class="status-msg"></div>
+                            <div class="id-wrapper" id="mIdWrapper"></div>
+                        </div>
+                        
+                        <div class="action-row">
+                            <div class="id-lock" id="mIdLock" onclick="toggleLock('m')" title="Click to Lock/Unlock">
+                                <svg id="mIconUnlock" viewBox="0 0 24 24"><path d="M12,17C10.89,17 10,16.1 10,15C10,13.89 10.89,13 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17M18,20V10H6V20H18M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10A2,2 0 0,1 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V7H15V6A3,3 0 0,0 12,3A3,3 0 0,0 9,6V8H18Z"/></svg>
+                                <svg id="mIconLock" viewBox="0 0 24 24" style="display:none;"><path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/></svg>
+                            </div>
+                            <button id="btnCheckM" class="btn-main" disabled onclick="checkIndividualId('m')">
+                                CHECK ID
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="slide-down-wrapper" id="confirmCheckWrapper">
+                    <label class="check-group">
+                        <input type="checkbox" id="idConfirmCheck" onchange="validateProceed()">
+                        <div class="custom-check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        </div>
+                        <span class="check-label">I CONFIRM THE ENTERED IDs ARE CORRECT</span>
+                    </label>
+                </div>
+                
+                <div class="btn-row" id="proceedBtnRow">
+                    <button id="btnProceedStep2" class="btn-check-id" onclick="proceedToStep2()">
+                        PROCEED TO NEXT STEP
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    
+    <script>
+        document.addEventListener('paste', e => e.preventDefault());
+        document.addEventListener('drop', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+
+        const attempts = { f: 0, m: 0 };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.search.includes('clear=true')) {
+                history.replaceState(null, '', window.location.pathname);
+            }
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            setupSequentialInputs('f');
+            setupSequentialInputs('m');
+        });
+
+        function setupSequentialInputs(prefix) {
+            let html = '';
+            const wrapperId = prefix + 'IdWrapper';
+            
+            for(let i=1; i<=12; i++) {
+                html += `<input type="text" class="id-box ${prefix}Id-box" maxlength="1" data-index="${i}">`;
+            }
+            
+            document.getElementById(wrapperId).innerHTML = html;
+
+            const inputs = document.querySelectorAll(`.${prefix}Id-box`);
+            inputs.forEach((input, index) => {
+                input.addEventListener('focus', function(e) {
+                    let firstEmpty = -1;
+                    for(let i=0; i<inputs.length; i++) {
+                        if(inputs[i].value === '') {
+                            firstEmpty = i;
+                            break;
+                        }
+                    }
+                    if(firstEmpty !== -1 && index > firstEmpty) {
+                        inputs[firstEmpty].focus();
+                    }
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if(e.key === 'Backspace' && this.value === '' && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+                
+                input.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    if(this.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                    
+                    const statusMsg = document.getElementById(prefix + 'StatusMsg');
+                    if (statusMsg.classList.contains('show')) {
+                        statusMsg.classList.remove('show');
+                    }
+                    
+                    document.getElementById('idConfirmCheck').checked = false;
+                    validateIdInputs(prefix);
+                    checkGlobalState();
+                    validateProceed();
+                });
+            });
+        }
+
+        function validateIdInputs(prefix) {
+            let count = 0; 
+            document.querySelectorAll(`.${prefix}Id-box`).forEach(i => { if(i.value.trim() !== '') count++; });
+            document.getElementById(`${prefix}Count`).innerText = `${count}/12`;
+
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            const btnCheck = document.getElementById(`btnCheck${prefix.toUpperCase()}`);
+            
+            if (!lockEl.classList.contains('locked')) {
+                if(count === 12) {
+                    lockEl.classList.add('ready');
+                } else {
+                    lockEl.classList.remove('ready');
+                    btnCheck.classList.remove('active');
+                    btnCheck.disabled = true;
+                }
+            }
+        }
+
+        function toggleLock(prefix) {
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            const iconUnlock = document.getElementById(prefix + 'IconUnlock');
+            const iconLock = document.getElementById(prefix + 'IconLock');
+            const btnCheck = document.getElementById(`btnCheck${prefix.toUpperCase()}`);
+            const boxes = document.querySelectorAll(`.${prefix}Id-box`);
+            
+            if (lockEl.classList.contains('locked')) {
+                unlockId(prefix, true);
+            } else {
+                lockEl.classList.add('locked');
+                iconUnlock.style.display = 'none';
+                iconLock.style.display = 'block';
+                boxes.forEach(b => b.disabled = true);
+                
+                btnCheck.classList.add('active');
+                btnCheck.disabled = false;
+            }
+        }
+
+        function unlockId(prefix, clearStatus = true) {
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            const iconUnlock = document.getElementById(prefix + 'IconUnlock');
+            const iconLock = document.getElementById(prefix + 'IconLock');
+            const btnCheck = document.getElementById(`btnCheck${prefix.toUpperCase()}`);
+            const boxes = document.querySelectorAll(`.${prefix}Id-box`);
+            
+            lockEl.classList.remove('locked', 'locked-state');
+            lockEl.style.pointerEvents = 'auto';
+            iconUnlock.style.display = 'block';
+            iconLock.style.display = 'none';
+            boxes.forEach(b => b.disabled = false);
+            
+            btnCheck.classList.remove('active', 'verified', 'confirmed-btn');
+            btnCheck.disabled = true;
+            btnCheck.style.background = 'transparent';
+            btnCheck.style.borderColor = 'var(--c-blue)';
+            btnCheck.style.color = 'var(--c-blue)';
+            btnCheck.innerText = 'CHECK ID';
+            
+            if (clearStatus) {
+                const statusMsg = document.getElementById(prefix + 'StatusMsg');
+                statusMsg.classList.remove('show');
+            }
+
+            document.getElementById('idConfirmCheck').checked = false;
+            checkGlobalState();
+            validateProceed();
+            
+            validateIdInputs(prefix);
+        }
+
+        function checkIndividualId(prefix) {
+            const btn = document.getElementById(`btnCheck${prefix.toUpperCase()}`);
+            const statusMsg = document.getElementById(`${prefix}StatusMsg`);
+            const lockEl = document.getElementById(prefix + 'IdLock');
+            
+            if (btn.classList.contains('verified')) {
+                unlockId(prefix, true);
+                return;
+            }
+
+            attempts[prefix]++;
+            
+            btn.classList.add('processing');
+            btn.style.pointerEvents = 'none';
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000';
+            btn.innerHTML = 'CHECKING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            
+            lockEl.style.pointerEvents = 'none';
+            statusMsg.classList.remove('show');
+
+            let waitTime = Math.floor(Math.random() * 5000) + 5000; 
+            
+            setTimeout(() => {
+                if (attempts[prefix] >= 2) {
+                    btn.style.background = 'var(--c-green)';
+                    btn.style.borderColor = 'var(--c-green)';
+                    btn.style.color = '#000';
+                    btn.innerText = 'CORRECT'; 
+                    
+                    statusMsg.className = 'status-msg success';
+                    statusMsg.innerHTML = `<div class="loader-ring-done">✔</div> VERIFIED SUCCESSFULLY`;
+                    setTimeout(() => { statusMsg.classList.add('show'); }, 50);
+                    
+                    setTimeout(() => {
+                        btn.classList.remove('processing');
+                        btn.classList.add('verified');
+                        btn.style.background = 'transparent';
+                        btn.style.borderColor = 'var(--c-blue)';
+                        btn.style.color = 'var(--c-blue)';
+                        btn.innerText = 'EDIT ID';
+                        btn.style.pointerEvents = 'auto';
+                        
+                        lockEl.classList.add('locked');
+                        lockEl.style.pointerEvents = 'none';
+                        
+                        checkGlobalState();
+                    }, 2000);
+                    
+                } else {
+                    btn.style.background = 'var(--c-red)';
+                    btn.style.borderColor = 'var(--c-red)';
+                    btn.style.color = '#fff';
+                    btn.innerText = 'INCORRECT'; 
+                    
+                    statusMsg.className = 'status-msg error';
+                    statusMsg.innerHTML = `<div class="loader-ring-fail">✘</div> INCORRECT ID ENTERED`;
+                    setTimeout(() => { statusMsg.classList.add('show'); }, 50);
+                    
+                    setTimeout(() => {
+                        btn.classList.remove('processing');
+                        btn.style.pointerEvents = 'auto';
+                        btn.style.background = 'transparent';
+                        btn.style.borderColor = 'var(--c-blue)';
+                        btn.style.color = 'var(--c-blue)';
+                        btn.innerText = 'CHECK ID';
+                        
+                        lockEl.style.pointerEvents = 'auto';
+                        unlockId(prefix, false); 
+                    }, 3000);
+                }
+            }, waitTime);
+        }
+
+        function checkGlobalState() {
+            const fVer = document.getElementById('btnCheckF').classList.contains('verified');
+            const mVer = document.getElementById('btnCheckM').classList.contains('verified');
+            const checkWrapper = document.getElementById('confirmCheckWrapper');
+            
+            if (fVer && mVer) {
+                checkWrapper.classList.add('show');
+            } else {
+                checkWrapper.classList.remove('show');
+                document.getElementById('idConfirmCheck').checked = false;
+                validateProceed();
+            }
+        }
+
+        function validateProceed() {
+            const isChecked = document.getElementById('idConfirmCheck').checked;
+            const proceedRow = document.getElementById('proceedBtnRow');
+            const btnEditF = document.getElementById('btnCheckF');
+            const btnEditM = document.getElementById('btnCheckM');
+            const lockF = document.getElementById('fIdLock');
+            const lockM = document.getElementById('mIdLock');
+
+            if(isChecked) {
+                btnEditF.classList.add('confirmed-btn');
+                btnEditM.classList.add('confirmed-btn');
+                btnEditF.innerText = 'VERIFIED';
+                btnEditM.innerText = 'VERIFIED';
+
+                lockF.classList.add('locked-state');
+                lockM.classList.add('locked-state');
+
+                setTimeout(() => {
+                    proceedRow.classList.add('show');
+                }, 100); 
+                
+            } else {
+                proceedRow.classList.remove('show');
+                
+                setTimeout(() => {
+                    btnEditF.classList.remove('confirmed-btn');
+                    btnEditM.classList.remove('confirmed-btn');
+                    
+                    if (btnEditF.classList.contains('verified')) btnEditF.innerText = 'EDIT ID';
+                    if (btnEditM.classList.contains('verified')) btnEditM.innerText = 'EDIT ID';
+                    
+                    lockF.classList.remove('locked-state');
+                    lockM.classList.remove('locked-state');
+                }, 400); 
+            }
+        }
+
+        function proceedToStep2() {
+            const btn = document.getElementById('btnProceedStep2');
+            btn.classList.add('processing');
+            btn.style.pointerEvents = 'none';
+            btn.style.background = 'var(--c-yellow)';
+            btn.style.borderColor = 'var(--c-yellow)';
+            btn.style.color = '#000';
+            btn.innerHTML = 'PROCEEDING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            
+            let fIdVal = Array.from(document.querySelectorAll('.fId-box')).map(i => i.value).join('');
+            let mIdVal = Array.from(document.querySelectorAll('.mId-box')).map(i => i.value).join('');
+            
+            sessionStorage.setItem('fIdVal', fIdVal);
+            sessionStorage.setItem('mIdVal', mIdVal);
+
+            setTimeout(() => {
+                btn.style.background = 'var(--c-green)';
+                btn.style.borderColor = 'var(--c-green)';
+                btn.style.color = '#000';
+                btn.innerText = 'PROCEEDED';
+                
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => { window.location.href = 'registration2.html'; }, 1000);
+                }, 1500);
+            }, 3000);
+        }
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

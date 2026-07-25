@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Payment</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+            user-select: none;
+        }
+
+        .container { width: 90%; max-width: 500px; text-align: center; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(24px, 7vw, 32px); color: var(--c-blue); }
+        p.desc { font-size: 12px; opacity: 0.7; margin-bottom: 30px; line-height: 1.6; padding: 0 10px; }
+        p.desc strong { color: var(--c-blue); opacity: 1; }
+
+        .fee-box { border: 1px dashed rgba(255,255,255,0.3); border-radius: 12px; padding: 20px; margin-bottom: 30px; background: rgba(255,255,255,0.02); }
+        .fee-label { font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; display: block; font-weight: bold; }
+        .fee-amount { font-size: 36px; font-weight: bold; color: var(--c-green); text-shadow: 0 0 15px rgba(0,200,81,0.3); margin-bottom: 5px; }
+        .fee-tax { font-size: 9px; opacity: 0.5; letter-spacing: 1px; font-weight: bold; }
+
+        .methods-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; text-align: left; }
+        
+        .pay-card { border: 1px solid rgba(255,255,255,0.15); padding: 16px 20px; border-radius: 12px; cursor: pointer; transition: all 0.3s; display: flex; justify-content: space-between; align-items: center; background: transparent; }
+        .pay-card:hover:not(.disabled) { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.02); }
+        .pay-card.active { border-color: var(--c-blue); background: rgba(0, 123, 255, 0.05); box-shadow: 0 5px 15px rgba(0, 123, 255, 0.15); }
+        
+        .pay-card.disabled { opacity: 0.3; cursor: not-allowed; border-color: rgba(255,255,255,0.08); }
+        .coming-soon-lbl { font-size: 9px; font-weight: bold; color: var(--c-yellow); letter-spacing: 1px; border: 1px solid var(--c-yellow); padding: 3px 6px; border-radius: 4px; }
+
+        .pay-info { display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: bold; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
+        .pay-card.active .pay-info { opacity: 1; color: var(--c-blue); }
+        .pay-info svg { width: 24px; height: 24px; fill: currentColor; }
+        
+        .radio-circle { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .radio-circle::after { content: ''; width: 10px; height: 10px; background: #fff; border-radius: 50%; opacity: 0; transition: 0.3s; transform: scale(0.5); }
+        .pay-card.active .radio-circle { border-color: var(--c-blue); background: var(--c-blue); }
+        .pay-card.active .radio-circle::after { opacity: 1; transform: scale(1); }
+
+        /* Modified Proceed Button Style - Transparent with Blue Border on active */
+        .btn-next { width: 100%; padding: 16px; background: transparent; color: var(--fg); border: 1px solid var(--fg); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.2; pointer-events: none; transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, opacity 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease; text-transform: uppercase; letter-spacing: 1.5px; box-sizing: border-box; }
+        .btn-next.active { opacity: 1; pointer-events: auto; background: transparent; border-color: var(--c-blue); color: var(--c-blue); }
+        .btn-next.active:hover { background: var(--c-blue) !important; color: var(--bg) !important; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .btn-next.active:active { transform: scale(0.97); }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        /* Variety Animated Tick Mark */
+        .anim-tick { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: drawTick 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; margin-right: 6px; flex-shrink: 0; }
+        @keyframes drawTick { 
+            0% { stroke-dashoffset: 100; transform: scale(0.5); opacity: 0; } 
+            60% { transform: scale(1.2); opacity: 1; } 
+            100% { stroke-dashoffset: 0; transform: scale(1); opacity: 1; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h2>Node Activation Fee</h2>
+        <p class="desc">Select a payment method to complete the secure transaction and activate your node.</p>
+
+        <div class="fee-box">
+            <span class="fee-label">One-Time Registration Fee</span>
+            <div class="fee-amount" id="displayFee">₹ 10.00</div>
+            <div class="fee-tax">(INCLUSIVE OF ALL TAXES)</div>
+        </div>
+
+        <div class="methods-grid">
+            <div class="pay-card" id="card-upi" onclick="selectMethod('upi')">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M16.5 15H15V10.5H13V15H11.5V10.5H9.5V15H8V9H16.5Z"/></svg>
+                    <span>UPI / BHIM / GPAY</span>
+                </div>
+                <div class="radio-circle"></div>
+            </div>
+
+            <div class="pay-card" id="card-qr" onclick="selectMethod('qr')">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M4,4H10V10H4V4M6,6V8H8V6H6M14,4H20V10H14V4M16,6V8H18V6H16M4,14H10V20H4V14M6,16V18H8V16H6M14,14H17V17H14V14M17,14H20V17H17V14M14,17H17V20H14V17M17,17H20V20H17V17Z"/></svg>
+                    <span>SCAN QR CODE</span>
+                </div>
+                <div class="radio-circle"></div>
+            </div>
+            
+            <div class="pay-card disabled" id="card-card">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/></svg>
+                    <span>Credit / Debit Card</span>
+                </div>
+                <span class="coming-soon-lbl">COMING SOON</span>
+            </div>
+            
+            <div class="pay-card disabled" id="card-net">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M11.5,1L2,6V8H21V6M16,10V17H19V10M2,22H21V19H2M10,10V17H13V10M4,10V17H7V10Z"/></svg>
+                    <span>Net Banking</span>
+                </div>
+                <span class="coming-soon-lbl">COMING SOON</span>
+            </div>
+
+            <div class="pay-card disabled" id="card-crypto">
+                <div class="pay-info">
+                    <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11.5,8A2.5,2.5 0 0,0 9,10.5A2.5,2.5 0 0,0 11.5,13H13A1.5,1.5 0 0,1 14.5,14.5A1.5,1.5 0 0,1 13,16H9V18H11V19H13V18H13.5A2.5,2.5 0 0,0 16,15.5A2.5,2.5 0 0,0 13.5,13H12A1.5,1.5 0 0,1 10.5,11.5A1.5,1.5 0 0,1 12,10H16V8H14V7H12V8Z"/></svg>
+                    <span>Crypto Network</span>
+                </div>
+                <span class="coming-soon-lbl">COMING SOON</span>
+            </div>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="proceedToGateway()">Proceed</button>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let selectedMethod = '';
+        const btnNext = document.getElementById('btnNext');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Smooth 1 Second Page Fade In
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+        });
+
+        function selectMethod(method) {
+            selectedMethod = method;
+            document.querySelectorAll('.pay-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(`card-${method}`).classList.add('active');
+            
+            // Restore default active button design if error occurred before
+            btnNext.className = 'btn-next active';
+            btnNext.style.background = 'transparent';
+            btnNext.style.borderColor = 'var(--c-blue)';
+            btnNext.style.color = 'var(--c-blue)';
+            btnNext.innerHTML = 'Proceed';
+            btnNext.style.pointerEvents = 'auto';
+        }
+
+        function proceedToGateway() {
+            if (!selectedMethod) {
+                // FAIL STATE: Show Red status if clicked without selecting method
+                btnNext.style.pointerEvents = 'none';
+                btnNext.style.background = 'var(--c-red)';
+                btnNext.style.borderColor = 'var(--c-red)';
+                btnNext.style.color = '#fff';
+                btnNext.innerHTML = 'CANNOT PROCEED';
+                return;
+            }
+            
+            // 1. PROCESSING STATE: Yellow color transition
+            btnNext.style.pointerEvents = 'none';
+            btnNext.style.background = 'var(--c-yellow)';
+            btnNext.style.borderColor = 'var(--c-yellow)';
+            btnNext.style.color = '#000';
+            btnNext.innerHTML = 'PROCESSING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            
+            let waitTime = Math.floor(Math.random() * 1500) + 1500; // 1.5 to 3 seconds simulation delay
+
+            setTimeout(() => {
+                // 2. PROCEED TO NEXT STEP STATE: Green color transition
+                btnNext.style.background = 'var(--c-green)';
+                btnNext.style.borderColor = 'var(--c-green)';
+                btnNext.style.color = '#000';
+                btnNext.innerHTML = `<span style="display:flex; align-items:center; justify-content:center;"><svg class="anim-tick" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg> PROCEEDED</span>`;
+                
+                setTimeout(() => {
+                    // Smooth Page Fade Out
+                    document.body.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        window.location.href = `payment_gateway.html?method=${selectedMethod}`;
+                    }, 1000); // Navigation occurs only after full animation hide
+                }, 1200);
+            }, waitTime);
+        }
+    </script>
+</body>
+</html>
