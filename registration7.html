@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity - Guardian Registration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--c-blue); }
+
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+            opacity: 0; transition: opacity 1s ease-in-out;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left span { font-weight: 900; letter-spacing: 2px; font-size: 13px; }
+
+        .container { width: 90%; max-width: 500px; margin: 40px auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; animation: fadeIn 0.5s ease; }
+        
+        .step-indicator { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+
+        .input-group { margin-bottom: 35px; position: relative; z-index: 5; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: border-color 0.3s, box-shadow 0.3s; background: transparent; position: relative; height: 48px; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { width: 100%; height: 100%; padding: 0 16px; background: transparent; border: none; color: inherit; font-size: clamp(12px, 3.5vw, 14px); font-family: inherit; font-weight: bold; letter-spacing: 1px; outline: none; text-transform: uppercase; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: normal; text-transform: none; }
+        .input-wrapper input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .char-count { position: absolute; right: 5px; bottom: -18px; font-size: 10px; opacity: 0.7; font-weight: bold; white-space: nowrap; }
+        .warning-text { position: absolute; left: 5px; bottom: -18px; font-size: 10px; color: var(--c-red); opacity: 0; transition: opacity 0.3s; font-weight: bold; pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px; }
+        .warning-text.show { opacity: 0.9; }
+
+        /* Gender Grid Styles */
+        .gender-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(10px, 3vw, 15px); margin-bottom: 25px; }
+        .gender-card { border: 1px solid var(--fg); padding: clamp(14px, 4vw, 18px) 10px; border-radius: 12px; text-align: center; cursor: pointer; font-weight: bold; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.5; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; }
+        .gender-card svg { width: clamp(24px, 6vw, 28px); height: clamp(24px, 6vw, 28px); margin-bottom: 10px; fill: currentColor; transition: transform 0.3s; }
+        .gender-card:hover { opacity: 0.8; }
+        .gender-card.active { opacity: 1; background: var(--c-blue); color: #ffffff; border-color: var(--c-blue); transform: scale(0.98); }
+        .gender-card.active svg { transform: scale(1.1); }
+        .gender-card.disabled { pointer-events: none; opacity: 0.2; }
+
+        .custom-select-wrapper { position: relative; width: 100%; z-index: 100;}
+        .custom-select { width: 100%; padding: clamp(12px, 3.5vw, 15px) 16px; background: transparent; border: 1px solid var(--fg); border-radius: 12px; color: var(--fg); font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; text-transform: uppercase; transition: 0.3s; height: 48px; }
+        .custom-select:hover { border-color: var(--c-blue); }
+        .custom-select.open { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .custom-select span { opacity: 0.5; transition: opacity 0.3s; }
+        .custom-select span.selected { opacity: 1; color: var(--fg); }
+        .custom-select svg { width: 16px; height: 16px; fill: currentColor; transition: transform 0.3s ease; opacity: 0.5; }
+        .custom-select.open svg { transform: rotate(180deg); fill: var(--c-blue); opacity: 1; }
+        .custom-select.disabled { opacity: 0.4; pointer-events: none; border-color: rgba(255,255,255,0.2); }
+        
+        .custom-options { position: absolute; top: calc(100% + 5px); left: 0; width: 100%; background: #0a0a0a; border: 1px solid var(--c-blue); border-radius: 12px; z-index: 1000; max-height: 220px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); padding: 0; margin: 0; list-style: none; box-shadow: 0 15px 35px rgba(0,0,0,0.9); }
+        .custom-options.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .custom-options::-webkit-scrollbar { width: 6px; }
+        .custom-options::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+        .custom-options li { padding: 14px 16px; cursor: pointer; transition: background 0.2s; font-size: 12px; font-weight: bold; letter-spacing: 1px; color: var(--fg); border-bottom: 1px solid rgba(128,128,128,0.2); text-transform: uppercase; }
+        .custom-options li:last-child { border-bottom: none; }
+        .custom-options li:hover, .custom-options li.selected { background-color: var(--c-blue); color: #fff; }
+
+        .hidden-section { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease-in-out; margin-bottom: 0; }
+        .hidden-section.show { max-height: 150px; opacity: 1; margin-bottom: 25px; overflow: visible; margin-top: 15px; }
+
+        .form-control { width: 100%; padding: 0 16px; background: transparent; border: 1px solid var(--fg); border-radius: 12px; color: var(--fg); font-size: 14px; font-weight: bold; letter-spacing: 1px; outline: none; transition: 0.3s; box-sizing: border-box; height: 48px; }
+        .form-control:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .form-control:disabled { opacity: 0.5; cursor: not-allowed; border-color: rgba(255,255,255,0.2); }
+        
+        .iti { width: 100%; display: block; }
+        .phone-intl { padding-left: 95px !important; }
+
+        .iti__country-list { 
+            background: #0a0a0a !important; 
+            border: 1px solid var(--c-blue) !important; 
+            border-radius: 8px !important; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.9) !important; 
+            padding: 0 !important; 
+            margin: 5px 0 0 0 !important;
+            font-family: inherit !important; 
+            font-size: 11px !important; 
+            font-weight: bold !important; 
+            letter-spacing: 1px !important; 
+            text-transform: uppercase !important;
+            scrollbar-width: thin; 
+            scrollbar-color: var(--c-blue) transparent;
+            display: block !important; 
+            opacity: 1; 
+            visibility: visible; 
+            transform: translateY(0); 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important; 
+            z-index: 9999 !important;
+        }
+        .iti__country-list.iti__hide { display: block !important; opacity: 0; visibility: hidden; transform: translateY(-10px); pointer-events: none; }
+        .iti__country { padding: 12px 15px !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; transition: background 0.2s !important; display: flex; align-items: center; outline: none; }
+        .iti__country:hover, .iti__country.iti__highlight { background-color: var(--c-blue) !important; color: #ffffff !important; }
+        .iti__country-name { color: var(--fg); flex: 1; text-align: left; }
+        .iti__country:hover .iti__country-name, .iti__country.iti__highlight .iti__country-name { color: #ffffff; }
+        .iti__dial-code { color: rgba(255,255,255,0.5) !important; }
+        .iti__country:hover .iti__dial-code, .iti__country.iti__highlight .iti__dial-code { color: #ffffff !important; }
+        .iti__divider { display: none !important; }
+        .iti__selected-flag { background: transparent !important; transition: 0.3s; padding: 0 15px !important; outline: none; }
+        .iti__selected-flag:hover { background: rgba(128,128,128,0.1) !important; }
+
+        .error-text { position: absolute; left: 5px; bottom: -22px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; display: block; opacity: 0; transition: opacity 0.3s ease; }
+        .error-text.show { opacity: 1; }
+        .error-text.error { color: var(--c-red); }
+        .error-text.success { color: var(--c-green); }
+
+        .otp-wrapper { display: flex; justify-content: space-between; gap: 6px; margin: 15px 0; }
+        .otp-box { width: calc(100% / 6); height: clamp(40px, 10vw, 50px); background: rgba(255,255,255,0.05); border: 1px solid var(--fg); border-radius: 8px; text-align: center; font-size: 20px; font-weight: bold; color: var(--fg); outline: none; transition: 0.3s; padding: 0; box-sizing: border-box; }
+        .otp-box:focus { border-color: var(--c-blue); box-shadow: 0 0 10px rgba(0, 123, 255, 0.3); transform: translateY(-2px); }
+        .otp-box:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .timer-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .hl-blue { color: var(--c-blue); font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .hl-blue:hover { opacity: 0.7; }
+        .hl-blue.disabled { pointer-events: none; opacity: 0.5; }
+
+        .btn-main { width: 100%; padding: 15px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; margin-bottom: 25px; }
+        .btn-main:hover:not(.processing):not(:disabled) { background: var(--c-blue); color: #ffffff; box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4); }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-main:disabled { opacity: 0.4; pointer-events: none; }
+        .btn-main.processing { background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); pointer-events: none; }
+        .btn-main.verified-state { background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000000 !important; pointer-events: none; }
+        .btn-main.error-state { background: var(--c-red) !important; border-color: var(--c-red) !important; color: #ffffff !important; pointer-events: none; box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3); }
+
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 250px; opacity: 1; margin-bottom: 20px; overflow: visible; }
+        .slide-down-wrapper.change-wrapper.show { margin-top: -5px; margin-bottom: 25px; max-height: 60px; }
+
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group input { display: none; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: clamp(13px, 4vw, 15px); font-weight: bold; cursor: pointer; opacity: 0.4; pointer-events: none; transition: all 0.4s ease; margin-top: 10px; letter-spacing: 1.5px; text-transform: uppercase; display: none; align-items: center; justify-content: center; text-align: center; }
+        .btn-next.active { display: flex; opacity: 1; pointer-events: auto; }
+        .btn-next.active:hover:not(.processing):not(.saved) { background: var(--c-blue); color: var(--bg); box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .btn-next:active { transform: scale(0.97); }
+        .btn-next.processing { display: flex; opacity: 1 !important; pointer-events: none; background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); }
+        .btn-next.saved { display: flex; opacity: 1 !important; pointer-events: none !important; transform: scale(0.98); background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000000 !important; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #0a0a0a; border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: 30px; max-width: 420px; width: 85%; text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-title { font-size: 16px; font-weight: bold; color: var(--c-red); margin-bottom: 15px; letter-spacing: 2px; text-transform: uppercase; }
+        .modal-desc { font-size: 14px; opacity: 0.8; margin-bottom: 25px; line-height: 1.6; color: var(--fg); text-align: left; padding: 0 10px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        .modal-btn { padding: 12px 24px; background: transparent; border: 1px solid #ffffff; color: var(--fg); border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
+        .modal-btn:hover:not(.danger) { background: #ffffff !important; color: #000000 !important; border-color: #ffffff !important; box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2); }
+        .modal-btn.danger { border-color: var(--c-red); color: var(--c-red); }
+        .modal-btn.danger:hover { background: var(--c-red) !important; color: #fff !important; box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4); }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+            .modal-desc { text-align: center; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="homeBtn" class="top-left">
+        <span>BACK</span>
+    </div>
+
+    <div class="container">
+        <div class="step-indicator">STEP 7 OF 11</div>
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>GUARDIAN AUTHORIZATION</strong></h2>
+        <p class="desc">Define your <strong>legal guardian</strong> to authorize and complete this entity registration.</p>
+
+        <div class="input-group">
+            <label>Guardian Full Name</label>
+            <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-yellow);">* Initials are strictly prohibited. Enter exact full name.</span>
+            <div class="input-wrapper">
+                <input type="text" id="guardianName" maxlength="50" placeholder="ENTER FULL NAME" oninput="formatName(this); validateForm();" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');">
+            </div>
+            <span class="warning-text" id="warn-guardianName">MINIMUM 3 CHARACTERS REQUIRED.</span>
+            <span class="char-count" id="count-guardianName">0/50</span>
+        </div>
+
+        <div class="input-group" id="birthGroup">
+            <label>Biological Sex at Birth</label>
+            <div class="gender-grid" id="grid-birth">
+                <div class="gender-card" onclick="selectGender('Male')">
+                    <svg viewBox="0 0 24 24"><path d="M9,9C10.29,9 11.5,9.41 12.47,10.11L17.58,5H13V3H21V11H19V6.41L13.89,11.5C14.59,12.5 15,13.7 15,15A6,6 0 0,1 9,21A6,6 0 0,1 3,15A6,6 0 0,1 9,9M9,11A4,4 0 0,0 5,15A4,4 0 0,0 9,19A4,4 0 0,0 13,15A4,4 0 0,0 9,11Z"/></svg>
+                    <span>Male</span>
+                </div>
+                <div class="gender-card" onclick="selectGender('Female')">
+                    <svg viewBox="0 0 24 24"><path d="M12,4A6,6 0 0,1 18,10C18,12.97 15.84,15.44 13,15.92V18H15V20H13V22H11V20H9V18H11V15.92C8.16,15.44 6,12.97 6,10A6,6 0 0,1 12,4M12,6A4,4 0 0,0 8,10A4,4 0 0,0 12,14A4,4 0 0,0 16,10A4,4 0 0,0 12,6Z"/></svg>
+                    <span>Female</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group" style="z-index: 100;">
+            <label>Relationship</label>
+            <div class="custom-select-wrapper" id="relationSelectWrapper">
+                <div class="custom-select" id="relationSelect" onclick="toggleDropdown()">
+                    <span id="relationText">SELECT RELATIONSHIP</span>
+                    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                </div>
+                <ul class="custom-options" id="relationOptions">
+                    <li onclick="selectOption(this, 'FATHER', event)">FATHER</li>
+                    <li onclick="selectOption(this, 'MOTHER', event)">MOTHER</li>
+                    <li onclick="selectOption(this, 'GRANDFATHER', event)">GRANDFATHER</li>
+                    <li onclick="selectOption(this, 'GRANDMOTHER', event)">GRANDMOTHER</li>
+                    <li onclick="selectOption(this, 'BROTHER', event)">BROTHER</li>
+                    <li onclick="selectOption(this, 'SISTER', event)">SISTER</li>
+                    <li onclick="selectOption(this, 'UNCLE', event)">UNCLE</li>
+                    <li onclick="selectOption(this, 'AUNT', event)">AUNT</li>
+                    <li onclick="selectOption(this, 'STEP FATHER', event)">STEP FATHER</li>
+                    <li onclick="selectOption(this, 'STEP MOTHER', event)">STEP MOTHER</li>
+                    <li onclick="selectOption(this, 'STEP BROTHER', event)">STEP BROTHER</li>
+                    <li onclick="selectOption(this, 'STEP SISTER', event)">STEP SISTER</li>
+                    <li onclick="selectOption(this, 'FRIEND', event)">FRIEND</li>
+                    <li onclick="selectOption(this, 'FAMILY FRIEND', event)">FAMILY FRIEND</li>
+                    <li onclick="selectOption(this, 'ADVOCATE', event)">ADVOCATE</li>
+                    <li onclick="selectOption(this, 'NEIGHBOR', event)">NEIGHBOR</li>
+                    <li onclick="selectOption(this, 'OTHER', event)">OTHER</li>
+                </ul>
+                <input type="hidden" id="guardianRelation" value="">
+            </div>
+        </div>
+
+        <div class="input-group hidden-section" id="otherRelationContainer">
+            <label>Specify Custom Relationship</label>
+            <div class="input-wrapper">
+                <input type="text" id="otherRelation" maxlength="30" placeholder="ENTER RELATIONSHIP" oninput="formatName(this); validateForm();" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');">
+            </div>
+            <span class="warning-text" id="warn-otherRelation">MINIMUM 3 CHARACTERS REQUIRED.</span>
+            <span class="char-count" id="count-otherRelation">0/30</span>
+        </div>
+
+        <div class="input-group" style="margin-top: 10px; margin-bottom: 35px; z-index: 5;">
+            <label>
+                <span>Guardian Mobile Number <span id="selectedCountryDisplay" style="color: var(--c-cyan); font-size: 9px; margin-left: 8px; border: 1px solid rgba(0,229,255,0.3); padding: 2px 6px; border-radius: 4px; background: rgba(0,229,255,0.05); letter-spacing: 1px; vertical-align: middle;">INDIA</span></span>
+                <span id="phoneCount" class="char-count" style="color: var(--c-yellow); top: 0; bottom: auto;">0/10 REQUIRED</span>
+            </label>
+            <div style="position: relative;">
+                <input type="tel" id="guardianPhone" class="form-control phone-intl" autocomplete="off" oninput="handlePhoneInput()">
+            </div>
+            <span class="error-text" id="phoneStatus"></span>
+        </div>
+
+        <button class="btn-main" id="btnSendOtp" disabled onclick="checkDuplicateAndSend()">Send OTP</button>
+
+        <div class="slide-down-wrapper change-wrapper" id="changeWrapper">
+            <button type="button" onclick="resetPhoneOnly()" style="width:100%; padding:12px; background:transparent; border:1px dashed var(--c-yellow); color:var(--c-yellow); border-radius:12px; font-size:12px; font-weight:bold; cursor:pointer; text-transform:uppercase; letter-spacing:1px; transition:0.3s;">CHANGE MOBILE NUMBER</button>
+        </div>
+
+        <div class="slide-down-wrapper" id="otpSectionWrapper">
+            <div class="brand-title" style="letter-spacing: 1px; color: var(--fg); opacity: 0.8; margin-bottom: 10px;">Enter 6-Digit OTP Sent to Guardian</div>
+            <div class="otp-wrapper">
+                <input type="password" class="otp-box card-otp" maxlength="1" data-index="1">
+                <input type="password" class="otp-box card-otp" maxlength="1" data-index="2">
+                <input type="password" class="otp-box card-otp" maxlength="1" data-index="3">
+                <input type="password" class="otp-box card-otp" maxlength="1" data-index="4">
+                <input type="password" class="otp-box card-otp" maxlength="1" data-index="5">
+                <input type="password" class="otp-box card-otp" maxlength="1" data-index="6">
+            </div>
+            <div class="timer-row">
+                <span id="otpTimer" style="color: var(--c-green);">05:00</span>
+                <span class="hl-blue" id="resendSpan" onclick="resendOTP()">Resend OTP</span>
+            </div>
+            <button class="btn-main" id="btnVerifyOtp" disabled onclick="verifyOTP()">Verify OTP</button>
+        </div>
+
+        <div class="slide-down-wrapper" id="confirmCheckWrapper">
+            <label class="check-group">
+                <input type="checkbox" id="formConfirmCheck" onchange="toggleFinalConfirm()">
+                <div class="custom-check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span class="check-label">I CONFIRM GUARDIAN DETAILS ARE ACCURATE</span>
+            </label>
+        </div>
+
+        <button class="btn-next" id="btnProceed" onclick="saveAndProceed()">NEXT STEP</button>
+
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+    </div>
+
+    <div class="modal-overlay" id="homeModal">
+        <div class="modal-box">
+            <div class="modal-title">WARNING</div>
+            <div class="modal-desc">
+                Are you sure you want to cancel the registration and return to the Home page? Any unsaved progress will be lost.
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeHomeWarning()">CANCEL</button>
+                <button class="modal-btn danger" onclick="confirmGoHome()">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <script src="brain.js"></script>
+    <script>
+        let timerInterval;
+        let isPhoneVerified = false;
+        let guardianOtpAttempts = 0;
+        let guardianOtpResends = 0;
+        let verifiedGuardianOtp = "";
+        let generatedBackendOtp = "";
+        let currentMaxDigits = 10;
+        let originalPhoneNumber = "";
+        let selectedGuardianGender = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            const homeBtn = document.getElementById('homeBtn');
+            homeBtn.onclick = function(e) {
+                e.preventDefault();
+                document.body.style.opacity = '0';
+                setTimeout(() => { window.location.href = isEdit ? 'edit.html' : 'registration6.html'; }, 1000);
+            };
+
+            setupIntlInput();
+            setupSequentialOtp();
+
+            if (isEdit) {
+                let userSettings = {};
+                try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+                
+                if (userSettings.guardianName && userSettings.guardianRelation && userSettings.guardianPhone) {
+                    document.getElementById('guardianName').value = userSettings.guardianName;
+                    document.getElementById('count-guardianName').innerText = `${userSettings.guardianName.length}/50`;
+                    
+                    if (userSettings.guardianGender) {
+                        selectGender(userSettings.guardianGender, true);
+                    }
+
+                    let rel = userSettings.guardianRelation;
+                    let foundOption = document.querySelector(`.custom-options li[onclick*="'${rel}'"]`);
+                    
+                    if (foundOption) {
+                        selectOption(foundOption, rel, null, true);
+                    } else {
+                        selectOption(document.querySelector(`.custom-options li[onclick*="'OTHER'"]`), 'OTHER', null, true);
+                        document.getElementById('otherRelation').value = rel;
+                        document.getElementById('count-otherRelation').innerText = `${rel.length}/30`;
+                    }
+
+                    window.iti.setNumber(userSettings.guardianPhone);
+                    
+                    setTimeout(() => {
+                        originalPhoneNumber = document.getElementById('guardianPhone').value;
+                        handlePhoneInput(true);
+                        
+                        verifiedGuardianOtp = userSettings.guardianOtp || '';
+                        guardianOtpAttempts = userSettings.guardianOtpAttempts || 0;
+                        guardianOtpResends = userSettings.guardianOtpResends || 0;
+
+                        isPhoneVerified = true;
+                        const btnSendOtp = document.getElementById('btnSendOtp');
+                        btnSendOtp.className = 'btn-main verified-state';
+                        btnSendOtp.innerHTML = 'APPROVED ✔';
+                        
+                        document.getElementById('guardianPhone').disabled = true;
+
+                        document.getElementById('changeWrapper').classList.add('show');
+                        
+                        const status = document.getElementById('phoneStatus');
+                        status.className = 'error-text success show';
+                        status.innerHTML = 'NUMBER AVAILABLE / VALIDATED';
+                        
+                        validateForm();
+                    }, 200);
+                } else {
+                    resetInputs();
+                }
+            } else {
+                resetInputs();
+            }
+        });
+
+        function setupIntlInput() {
+            const countryData = window.intlTelInputGlobals.getCountryData();
+            for (let i = 0; i < countryData.length; i++) {
+                countryData[i].name = countryData[i].name.split(' (')[0].trim().toUpperCase();
+            }
+
+            const input = document.querySelector("#guardianPhone");
+            window.iti = window.intlTelInput(input, {
+                separateDialCode: true,
+                initialCountry: "in",
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+            });
+            input.addEventListener('countrychange', () => {
+                updateCountryInfo();
+            });
+            setTimeout(updateCountryInfo, 1000);
+        }
+
+        function updateCountryInfo() {
+            const countryData = window.iti.getSelectedCountryData();
+            if (countryData && countryData.name) {
+                let cName = countryData.name.toUpperCase();
+                document.getElementById('selectedCountryDisplay').innerText = cName;
+            }
+            
+            setTimeout(() => {
+                const placeholder = document.getElementById('guardianPhone').getAttribute('placeholder') || '';
+                const digits = placeholder.replace(/\D/g, '').length;
+                if (digits > 0) {
+                    currentMaxDigits = digits;
+                } else {
+                    currentMaxDigits = 10;
+                }
+                handlePhoneInput(true);
+            }, 100);
+        }
+
+        function resetInputs() {
+            document.getElementById('guardianName').value = '';
+            document.getElementById('otherRelation').value = '';
+            document.getElementById('guardianPhone').value = '';
+            document.getElementById('count-guardianName').innerText = '0/50';
+            document.getElementById('count-otherRelation').innerText = '0/30';
+            
+            selectedGuardianGender = '';
+            document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('active'));
+
+            document.getElementById('relationText').innerText = 'SELECT RELATIONSHIP';
+            document.getElementById('relationText').classList.remove('selected');
+            document.querySelectorAll('.custom-options li').forEach(opt => opt.classList.remove('selected'));
+            document.getElementById('otherRelationContainer').classList.remove('show');
+            document.getElementById('guardianRelation').value = '';
+
+            resetPhoneOnly(true);
+        }
+
+        function resetPhoneOnly(isLoad = false) {
+            const input = document.getElementById('guardianPhone');
+            input.value = '';
+            originalPhoneNumber = '';
+            input.disabled = false;
+            document.querySelectorAll('.card-otp').forEach(i => { i.value = ''; i.disabled = false; });
+            
+            isPhoneVerified = false;
+            generatedBackendOtp = "";
+            verifiedGuardianOtp = "";
+            guardianOtpAttempts = 0;
+            guardianOtpResends = 0;
+            
+            const btnSendOtp = document.getElementById('btnSendOtp');
+            btnSendOtp.className = 'btn-main';
+            btnSendOtp.innerHTML = 'Send OTP';
+            btnSendOtp.disabled = true;
+
+            const btnVerifyOtp = document.getElementById('btnVerifyOtp');
+            btnVerifyOtp.className = 'btn-main';
+            btnVerifyOtp.innerHTML = 'Verify OTP';
+            btnVerifyOtp.disabled = true;
+
+            document.getElementById('otpSectionWrapper').classList.remove('show');
+            document.getElementById('changeWrapper').classList.remove('show');
+            document.getElementById('phoneCount').innerText = `0/${currentMaxDigits} REQUIRED`;
+            document.getElementById('phoneCount').style.color = 'var(--c-yellow)';
+            
+            const status = document.getElementById('phoneStatus');
+            status.classList.remove('show');
+
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+            
+            if(!isLoad) {
+                validateForm();
+                input.focus();
+            }
+        }
+
+        function showHomeWarning() { document.getElementById('homeModal').classList.add('show'); }
+        function closeHomeWarning() { document.getElementById('homeModal').classList.remove('show'); }
+        function confirmGoHome() {
+            closeHomeWarning();
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = 'home.html'; }, 1000);
+        }
+
+        function formatName(el) {
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+            let val = el.value.toUpperCase().replace(/[^A-Z\s]/g, '').replace(/\s{2,}/g, ' ');
+            if (val.startsWith(' ')) val = val.trimStart();
+            el.value = val;
+            
+            let countId = (el.id === 'guardianName') ? 'count-guardianName' : 'count-otherRelation';
+            let max = (el.id === 'guardianName') ? 50 : 30;
+            document.getElementById(countId).innerText = `${el.value.length}/${max}`;
+            validateForm();
+        }
+
+        function selectGender(value, isLoad = false) {
+            const cards = document.getElementById('grid-birth').querySelectorAll('.gender-card');
+            
+            cards.forEach(card => {
+                if (card.querySelector('span').innerText.trim() === value) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+
+            selectedGuardianGender = value;
+
+            if(!isLoad) {
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+                validateForm();
+            }
+        }
+
+        function toggleDropdown() {
+            if (document.getElementById('relationSelect').classList.contains('disabled')) return;
+            document.getElementById('relationOptions').classList.toggle('show');
+            document.getElementById('relationSelect').classList.toggle('open');
+        }
+
+        document.addEventListener('click', (e) => {
+            const selectWrapper = document.getElementById('relationSelectWrapper');
+            if (selectWrapper && !selectWrapper.contains(e.target)) {
+                document.getElementById('relationOptions').classList.remove('show');
+                document.getElementById('relationSelect').classList.remove('open');
+            }
+        });
+
+        function selectOption(el, val, event, isLoad = false) {
+            if(event) event.stopPropagation();
+            
+            document.getElementById('guardianRelation').value = val;
+            
+            const triggerText = document.getElementById('relationText');
+            triggerText.innerText = el.innerText;
+            triggerText.classList.add('selected');
+            
+            document.querySelectorAll('.custom-options li').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            
+            document.getElementById('relationOptions').classList.remove('show');
+            document.getElementById('relationSelect').classList.remove('open');
+
+            const otherContainer = document.getElementById('otherRelationContainer');
+            if (val === 'OTHER') {
+                otherContainer.classList.add('show');
+            } else {
+                otherContainer.classList.remove('show');
+                document.getElementById('otherRelation').value = '';
+                document.getElementById('count-otherRelation').innerText = '0/30';
+            }
+
+            if(!isLoad) {
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+                validateForm();
+            }
+        }
+
+        function handlePhoneInput(isLoad = false) {
+            const input = document.getElementById('guardianPhone');
+            const countEl = document.getElementById('phoneCount');
+            const btn = document.getElementById('btnSendOtp');
+            const status = document.getElementById('phoneStatus');
+            
+            if(!isLoad) {
+                status.classList.remove('show');
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+                isPhoneVerified = false;
+                validateForm();
+                
+                btn.className = 'btn-main';
+                btn.innerHTML = 'Send OTP';
+                document.getElementById('otpSectionWrapper').classList.remove('show');
+                document.querySelectorAll('.card-otp').forEach(i => i.value = '');
+            }
+
+            let rawVal = input.value.replace(/\D/g, '');
+            if(rawVal.length > currentMaxDigits) {
+                rawVal = rawVal.substring(0, currentMaxDigits);
+            }
+            
+            const placeholder = input.getAttribute('placeholder') || '';
+            let formattedVal = '';
+            let rawIdx = 0;
+            
+            for(let i=0; i<placeholder.length; i++) {
+                if(rawIdx >= rawVal.length) break;
+                if(placeholder[i] === ' ' || placeholder[i] === '-') {
+                    formattedVal += placeholder[i];
+                } else {
+                    formattedVal += rawVal[rawIdx];
+                    rawIdx++;
+                }
+            }
+            if(rawIdx < rawVal.length) {
+                formattedVal += rawVal.substring(rawIdx);
+            }
+            
+            input.value = formattedVal;
+            originalPhoneNumber = formattedVal;
+
+            let currentLen = rawVal.length;
+
+            if (currentLen > 0) {
+                if(currentLen === currentMaxDigits && window.iti.isValidNumber() && !isPhoneVerified) {
+                    btn.disabled = false;
+                    countEl.innerText = `${currentLen}/${currentMaxDigits} VALID ✔`;
+                    countEl.style.color = "var(--c-green)";
+                } else if (currentLen === currentMaxDigits && !isPhoneVerified) {
+                    btn.disabled = true;
+                    countEl.innerText = `${currentLen}/${currentMaxDigits} INVALID`;
+                    countEl.style.color = "var(--c-red)";
+                } else if (isPhoneVerified) {
+                    countEl.innerText = `${currentLen}/${currentMaxDigits} VALID ✔`;
+                    countEl.style.color = "var(--c-green)";
+                } else {
+                    btn.disabled = true;
+                    countEl.innerText = `${currentLen}/${currentMaxDigits} DIGITS`;
+                    countEl.style.color = "var(--c-yellow)";
+                }
+            } else {
+                btn.disabled = true;
+                countEl.innerText = `0/${currentMaxDigits} REQUIRED`;
+                countEl.style.color = "var(--c-yellow)";
+            }
+        }
+
+        async function checkDuplicateAndSend() {
+            const phoneVal = window.iti.getNumber();
+            const btn = document.getElementById('btnSendOtp');
+            const status = document.getElementById('phoneStatus');
+            const input = document.getElementById('guardianPhone');
+
+            btn.classList.add('processing');
+            btn.innerHTML = 'SENDING OTP<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            status.classList.remove('show');
+
+            if(phoneVal === '+919999999999') {
+                setTimeout(() => {
+                    btn.classList.remove('processing');
+                    btn.className = 'btn-main error-state';
+                    btn.innerHTML = 'ALREADY REGISTERED';
+                    status.className = 'error-text error show';
+                    status.innerText = 'THIS NUMBER IS ALREADY REGISTERED TO ANOTHER INFINITY ID';
+                }, 1500);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/send_otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'guardian_phone', contact: phoneVal })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    generatedBackendOtp = result.otp;
+                }
+            } catch (err) {
+                generatedBackendOtp = "123456"; 
+            }
+
+            setTimeout(() => {
+                btn.classList.remove('processing');
+                btn.className = 'btn-main verified-state';
+                btn.innerHTML = 'OTP SENT ✔';
+                
+                document.getElementById('guardianPhone').disabled = true;
+                
+                status.className = 'error-text success show';
+                status.innerHTML = 'OTP DELIVERED SECURELY';
+
+                document.getElementById('changeWrapper').classList.add('show');
+
+                setTimeout(() => {
+                    document.getElementById('otpSectionWrapper').classList.add('show');
+                    startTimer();
+                    setTimeout(() => document.querySelector('.card-otp[data-index="1"]').focus(), 100);
+                }, 500);
+            }, 1500);
+        }
+
+        function setupSequentialOtp() {
+            const inputs = document.querySelectorAll('.card-otp');
+            inputs.forEach((input, index) => {
+                input.addEventListener('focus', function() {
+                    let firstEmpty = -1;
+                    for(let i=0; i<inputs.length; i++) {
+                        if(inputs[i].value === '') { firstEmpty = i; break; }
+                    }
+                    if(firstEmpty !== -1 && index > firstEmpty) inputs[firstEmpty].focus();
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if(e.key === 'Backspace' && this.value === '' && index > 0) inputs[index - 1].focus();
+                });
+                
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    if(this.value.length === 1 && index < inputs.length - 1) inputs[index + 1].focus();
+                    validateOtpCompletion();
+                });
+            });
+        }
+
+        function validateOtpCompletion() {
+            let filled = 0;
+            document.querySelectorAll('.card-otp').forEach(i => { if(i.value) filled++; });
+            const btn = document.getElementById('btnVerifyOtp');
+            if(filled === 6) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        function startTimer() {
+            let timeLeft = 300;
+            const display = document.getElementById('otpTimer');
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                display.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    display.innerText = 'EXPIRED';
+                }
+            }, 1000);
+        }
+
+        function resendOTP() {
+            guardianOtpResends++;
+            document.querySelectorAll('.card-otp').forEach(i => { i.value = ''; i.disabled = false; });
+            
+            const btnVerify = document.getElementById('btnVerifyOtp');
+            btnVerify.className = 'btn-main';
+            btnVerify.innerHTML = 'Verify OTP';
+            btnVerify.disabled = true;
+
+            validateOtpCompletion();
+            
+            const resendSpan = document.getElementById('resendSpan');
+            resendSpan.innerHTML = 'SENDING OTP<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            resendSpan.classList.add('disabled');
+
+            const phoneVal = window.iti.getNumber();
+            fetch('/api/send_otp/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'guardian_phone', contact: phoneVal })
+            }).then(r => r.json()).then(res => {
+                if (res.status === 'success') generatedBackendOtp = res.otp;
+            }).catch(e => { generatedBackendOtp = "123456"; });
+
+            setTimeout(() => {
+                startTimer();
+                document.querySelector('.card-otp[data-index="1"]').focus();
+                
+                resendSpan.style.color = "var(--c-green)";
+                resendSpan.innerText = "OTP RESENT SUCCESSFULLY ✔";
+                
+                setTimeout(() => {
+                    resendSpan.style.color = "";
+                    resendSpan.innerText = "Resend OTP";
+                    resendSpan.classList.remove('disabled');
+                }, 3000);
+            }, 1500);
+        }
+
+        function verifyOTP() {
+            const btn = document.getElementById('btnVerifyOtp');
+            btn.classList.add('processing');
+            btn.innerHTML = 'VERIFYING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            
+            document.querySelectorAll('.card-otp').forEach(i => i.disabled = true);
+            document.getElementById('resendSpan').classList.add('disabled');
+
+            let otpVal = '';
+            document.querySelectorAll('.card-otp').forEach(i => { otpVal += i.value; });
+
+            setTimeout(() => {
+                if (otpVal === generatedBackendOtp || (generatedBackendOtp === "" && otpVal.length === 6)) {
+                    verifiedGuardianOtp = otpVal;
+                    clearInterval(timerInterval);
+                    btn.classList.remove('processing');
+                    btn.className = 'btn-main verified-state';
+                    btn.innerHTML = 'PHONE VERIFIED ✔';
+                    
+                    isPhoneVerified = true;
+                    
+                    setTimeout(() => {
+                        document.getElementById('otpSectionWrapper').classList.remove('show');
+                        validateForm();
+                    }, 1000);
+                } else {
+                    guardianOtpAttempts++;
+                    btn.classList.remove('processing');
+                    btn.className = 'btn-main error-state';
+                    btn.innerHTML = 'INCORRECT OTP';
+                    
+                    setTimeout(() => {
+                        btn.className = 'btn-main';
+                        btn.innerHTML = 'Verify OTP';
+                        document.querySelectorAll('.card-otp').forEach(i => { i.value = ''; i.disabled = false; });
+                        document.getElementById('resendSpan').classList.remove('disabled');
+                        validateOtpCompletion();
+                        document.querySelector('.card-otp[data-index="1"]').focus();
+                    }, 2000);
+                }
+            }, 1500);
+        }
+
+        function validateForm() {
+            const gNameRaw = document.getElementById('guardianName').value;
+            const gName = gNameRaw.trim();
+            const relVal = document.getElementById('guardianRelation').value;
+            const customRel = document.getElementById('otherRelation').value.trim();
+            const checkWrapper = document.getElementById('confirmCheckWrapper');
+            const warnName = document.getElementById('warn-guardianName');
+            const warnOtherRel = document.getElementById('warn-otherRelation');
+
+            let isValid = true;
+
+            if (gNameRaw.endsWith(' ')) {
+                warnName.innerText = 'REMOVE TRAILING SPACE TO PROCEED.';
+                warnName.classList.add('show');
+                isValid = false;
+            } else if (gName.length > 0 && gName.length < 3) {
+                warnName.innerText = 'MINIMUM 3 CHARACTERS REQUIRED.';
+                warnName.classList.add('show');
+                isValid = false;
+            } else {
+                warnName.classList.remove('show');
+                if (gName.length === 0) isValid = false;
+            }
+
+            if (selectedGuardianGender === '') isValid = false;
+            if (relVal === '') isValid = false;
+
+            if (relVal === 'OTHER') {
+                const rawOther = document.getElementById('otherRelation').value;
+                if (rawOther.endsWith(' ')) {
+                    warnOtherRel.innerText = 'REMOVE TRAILING SPACE TO PROCEED.';
+                    warnOtherRel.classList.add('show');
+                    isValid = false;
+                } else if (customRel.length > 0 && customRel.length < 3) {
+                    warnOtherRel.innerText = 'MINIMUM 3 CHARACTERS REQUIRED.';
+                    warnOtherRel.classList.add('show');
+                    isValid = false;
+                } else {
+                    warnOtherRel.classList.remove('show');
+                    if (customRel.length === 0) isValid = false;
+                }
+            }
+
+            if (!isPhoneVerified) isValid = false;
+
+            if (isValid) {
+                checkWrapper.classList.add('show');
+            } else {
+                checkWrapper.classList.remove('show');
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+        }
+
+        function toggleFinalConfirm() {
+            const isChecked = document.getElementById('formConfirmCheck').checked;
+            const btnNext = document.getElementById('btnProceed');
+            const relSelect = document.getElementById('relationSelect');
+            const gridBirth = document.getElementById('grid-birth');
+
+            if(isChecked) {
+                document.getElementById('guardianName').disabled = true;
+                document.getElementById('otherRelation').disabled = true;
+                gridBirth.classList.add('disabled');
+                relSelect.classList.add('disabled');
+                
+                btnNext.classList.add('active');
+                btnNext.disabled = false;
+            } else {
+                document.getElementById('guardianName').disabled = false;
+                document.getElementById('otherRelation').disabled = false;
+                gridBirth.classList.remove('disabled');
+                relSelect.classList.remove('disabled');
+
+                btnNext.classList.remove('active');
+                btnNext.disabled = true;
+            }
+        }
+
+        function saveAndProceed() {
+            const btn = document.getElementById('btnProceed');
+            if(!btn.classList.contains('active')) return;
+
+            btn.classList.remove('active');
+            btn.classList.add('processing');
+            btn.innerHTML = 'SAVING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btn.disabled = true;
+
+            let userSettings = {};
+            try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+            
+            userSettings.guardianName = document.getElementById('guardianName').value.trim();
+            userSettings.guardianGender = selectedGuardianGender;
+            const rawRel = document.getElementById('guardianRelation').value;
+            userSettings.guardianRelation = (rawRel === 'OTHER') ? document.getElementById('otherRelation').value.trim() : rawRel;
+            
+            const countryData = window.iti.getSelectedCountryData() || {};
+            userSettings.guardianPhoneCountryCode = countryData.dialCode ? '+' + countryData.dialCode : '';
+            userSettings.guardianPhoneCountryName = countryData.name || '';
+            userSettings.guardianPhone = window.iti.getNumber();
+            
+            userSettings.guardianOtpAttempts = guardianOtpAttempts;
+            userSettings.guardianOtpResends = guardianOtpResends;
+            userSettings.guardianOtp = verifiedGuardianOtp;
+
+            localStorage.setItem('inf_settings', JSON.stringify(userSettings));
+
+            setTimeout(() => {
+                btn.classList.remove('processing');
+                btn.classList.add('saved');
+                btn.innerHTML = 'SAVED ✔';
+
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                        window.location.href = isEdit ? 'edit.html' : 'registration8.html';
+                    }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

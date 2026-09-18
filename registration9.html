@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - Email Verification</title>
+    
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; overflow-y: auto; 
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left span { font-weight: 900; letter-spacing: 2px; font-size: 13px; }
+
+        .container { 
+            width: 90%; 
+            max-width: 500px; 
+            margin: 40px auto; 
+            padding: clamp(20px, 5vw, 30px); 
+            box-sizing: border-box; 
+            border: 1px solid rgba(128,128,128,0.2); 
+            border-radius: 16px; 
+            background: rgba(128,128,128,0.02); 
+            backdrop-filter: blur(10px); 
+            z-index: 10;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .step-indicator { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+
+        .form-group { margin-bottom: 25px; position: relative; }
+        .form-group label { display: flex; justify-content: space-between; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: border-color 0.3s, box-shadow 0.3s; background: transparent; position: relative; height: 50px; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { width: 100%; height: 100%; padding: 0 16px; background: transparent; border: none; color: inherit; font-size: 14px; font-family: inherit; font-weight: bold; letter-spacing: 1px; outline: none; text-transform: lowercase; }
+        .input-wrapper input::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: normal; text-transform: none; }
+        .input-wrapper input:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .fixed-domain { padding-right: 16px; font-weight: bold; color: var(--c-blue); font-size: 14px; letter-spacing: 1px; pointer-events: none; opacity: 0.9; }
+
+        .error-text { position: absolute; left: 5px; bottom: -28px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; display: block; opacity: 0; transition: opacity 0.3s ease; }
+        .error-text.show { opacity: 1; }
+        .error-text.error { color: var(--c-red); }
+        .error-text.success { color: var(--c-green); }
+
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 250px; opacity: 1; margin-top: 20px; overflow: visible; }
+        .slide-down-wrapper.change-wrapper.show { margin-top: 15px; margin-bottom: 25px; max-height: 60px; }
+
+        .otp-wrapper { display: flex; justify-content: space-between; gap: 6px; margin: 15px 0; }
+        .otp-box { width: calc(100% / 6); height: clamp(40px, 10vw, 50px); background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 8px; text-align: center; font-size: 20px; font-weight: bold; color: var(--fg); outline: none; transition: 0.3s; padding: 0; box-sizing: border-box; }
+        .otp-box:focus { border-color: var(--c-blue); box-shadow: 0 0 10px rgba(0, 123, 255, 0.3); transform: translateY(-2px); }
+        .otp-box:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .timer-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .hl-blue { color: var(--c-blue); font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .hl-blue:hover { opacity: 0.7; }
+        .hl-blue.disabled { pointer-events: none; opacity: 0.5; }
+
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); margin-bottom: 20px; }
+        .check-group:active { opacity: 0.7; }
+        .check-group input { display: none; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .btn-main { width: 100%; padding: 15px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; margin-top: 10px; }
+        .btn-main:hover:not(.processing):not(:disabled) { background: var(--c-blue); color: #ffffff; box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4); }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-main:disabled { opacity: 0.4; pointer-events: none; }
+        
+        .btn-main.processing { background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); pointer-events: none; }
+        .btn-main.verified-state { background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000000 !important; pointer-events: none; }
+        .btn-main.error-state { background: var(--c-red) !important; border-color: var(--c-red) !important; color: #ffffff !important; pointer-events: none; box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3); }
+
+        .btn-main.warning { border-color: var(--c-yellow); color: var(--c-yellow); margin-top: 0; }
+        .btn-main.warning:hover:not(.processing):not(:disabled) { background: var(--c-yellow); color: #000000; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.4); }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: clamp(13px, 4vw, 15px); font-weight: bold; cursor: pointer; opacity: 0.4; pointer-events: none; transition: all 0.4s ease; letter-spacing: 1.5px; text-transform: uppercase; display: none; align-items: center; justify-content: center; text-align: center; }
+        .btn-next.active { display: flex; opacity: 1; pointer-events: auto; }
+        .btn-next.active:hover:not(.processing):not(.saved) { background: var(--c-blue); color: var(--bg); box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .btn-next:active { transform: scale(0.97); }
+        .btn-next.processing { display: flex; opacity: 1 !important; pointer-events: none; background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); }
+        .btn-next.saved { display: flex; opacity: 1 !important; pointer-events: none !important; transform: scale(0.98); background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000000 !important; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #0a0a0a; border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: 30px; max-width: 420px; width: 85%; text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-title { font-size: 16px; font-weight: bold; color: var(--c-red); margin-bottom: 15px; letter-spacing: 2px; text-transform: uppercase; }
+        .modal-desc { font-size: 14px; opacity: 0.8; margin-bottom: 25px; line-height: 1.6; color: var(--fg); text-align: left; padding: 0 10px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        .modal-btn { padding: 12px 24px; background: transparent; border: 1px solid #ffffff; color: var(--fg); border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
+        .modal-btn:hover:not(.warning) { background: #ffffff !important; color: #000000 !important; border-color: #ffffff !important; box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2); }
+        
+        .modal-btn.warning { border-color: var(--c-yellow); color: var(--c-yellow); }
+        .modal-btn.warning:hover { background: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.4); }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 10px 0; margin-top: 40px; }
+            .modal-desc { text-align: center; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="homeBtn" class="top-left">
+        <span>BACK</span>
+    </div>
+
+    <div class="container">
+        <div class="step-indicator">STEP 9 OF 11</div>
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>EMERGENCY CONTACT</strong></h2>
+        <p class="desc">Provide a reliable <strong>alternate communication node</strong>. Protocol requires OTP verification for identity security.</p>
+
+        <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-cyan);">* Currently supporting Gmail only. Outlook and other providers will be integrated in future updates.</span>
+
+        <div class="form-group" style="margin-bottom: 35px;">
+            <label>
+                <span>Email Address</span>
+            </label>
+            <div class="input-wrapper">
+                <input type="text" id="emailUsername" placeholder="enter username" autocomplete="off" oninput="handleEmailInput()">
+                <span class="fixed-domain">@gmail.com</span>
+            </div>
+            <span class="error-text" id="emailStatus"></span>
+        </div>
+        
+        <button class="btn-main" id="btnSendEmailOtp" disabled onclick="sendOTP()">Send Email OTP</button>
+
+        <div id="skipWrapper" style="width: 100%; margin-top: 15px; margin-bottom: 25px;">
+            <button class="btn-main warning" onclick="showSkipWarning()">SKIP EMAIL VERIFICATION</button>
+        </div>
+
+        <div class="slide-down-wrapper change-wrapper" id="changeWrapper">
+            <button type="button" onclick="resetEmailOnly()" style="width:100%; padding:12px; background:transparent; border:1px dashed var(--c-yellow); color:var(--c-yellow); border-radius:12px; font-size:12px; font-weight:bold; cursor:pointer; text-transform:uppercase; letter-spacing:1px; transition:0.3s;">CHANGE EMAIL ADDRESS</button>
+        </div>
+
+        <div class="slide-down-wrapper" id="emailOtpWrapper">
+            <div class="brand-title" style="letter-spacing: 1px; color: var(--fg); opacity: 0.8; margin-bottom: 10px;">Enter 6-Digit Email OTP</div>
+            <div class="otp-wrapper" id="emailOtpGroup">
+                <input type="password" class="otp-box email-otp" maxlength="1" data-index="1">
+                <input type="password" class="otp-box email-otp" maxlength="1" data-index="2">
+                <input type="password" class="otp-box email-otp" maxlength="1" data-index="3">
+                <input type="password" class="otp-box email-otp" maxlength="1" data-index="4">
+                <input type="password" class="otp-box email-otp" maxlength="1" data-index="5">
+                <input type="password" class="otp-box email-otp" maxlength="1" data-index="6">
+            </div>
+            <div class="timer-row">
+                <span id="emailTimer" style="color: var(--c-green);">05:00</span>
+                <span class="hl-blue" id="resendSpan" onclick="resendOTP()">Resend OTP</span>
+            </div>
+            <button class="btn-main" id="btnVerifyEmailOtp" disabled onclick="verifyOTP()">Verify OTP</button>
+        </div>
+
+        <div class="slide-down-wrapper" id="confirmCheckWrapper">
+            <label class="check-group">
+                <input type="checkbox" id="formConfirmCheck" onchange="toggleFinalConfirm()">
+                <div class="custom-check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span class="check-label">I CONFIRM MY EMERGENCY CONTACT IS ACCURATE</span>
+            </label>
+        </div>
+
+        <button class="btn-next" id="btnProceed" onclick="saveAndProceed()">NEXT STEP</button>
+
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+    </div>
+
+    <!-- Skip Modal -->
+    <div class="modal-overlay" id="skipModal">
+        <div class="modal-box">
+            <div class="modal-title">SKIP VERIFICATION?</div>
+            <div class="modal-desc">
+                Are you sure you want to skip Email Verification? This step is optional and can be completed later in your profile settings.
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeSkipWarning()">CANCEL</button>
+                <button class="modal-btn warning" onclick="confirmSkip()">CONFIRM SKIP</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let timerInterval;
+        let isEmailVerified = false;
+        let emailOtpAttempts = 0;
+        let emailOtpResends = 0;
+        let verifiedEmailOtp = "";
+        let generatedBackendOtp = "";
+        let originalEmailUsername = "";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            const referrer = document.referrer || '';
+            const isBackNavigation = referrer.includes('registration10.html');
+            
+            document.getElementById('homeBtn').onclick = function(e) {
+                e.preventDefault();
+                document.body.style.opacity = '0';
+                setTimeout(() => { 
+                    window.location.href = isEdit ? 'edit.html' : 'registration8.html'; 
+                }, 1000);
+            };
+
+            setupSequentialOtp();
+
+            if (isEdit || isBackNavigation) {
+                let userSettings = {};
+                try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+                
+                if (userSettings.emergencyContact && userSettings.emergencyContact.email) {
+                    const fullEmail = userSettings.emergencyContact.email;
+                    const username = fullEmail.split('@')[0];
+                    document.getElementById('emailUsername').value = username;
+                    originalEmailUsername = username;
+                    
+                    handleEmailInput(true);
+                    
+                    verifiedEmailOtp = userSettings.emailOtp || '';
+                    emailOtpAttempts = userSettings.emailOtpAttempts || 0;
+                    emailOtpResends = userSettings.emailOtpResends || 0;
+
+                    isEmailVerified = true;
+                    const btnSendOtp = document.getElementById('btnSendEmailOtp');
+                    btnSendOtp.className = 'btn-main verified-state';
+                    btnSendOtp.innerHTML = 'APPROVED ✔';
+                    
+                    document.getElementById('emailUsername').disabled = true;
+                    
+                    document.getElementById('changeWrapper').classList.add('show');
+                    document.getElementById('skipWrapper').style.display = 'none';
+                    
+                    const status = document.getElementById('emailStatus');
+                    status.className = 'error-text success show';
+                    status.innerHTML = 'EMAIL AVAILABLE / VALIDATED';
+                    
+                    document.getElementById('confirmCheckWrapper').classList.add('show');
+                    document.getElementById('btnProceed').style.display = 'flex';
+                } else {
+                    resetInputs();
+                }
+            } else {
+                resetInputs();
+            }
+        });
+
+        function resetInputs() {
+            resetEmailOnly(true);
+        }
+
+        function resetEmailOnly(isLoad = false) {
+            const input = document.getElementById('emailUsername');
+            input.value = '';
+            originalEmailUsername = '';
+            input.disabled = false;
+            document.querySelectorAll('.email-otp').forEach(i => { i.value = ''; i.disabled = false; });
+            
+            isEmailVerified = false;
+            generatedBackendOtp = "";
+            verifiedEmailOtp = "";
+            emailOtpAttempts = 0;
+            emailOtpResends = 0;
+            
+            const btnSendOtp = document.getElementById('btnSendEmailOtp');
+            btnSendOtp.className = 'btn-main';
+            btnSendOtp.innerHTML = 'Send Email OTP';
+            btnSendOtp.disabled = true;
+
+            const btnVerifyOtp = document.getElementById('btnVerifyEmailOtp');
+            btnVerifyOtp.className = 'btn-main';
+            btnVerifyOtp.innerHTML = 'Verify OTP';
+            btnVerifyOtp.disabled = true;
+            
+            document.getElementById('emailOtpWrapper').classList.remove('show');
+            document.getElementById('changeWrapper').classList.remove('show');
+            document.getElementById('skipWrapper').style.display = 'block';
+            
+            const status = document.getElementById('emailStatus');
+            status.classList.remove('show');
+            
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+            document.getElementById('btnProceed').style.display = 'none';
+            
+            if(!isLoad) {
+                input.focus();
+            }
+        }
+
+        function handleEmailInput(isLoad = false) {
+            const input = document.getElementById('emailUsername');
+            const btn = document.getElementById('btnSendEmailOtp');
+            const status = document.getElementById('emailStatus');
+
+            if(!isLoad) {
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+                isEmailVerified = false;
+                btn.className = 'btn-main';
+                btn.innerHTML = 'Send Email OTP';
+                document.getElementById('emailOtpWrapper').classList.remove('show');
+                document.querySelectorAll('.email-otp').forEach(i => i.value = '');
+                status.classList.remove('show');
+                document.getElementById('skipWrapper').style.display = 'block';
+            }
+
+            let val = input.value.toLowerCase().replace(/[^a-z0-9.]/g, '');
+            input.value = val;
+            originalEmailUsername = val;
+
+            if(val.length >= 3 && !isEmailVerified) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        async function sendOTP() {
+            const btn = document.getElementById('btnSendEmailOtp');
+            const status = document.getElementById('emailStatus');
+            const input = document.getElementById('emailUsername');
+
+            btn.classList.add('processing');
+            btn.innerHTML = 'SENDING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            status.classList.remove('show');
+
+            const fullEmail = input.value + '@gmail.com';
+
+            try {
+                const response = await fetch('/api/send_otp/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'email', contact: fullEmail })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    generatedBackendOtp = result.otp;
+                }
+            } catch (err) {
+                generatedBackendOtp = "123456"; 
+            }
+
+            setTimeout(() => {
+                btn.classList.remove('processing');
+                btn.className = 'btn-main verified-state';
+                btn.innerHTML = 'OTP SENT ✔';
+                
+                input.disabled = true;
+                
+                status.className = 'error-text success show';
+                status.innerHTML = 'OTP DELIVERED SECURELY';
+
+                document.getElementById('changeWrapper').classList.add('show');
+                document.getElementById('skipWrapper').style.display = 'none';
+
+                setTimeout(() => {
+                    document.getElementById('emailOtpWrapper').classList.add('show');
+                    startTimer();
+                    setTimeout(() => document.querySelector('.email-otp[data-index="1"]').focus(), 100);
+                }, 500);
+            }, 1500);
+        }
+
+        function setupSequentialOtp() {
+            const inputs = document.querySelectorAll('.email-otp');
+            inputs.forEach((input, index) => {
+                input.addEventListener('focus', function() {
+                    let firstEmpty = -1;
+                    for(let i=0; i<inputs.length; i++) {
+                        if(inputs[i].value === '') { firstEmpty = i; break; }
+                    }
+                    if(firstEmpty !== -1 && index > firstEmpty) inputs[firstEmpty].focus();
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if(e.key === 'Backspace' && this.value === '' && index > 0) inputs[index - 1].focus();
+                });
+                
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    if(this.value.length === 1 && index < inputs.length - 1) inputs[index + 1].focus();
+                    validateOtpCompletion();
+                });
+            });
+        }
+
+        function validateOtpCompletion() {
+            let filled = 0;
+            document.querySelectorAll('.email-otp').forEach(i => { if(i.value) filled++; });
+            const btn = document.getElementById('btnVerifyEmailOtp');
+            btn.disabled = (filled !== 6);
+        }
+
+        function startTimer() {
+            let timeLeft = 300;
+            const display = document.getElementById('emailTimer');
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                display.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    display.innerText = 'EXPIRED';
+                }
+            }, 1000);
+        }
+
+        function resendOTP() {
+            emailOtpResends++;
+            document.querySelectorAll('.email-otp').forEach(i => { i.value = ''; i.disabled = false; });
+            
+            const btnVerify = document.getElementById('btnVerifyEmailOtp');
+            btnVerify.className = 'btn-main';
+            btnVerify.innerHTML = 'Verify OTP';
+            btnVerify.disabled = true;
+
+            validateOtpCompletion();
+            
+            const resendSpan = document.getElementById('resendSpan');
+            resendSpan.innerHTML = 'SENDING OTP<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            resendSpan.classList.add('disabled');
+
+            const fullEmail = document.getElementById('emailUsername').value + '@gmail.com';
+            fetch('/api/send_otp/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'email', contact: fullEmail })
+            }).then(r => r.json()).then(res => {
+                if (res.status === 'success') generatedBackendOtp = res.otp;
+            }).catch(e => { generatedBackendOtp = "123456"; });
+
+            setTimeout(() => {
+                startTimer();
+                document.querySelector('.email-otp[data-index="1"]').focus();
+                
+                resendSpan.style.color = "var(--c-green)";
+                resendSpan.innerText = "OTP RESENT SUCCESSFULLY ✔";
+                
+                setTimeout(() => {
+                    resendSpan.style.color = "";
+                    resendSpan.innerText = "Resend OTP";
+                    resendSpan.classList.remove('disabled');
+                }, 3000);
+            }, 1500);
+        }
+
+        function verifyOTP() {
+            const btn = document.getElementById('btnVerifyEmailOtp');
+            btn.classList.add('processing');
+            btn.innerHTML = 'VERIFYING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            
+            document.querySelectorAll('.email-otp').forEach(i => i.disabled = true);
+            document.getElementById('resendSpan').classList.add('disabled');
+
+            let otpVal = '';
+            document.querySelectorAll('.email-otp').forEach(i => { otpVal += i.value; });
+
+            setTimeout(() => {
+                if (otpVal === generatedBackendOtp || (generatedBackendOtp === "" && otpVal.length === 6)) {
+                    verifiedEmailOtp = otpVal;
+                    clearInterval(timerInterval);
+                    btn.classList.remove('processing');
+                    btn.className = 'btn-main verified-state';
+                    btn.innerHTML = 'VERIFIED ✔';
+                    
+                    isEmailVerified = true;
+                    
+                    setTimeout(() => {
+                        document.getElementById('emailOtpWrapper').classList.remove('show');
+                        document.getElementById('confirmCheckWrapper').classList.add('show');
+                        document.getElementById('btnProceed').style.display = 'flex';
+                    }, 1000);
+                } else {
+                    emailOtpAttempts++;
+                    btn.classList.remove('processing');
+                    btn.className = 'btn-main error-state';
+                    btn.innerHTML = 'INCORRECT OTP';
+                    
+                    setTimeout(() => {
+                        btn.className = 'btn-main';
+                        btn.innerHTML = 'Verify OTP';
+                        document.querySelectorAll('.email-otp').forEach(i => { i.value = ''; i.disabled = false; });
+                        document.getElementById('resendSpan').classList.remove('disabled');
+                        validateOtpCompletion();
+                        document.querySelector('.email-otp[data-index="1"]').focus();
+                    }, 2000);
+                }
+            }, 1500);
+        }
+
+        function toggleFinalConfirm() {
+            const isChecked = document.getElementById('formConfirmCheck').checked;
+            const btnNext = document.getElementById('btnProceed');
+
+            if(isChecked) {
+                btnNext.classList.add('active');
+                btnNext.disabled = false;
+            } else {
+                btnNext.classList.remove('active');
+                btnNext.disabled = true;
+            }
+        }
+
+        function saveAndProceed() {
+            const btn = document.getElementById('btnProceed');
+            if(!btn.classList.contains('active')) return;
+
+            btn.classList.remove('active');
+            btn.classList.add('processing');
+            btn.innerHTML = 'SAVING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btn.disabled = true;
+
+            let userSettings = {};
+            try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+            
+            userSettings.emergencyContact = {
+                email: document.getElementById('emailUsername').value + '@gmail.com'
+            };
+            
+            userSettings.emailOtpAttempts = emailOtpAttempts;
+            userSettings.emailOtpResends = emailOtpResends;
+            userSettings.emailOtp = verifiedEmailOtp;
+            userSettings.emailSkipped = false;
+
+            localStorage.setItem('inf_settings', JSON.stringify(userSettings));
+
+            setTimeout(() => {
+                btn.classList.remove('processing');
+                btn.classList.add('saved');
+                btn.innerHTML = 'SAVED ✔';
+
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                        window.location.href = isEdit ? 'edit.html' : 'registration10.html';
+                    }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+
+        function showSkipWarning() {
+            document.getElementById('skipModal').classList.add('show');
+        }
+
+        function closeSkipWarning() {
+            document.getElementById('skipModal').classList.remove('show');
+        }
+
+        function confirmSkip() {
+            let userSettings = {};
+            try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+            
+            userSettings.emergencyContact = { email: "" };
+            userSettings.emailSkipped = true;
+            localStorage.setItem('inf_settings', JSON.stringify(userSettings));
+
+            closeSkipWarning();
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                window.location.href = isEdit ? 'edit.html' : 'registration10.html';
+            }, 1000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

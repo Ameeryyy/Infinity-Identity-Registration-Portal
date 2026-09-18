@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Blood Group Designation</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left span { font-weight: 900; letter-spacing: 2px; font-size: 13px; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        /* Step Indicator Style */
+        .step-indicator { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { margin-bottom: 20px; position: relative; z-index: 50; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Custom Select Theme */
+        .custom-select-wrapper { position: relative; width: 100%; }
+        .custom-select { width: 100%; padding: clamp(12px, 3.5vw, 15px) 16px; background: transparent; border: 1px solid var(--fg); border-radius: 12px; color: var(--fg); font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; text-transform: uppercase; transition: 0.3s; }
+        .custom-select:hover { border-color: var(--c-blue); }
+        .custom-select.open { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .custom-select.disabled { opacity: 0.4; pointer-events: none; }
+        .custom-select span { opacity: 0.5; transition: opacity 0.3s; }
+        
+        .custom-select svg { width: 16px; height: 16px; fill: currentColor; transition: transform 0.3s ease; opacity: 0.5; }
+        .custom-select.open svg { transform: rotate(180deg); fill: var(--c-blue); opacity: 1; }
+        
+        .custom-options { position: absolute; top: calc(100% + 5px); left: 0; width: 100%; background: var(--bg); border: 1px solid var(--fg); border-radius: 12px; z-index: 100; max-height: 280px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; padding: 0; margin: 0; list-style: none; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+        .custom-options.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        
+        .custom-options::-webkit-scrollbar { width: 6px; }
+        .custom-options::-webkit-scrollbar-track { background: transparent; }
+        .custom-options::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+        .custom-options::-webkit-scrollbar-thumb:hover { background: var(--c-blue); }
+
+        .custom-options li { padding: 14px 16px; cursor: pointer; transition: background 0.2s; font-size: clamp(11px, 3vw, 13px); font-weight: bold; letter-spacing: 1px; color: var(--fg); border-bottom: 1px solid rgba(128,128,128,0.2); text-transform: uppercase; }
+        .custom-options li:last-child { border-bottom: none; }
+        .custom-options li:hover, .custom-options li.selected { background-color: rgba(128,128,128,0.2); color: var(--c-blue); }
+
+        /* Blood Info Box */
+        .blood-info-box { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; border: 1px dashed rgba(128,128,128,0.3); border-radius: 12px; background: rgba(128,128,128,0.02); text-align: center; padding: 0 20px; margin-bottom: 0; }
+        .blood-info-box.show { max-height: 200px; opacity: 1; padding: 20px; margin-bottom: 25px; }
+        .blood-info-box p { margin: 0; font-size: clamp(12px, 3vw, 14px); line-height: 1.6; opacity: 0.9; }
+
+        /* Slide Down Checkbox Wrapper */
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 100px; opacity: 1; margin-bottom: 25px; overflow: visible; }
+        
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group input { display: none; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* Next Step Button */
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: clamp(13px, 4vw, 15px); font-weight: bold; cursor: pointer; opacity: 0.4; pointer-events: none; transition: all 0.4s ease; letter-spacing: 1.5px; text-transform: uppercase; }
+        .btn-next.active { opacity: 1; pointer-events: auto; }
+        .btn-next.active:hover:not(.processing):not(.saved) { background: var(--c-blue); color: var(--bg); box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .btn-next:active { transform: scale(0.97); }
+        .btn-next.processing { opacity: 1 !important; pointer-events: none; background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); }
+        .btn-next.saved { opacity: 1; pointer-events: none; transform: scale(0.98); background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000 !important; }
+
+        /* Custom Modal CSS for Restart Warning */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #0a0a0a; border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: 16px; padding: 30px; max-width: 420px; width: 85%; text-align: center; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-title { font-size: 16px; font-weight: bold; color: var(--c-red); margin-bottom: 15px; letter-spacing: 2px; text-transform: uppercase; }
+        .modal-desc { font-size: 14px; opacity: 0.8; margin-bottom: 25px; line-height: 1.6; color: var(--fg); text-align: left; padding: 0 10px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        .modal-btn { padding: 12px 24px; background: transparent; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); color: var(--fg); border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
+        .modal-btn:hover:not(.danger) { background: #ffffff !important; color: #000000 !important; border-color: #ffffff !important; box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2); }
+        .modal-btn.danger { border-color: var(--c-red); color: var(--c-red); }
+        .modal-btn.danger:hover { background: var(--c-red) !important; color: #ffffff !important; box-shadow: 0 5px 15px color-mix(in srgb, var(--c-red) 30%, transparent); }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+            .modal-desc { text-align: center; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="homeBtn" class="top-left">
+        <span>BACK</span>
+    </div>
+
+    <div class="container">
+        <div class="step-indicator">STEP 6 OF 11</div>
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>BLOOD GROUP DESIGNATION</strong></h2>
+        <p class="desc">Verify and select your <strong>biological blood group</strong> to complete the medical node synchronization for ages 25 to 50.</p>
+
+        <div class="input-group">
+            <label>Biological Blood Group *</label>
+            <div class="custom-select-wrapper" id="bgSelectWrapper">
+                <div class="custom-select" id="bgSelect" onclick="toggleDropdown()">
+                    <span id="bgText">SELECT BLOOD GROUP</span>
+                    <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                </div>
+                <ul class="custom-options" id="bgOptions">
+                    <li onclick="selectOption(this, 'A+', 'A POSITIVE (A+)', event)">A POSITIVE (A+)</li>
+                    <li onclick="selectOption(this, 'A-', 'A NEGATIVE (A-)', event)">A NEGATIVE (A-)</li>
+                    <li onclick="selectOption(this, 'B+', 'B POSITIVE (B+)', event)">B POSITIVE (B+)</li>
+                    <li onclick="selectOption(this, 'B-', 'B NEGATIVE (B-)', event)">B NEGATIVE (B-)</li>
+                    <li onclick="selectOption(this, 'AB+', 'AB POSITIVE (AB+)', event)">AB POSITIVE (AB+)</li>
+                    <li onclick="selectOption(this, 'AB-', 'AB NEGATIVE (AB-)', event)">AB NEGATIVE (AB-)</li>
+                    <li onclick="selectOption(this, 'O+', 'O POSITIVE (O+)', event)">O POSITIVE (O+)</li>
+                    <li onclick="selectOption(this, 'O-', 'O NEGATIVE (O-)', event)">O NEGATIVE (O-)</li>
+                </ul>
+                <input type="hidden" id="bloodGroup" value="">
+            </div>
+        </div>
+
+        <div class="blood-info-box" id="bloodInfoBox">
+            <p id="bloodInfoText"></p>
+        </div>
+
+        <div class="slide-down-wrapper" id="confirmCheckWrapper">
+            <label class="check-group">
+                <input type="checkbox" id="formConfirmCheck" onchange="toggleFinalConfirm()">
+                <div class="custom-check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span class="check-label">I CONFIRM THE SELECTED BLOOD GROUP IS ACCURATE</span>
+            </label>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">NEXT STEP</button>
+
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+    </div>
+
+    <div class="modal-overlay" id="homeModal">
+        <div class="modal-box">
+            <div class="modal-title">WARNING</div>
+            <div class="modal-desc">
+                Are you sure you want to cancel the registration and return to the Home page? Any unsaved progress will be lost.
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeHomeWarning()">CANCEL</button>
+                <button class="modal-btn danger" onclick="confirmGoHome()">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const bloodFacts = {
+            'A+': "A Positive is one of the most common blood types. You can give blood to A+ and AB+ individuals, and receive from A+, A-, O+, and O-.",
+            'A-': "A Negative is a rare blood type. You are a valuable donor who can give to anyone with A or AB blood types, both positive and negative.",
+            'B+': "B Positive is a vital blood type. You can donate to B+ and AB+ recipients, playing a crucial role in maintaining blood bank supplies.",
+            'B-': "B Negative is quite rare. Your donations are especially important because you can give blood to B+, B-, AB+, and AB- individuals.",
+            'AB+': "AB Positive is the universal recipient! You can receive blood from all blood types, but can only donate to other AB+ individuals.",
+            'AB-': "AB Negative is the rarest blood type of all! Your plasma is universal, meaning anyone can receive it regardless of their blood type.",
+            'O+': "O Positive is the most common blood type and the most needed. You can donate red blood cells to anyone with a positive blood type.",
+            'O-': "O Negative is the universal donor! Your blood can be given to anyone in an emergency, making you a true lifesaver. You are incredibly rare and important."
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            const referrer = document.referrer || '';
+            const isBackNavigation = referrer.includes('registration7.html');
+
+            const homeBtn = document.getElementById('homeBtn');
+            homeBtn.onclick = function(e) {
+                e.preventDefault();
+                document.body.style.opacity = '0';
+                setTimeout(() => { 
+                    window.location.href = isEdit ? 'edit.html' : 'registration5.html'; 
+                }, 1000);
+            };
+
+            if (isEdit || isBackNavigation) {
+                let userSettings = {};
+                try {
+                    userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {};
+                } catch(e) {}
+                
+                if (userSettings.bloodGroup) {
+                    const hiddenInput = document.getElementById('bloodGroup');
+                    hiddenInput.value = userSettings.bloodGroup;
+                    
+                    const opt = document.querySelector(`.custom-options li[onclick*="'${userSettings.bloodGroup}'"]`);
+                    if (opt) {
+                        const triggerText = document.getElementById('bgText');
+                        triggerText.innerText = opt.innerText;
+                        triggerText.style.opacity = '1';
+                        triggerText.style.fontWeight = 'bold';
+                        opt.classList.add('selected');
+
+                        const infoBox = document.getElementById('bloodInfoBox');
+                        document.getElementById('bloodInfoText').innerHTML = `<span style="color:var(--c-blue); font-weight:bold;">${userSettings.bloodGroup}</span>: ${bloodFacts[userSettings.bloodGroup]}`;
+                        infoBox.classList.add('show');
+                    }
+                    validateForm();
+                } else {
+                    resetInputs();
+                }
+            } else {
+                resetInputs();
+            }
+        });
+
+        function resetInputs() {
+            document.getElementById('bloodGroup').value = '';
+            document.getElementById('bgText').innerText = 'SELECT BLOOD GROUP';
+            document.getElementById('bgText').style.opacity = '0.5';
+            document.getElementById('bgText').style.fontWeight = 'normal';
+            document.querySelectorAll('.custom-options li').forEach(opt => opt.classList.remove('selected'));
+            document.getElementById('bloodInfoBox').classList.remove('show');
+            validateForm();
+        }
+
+        document.addEventListener('click', (e) => {
+            const selectWrapper = document.getElementById('bgSelectWrapper');
+            if (selectWrapper && !selectWrapper.contains(e.target)) {
+                document.getElementById('bgOptions').classList.remove('show');
+                document.getElementById('bgSelect').classList.remove('open');
+            }
+        });
+
+        function toggleDropdown() {
+            const select = document.getElementById('bgSelect');
+            if(select.classList.contains('disabled')) return;
+            
+            document.getElementById('bgOptions').classList.toggle('show');
+            select.classList.toggle('open');
+        }
+
+        function selectOption(el, val, text, event) {
+            if(event) event.stopPropagation();
+            
+            document.getElementById('bloodGroup').value = val;
+            
+            const triggerText = document.getElementById('bgText');
+            triggerText.innerText = text;
+            triggerText.style.opacity = '1';
+            triggerText.style.fontWeight = 'bold';
+            
+            document.querySelectorAll('.custom-options li').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            
+            document.getElementById('bgOptions').classList.remove('show');
+            document.getElementById('bgSelect').classList.remove('open');
+            
+            const infoBox = document.getElementById('bloodInfoBox');
+            if (bloodFacts[val]) {
+                document.getElementById('bloodInfoText').innerHTML = `<span style="color:var(--c-blue); font-weight:bold;">${val}</span>: ${bloodFacts[val]}`;
+                infoBox.classList.add('show');
+            } else {
+                infoBox.classList.remove('show');
+            }
+
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+
+            validateForm();
+        }
+
+        function validateForm() {
+            const bgValue = document.getElementById('bloodGroup').value;
+            const checkWrapper = document.getElementById('confirmCheckWrapper');
+            
+            if (bgValue !== '') {
+                checkWrapper.classList.add('show');
+            } else {
+                checkWrapper.classList.remove('show');
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm(); 
+            }
+        }
+
+        function toggleFinalConfirm() {
+            const isChecked = document.getElementById('formConfirmCheck').checked;
+            const btnNext = document.getElementById('btnNext');
+            const bgSelect = document.getElementById('bgSelect');
+
+            if(isChecked) {
+                bgSelect.classList.add('disabled');
+                btnNext.classList.add('active');
+                btnNext.disabled = false;
+            } else {
+                bgSelect.classList.remove('disabled');
+                btnNext.classList.remove('active');
+                btnNext.disabled = true;
+            }
+        }
+
+        function showHomeWarning() {
+            document.getElementById('homeModal').classList.add('show');
+        }
+
+        function closeHomeWarning() {
+            document.getElementById('homeModal').classList.remove('show');
+        }
+
+        function confirmGoHome() {
+            closeHomeWarning();
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 1000);
+        }
+
+        function saveAndProceed() {
+            const btn = document.getElementById('btnNext');
+            if(!btn.classList.contains('active')) return;
+
+            btn.classList.remove('active');
+            btn.classList.add('processing');
+            btn.innerHTML = 'SAVING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btn.disabled = true;
+
+            let userSettings = {};
+            try {
+                userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {};
+            } catch(e) {}
+            
+            userSettings.bloodGroup = document.getElementById('bloodGroup').value;
+            localStorage.setItem('inf_settings', JSON.stringify(userSettings));
+
+            setTimeout(() => {
+                btn.classList.remove('processing');
+                btn.classList.add('saved');
+                btn.innerHTML = 'SAVED ✔';
+
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                        window.location.href = isEdit ? 'edit.html' : 'registration7.html';
+                    }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

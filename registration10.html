@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity Identity - Identification Marks</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0; transition: opacity 1s ease-in-out;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left span { font-weight: 900; letter-spacing: 2px; font-size: 13px; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); z-index: 10; }
+        
+        .step-indicator { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+
+        .input-group { margin-bottom: 30px; position: relative; }
+        .input-group label { display: block; font-size: 12px; opacity: 0.9; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: auto; padding: 10px 0; position: relative; z-index: 5; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper.error { border-color: var(--c-red); box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.15); }
+        .input-wrapper.success { border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(0, 200, 81, 0.15); }
+        
+        .input-wrapper textarea { flex: 1; padding: 5px 15px; background: transparent; border: none; color: inherit; font-size: 14px; outline: none; font-family: inherit; font-weight: bold; letter-spacing: 1px; width: 100%; min-width: 0; text-transform: uppercase; resize: none; line-height: 1.5; }
+        .input-wrapper textarea::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: normal; text-transform: none; }
+        .input-wrapper textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .char-count { position: absolute; right: 5px; bottom: -18px; font-size: 9px; opacity: 0.6; font-weight: bold; white-space: nowrap; }
+
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 100px; opacity: 1; margin-bottom: 25px; overflow: visible; margin-top: 20px; }
+        
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group input { display: none; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; user-select: none; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .btn-next { width: 100%; padding: 16px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.4; pointer-events: none; transition: all 0.4s ease; letter-spacing: 2px; text-transform: uppercase; margin-top: 5px; display: flex; align-items: center; justify-content: center; }
+        .btn-next.active { opacity: 1; pointer-events: auto; box-shadow: 0 0 12px rgba(0, 123, 255, 0.4); }
+        .btn-next.active:hover:not(.processing):not(.saved) { background: var(--c-blue) !important; color: #ffffff !important; box-shadow: 0 5px 15px rgba(0, 123, 255, 0.5); }
+        .btn-next:active { transform: scale(0.97); }
+        .btn-next.processing { opacity: 1 !important; pointer-events: none; background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); }
+        .btn-next.saved { opacity: 1 !important; pointer-events: none !important; transform: scale(0.98); background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000000 !important; box-shadow: none !important; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="homeBtn" class="top-left">
+        <span>BACK</span>
+    </div>
+    
+    <div class="container">
+        <div class="step-indicator">STEP 10 OF 11</div>
+        <div class="brand-title">INFINITY IDENTITY</div>
+        
+        <h2><strong>IDENTIFICATION MARKS</strong></h2>
+        <p class="desc">
+            Provide <strong>two prominent identification marks</strong> (moles, scars, or birthmarks) located on your physical frame.
+        </p>
+
+        <div class="input-group">
+            <label>Mark 1 (Mandatory)</label>
+            <div class="input-wrapper" id="mark1Wrapper">
+                <textarea id="mark1" maxlength="100" rows="2" placeholder="E.G. A BLACK MOLE ON THE RIGHT CHEEK" oninput="formatAlphaNum(this); validateForm()" autocomplete="off"></textarea>
+            </div>
+            <span class="char-count" id="count-mark1">0/100</span>
+        </div>
+
+        <div class="input-group">
+            <label>Mark 2 (Mandatory)</label>
+            <div class="input-wrapper" id="mark2Wrapper">
+                <textarea id="mark2" maxlength="100" rows="2" placeholder="E.G. A SCAR ON THE LEFT FOREARM" oninput="formatAlphaNum(this); validateForm()" autocomplete="off"></textarea>
+            </div>
+            <span class="char-count" id="count-mark2">0/100</span>
+        </div>
+
+        <div class="slide-down-wrapper" id="confirmCheckWrapper">
+            <label class="check-group">
+                <input type="checkbox" id="formConfirmCheck" onchange="toggleFinalConfirm()">
+                <div class="custom-check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span class="check-label">I CONFIRM THESE MARKS ARE ACCURATE AND VISIBLE</span>
+            </label>
+        </div>
+        
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">NEXT STEP</button>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            
+            document.getElementById('homeBtn').onclick = function(e) {
+                e.preventDefault();
+                document.body.style.opacity = '0';
+                setTimeout(() => { 
+                    window.location.href = isEdit ? 'edit.html' : 'registration9.html'; 
+                }, 1000);
+            };
+
+            if (isEdit) {
+                let userSettings = {};
+                try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+                
+                if (userSettings.identificationMarks) {
+                    document.getElementById('mark1').value = userSettings.identificationMarks.mark1 || '';
+                    document.getElementById('mark2').value = userSettings.identificationMarks.mark2 || '';
+                    
+                    document.getElementById('count-mark1').innerText = `${document.getElementById('mark1').value.length}/100`;
+                    document.getElementById('count-mark2').innerText = `${document.getElementById('mark2').value.length}/100`;
+                    
+                    validateForm();
+                }
+            }
+        });
+
+        function formatAlphaNum(el) {
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+            let val = el.value.toUpperCase().replace(/[^A-Z0-9 \-\,\.]/g, '');
+            val = val.replace(/\s{2,}/g, ' ');
+            if (val.startsWith(' ')) val = val.trimStart();
+            el.value = val;
+            
+            document.getElementById('count-' + el.id).innerText = `${el.value.length}/100`;
+        }
+
+        function validateForm() {
+            const m1 = document.getElementById('mark1').value.trim();
+            const m2 = document.getElementById('mark2').value.trim();
+
+            let isValid = true;
+
+            if (m1.length < 5) { 
+                isValid = false; 
+                toggleClass('mark1Wrapper', 'error', 'success'); 
+            } else { 
+                toggleClass('mark1Wrapper', 'success', 'error'); 
+            }
+
+            if (m2.length < 5) {
+                isValid = false;
+                toggleClass('mark2Wrapper', 'error', 'success');
+            } else {
+                toggleClass('mark2Wrapper', 'success', 'error');
+            }
+
+            // Clean classes if empty
+            if (m1 === '') removeClasses('mark1Wrapper');
+            if (m2 === '') removeClasses('mark2Wrapper');
+
+            const checkWrapper = document.getElementById('confirmCheckWrapper');
+            if (isValid) {
+                checkWrapper.classList.add('show');
+            } else {
+                checkWrapper.classList.remove('show');
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+        }
+
+        function toggleClass(id, addCls, removeCls) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.remove(removeCls);
+                el.classList.add(addCls);
+            }
+        }
+
+        function removeClasses(id) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.remove('error');
+                el.classList.remove('success');
+            }
+        }
+
+        function toggleFinalConfirm() {
+            const isChecked = document.getElementById('formConfirmCheck').checked;
+            const btnNext = document.getElementById('btnNext');
+
+            if(isChecked) {
+                document.getElementById('mark1').disabled = true;
+                document.getElementById('mark2').disabled = true;
+                btnNext.classList.add('active');
+                btnNext.disabled = false;
+            } else {
+                document.getElementById('mark1').disabled = false;
+                document.getElementById('mark2').disabled = false;
+                btnNext.classList.remove('active');
+                btnNext.disabled = true;
+            }
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+            
+            const btnNext = document.getElementById('btnNext');
+            btnNext.classList.remove('active');
+            btnNext.classList.add('processing');
+            btnNext.innerHTML = 'SAVING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btnNext.disabled = true;
+            
+            let userSettings = {};
+            try {
+                userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {};
+            } catch(e) {}
+            
+            userSettings.identificationMarks = {
+                mark1: document.getElementById('mark1').value.trim(),
+                mark2: document.getElementById('mark2').value.trim()
+            };
+            
+            localStorage.setItem('inf_settings', JSON.stringify(userSettings));
+            
+            setTimeout(() => { 
+                btnNext.classList.remove('processing');
+                btnNext.classList.add('saved');
+                btnNext.innerHTML = 'SAVED ✔';
+
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                        window.location.href = isEdit ? 'edit.html' : 'registration11.html'; 
+                    }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

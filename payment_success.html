@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Payment Status</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+            user-select: none;
+        }
+
+        .container { width: 90%; max-width: 400px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+
+        .circle-loader { position: relative; width: 100px; height: 100px; margin-bottom: 30px; }
+        .success-circle { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--c-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: scale(0); opacity: 0; box-shadow: 0 0 30px rgba(0, 200, 81, 0.5); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease; }
+        .success-circle svg { width: 50px; height: 50px; fill: none; stroke: #ffffff; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 100; }
+        .success-circle.show { transform: scale(1); opacity: 1; }
+        .success-circle.show svg { animation: drawCheck 0.6s ease 0.2s forwards; }
+
+        .status-text { font-size: 18px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; color: var(--c-green); text-shadow: 0 0 10px rgba(0,200,81,0.4); opacity: 0; transform: translateY(10px); transition: 0.5s; }
+        .status-text.show { opacity: 1; transform: translateY(0); }
+
+        .details-wrapper { width: 100%; opacity: 0; transform: translateY(20px); transition: all 0.6s ease 0.4s; }
+        .details-wrapper.show { opacity: 1; transform: translateY(0); }
+
+        .amount-display { font-size: 48px; font-weight: bold; margin-bottom: 5px; color: var(--fg); }
+        .paid-to { font-size: 11px; opacity: 0.6; font-weight: bold; letter-spacing: 1px; margin-bottom: 30px; text-transform: uppercase; }
+
+        .receipt-card { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.2); border-radius: 16px; padding: 20px; text-align: left; margin-bottom: 30px; backdrop-filter: blur(5px); }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 12px; }
+        .receipt-row:last-child { margin-bottom: 0; }
+        .r-label { opacity: 0.5; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .r-value { font-weight: bold; color: var(--fg); letter-spacing: 0.5px; text-transform: uppercase; }
+
+        .btn-done { width: 100%; padding: 16px; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.4s; text-transform: uppercase; letter-spacing: 1px; opacity: 0; transform: translateY(10px); pointer-events: none; }
+        .details-wrapper.show .btn-done { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        
+        .btn-done.filled { background: var(--c-blue); border-color: var(--c-blue); color: #ffffff; box-shadow: 0 5px 20px rgba(0, 123, 255, 0.4); }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="circle-loader"><div class="success-circle" id="successCircle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+        <div class="status-text" id="statusText">Payment Successful</div>
+        <div class="details-wrapper" id="detailsWrapper">
+            <div class="amount-display" id="dispAmount">--</div>
+            <div class="paid-to">PAID TO INFINITY IDENTITY REGISTRY</div>
+            <div class="receipt-card">
+                <div class="receipt-row"><span class="r-label">Transaction ID</span><span class="r-value" id="txnId">--</span></div>
+                <div class="receipt-row"><span class="r-label">Date & Time</span><span class="r-value" id="txnTime">--</span></div>
+                <div class="receipt-row"><span class="r-label">Method</span><span class="r-value" id="txnMethod">--</span></div>
+            </div>
+            <button class="btn-done" id="btnDone" onclick="completePayment(this)">Continue to Transfer</button>
+        </div>
+        
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            fetchTransactionFromBackend();
+        });
+
+        async function fetchTransactionFromBackend() {
+            const txnId = sessionStorage.getItem('current_txn_id');
+            if(!txnId) return; 
+            
+            try {
+                const response = await fetch('/api/get_transaction_details/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: txnId })
+                });
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    document.getElementById('txnId').innerText = result.transaction_id;
+                    document.getElementById('txnTime').innerText = result.date;
+                    document.getElementById('txnMethod').innerText = result.app_used + " / " + result.method;
+                    document.getElementById('dispAmount').innerText = result.amount;
+                    
+                    let userSettings = {};
+                    try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+                    
+                    userSettings.transactionData = { id: result.transaction_id };
+                    localStorage.setItem('inf_settings', JSON.stringify(userSettings));
+
+                    setTimeout(() => {
+                        document.getElementById('successCircle').classList.add('show');
+                        document.getElementById('statusText').classList.add('show');
+                        document.getElementById('detailsWrapper').classList.add('show');
+                    }, 500);
+                }
+            } catch(e) {
+                console.error("Failed to fetch transaction details", e);
+            }
+        }
+
+        function completePayment(btn) {
+            btn.classList.add('filled');
+            btn.style.pointerEvents = 'none';
+            
+            document.body.style.opacity = '0';
+            
+            setTimeout(() => { 
+                window.location.href = 'transfer.html'; 
+            }, 1000); 
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

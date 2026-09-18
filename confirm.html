@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Final Authentication</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0; transition: opacity 1s ease-in-out; padding-bottom: 50px;
+        }
+
+        .top-left { position: fixed; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 100; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left span { font-weight: 900; letter-spacing: 2px; font-size: 13px; }
+
+        .profile-photo-wrapper { position: relative; width: 120px; height: 120px; margin: 80px auto 20px auto; display: inline-block; cursor: pointer; transition: transform 0.3s ease; }
+        .profile-photo-wrapper:hover { transform: scale(1.05); }
+        .profile-photo { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--c-blue); box-shadow: 0 0 25px rgba(0,123,255,0.3); background: #050505; margin: 0; display: block; }
+        .profile-photo-wrapper .verified-badge { position: absolute; top: 0; right: 0; width: 32px; height: 32px; background: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(0,200,81,0.5); z-index: 10; transform: translate(15%, -15%); }
+        .profile-photo-wrapper .verified-badge svg { width: 20px; height: 20px; fill: var(--c-green); }
+
+        .master-wrapper { width: 90%; max-width: 650px; animation: fadeIn 0.6s ease; text-align: center; }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h1 { font-weight: bold; margin-top: 0; margin-bottom: 30px; font-size: clamp(22px, 6vw, 32px); text-transform: uppercase; letter-spacing: 1px; }
+
+        .summary-grid { display: grid; grid-template-columns: 1fr; gap: 15px; text-align: left; background: rgba(128,128,128,0.02); padding: 25px; border-radius: 16px; border: 1px solid rgba(128,128,128,0.2); margin-bottom: 30px; backdrop-filter: blur(10px); }
+        .s-item { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px dashed rgba(128,128,128,0.2); padding-bottom: 12px; }
+        .s-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .s-label { font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+        .s-value { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; word-break: break-word; color: var(--fg); }
+        .s-value.empty { color: var(--c-red); font-size: 11px; }
+
+        .payment-box { border: 1px solid var(--c-blue); background: rgba(0, 123, 255, 0.05); padding: 25px; border-radius: 16px; margin-bottom: 25px; text-align: center; }
+        .payment-amount { font-size: 36px; font-weight: bold; color: var(--c-blue); margin-bottom: 10px; letter-spacing: 2px; }
+        .payment-desc { font-size: 12px; opacity: 0.8; line-height: 1.5; text-transform: uppercase; letter-spacing: 1px; }
+
+        .btn-group { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; }
+        .btn-action { flex: 1; padding: 16px; min-width: 200px; background: transparent; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; justify-content: center; }
+        .btn-cancel { border: 1px solid var(--c-red); color: var(--c-red); }
+        .btn-cancel:hover { background: var(--c-red); color: #000; box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3); }
+        .btn-pay { border: 1px solid var(--c-green); color: var(--c-green); }
+        .btn-pay:hover:not(.processing):not(.saved) { background: var(--c-green); color: #000; box-shadow: 0 5px 15px rgba(0, 200, 81, 0.3); }
+        
+        .btn-pay.processing { opacity: 1 !important; pointer-events: none; background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); }
+        .btn-pay.saved { opacity: 1 !important; pointer-events: none !important; background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000 !important; box-shadow: none !important; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        /* Fullscreen Image Modal */
+        .img-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .img-modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .img-modal-content { max-width: 90vw; max-height: 90vh; border-radius: 12px; box-shadow: 0 0 30px rgba(0, 123, 255, 0.2); object-fit: contain; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 2px solid var(--c-blue); }
+        .img-modal-overlay.show .img-modal-content { transform: scale(1); }
+        .img-modal-close { position: absolute; top: clamp(20px, 5vw, 40px); right: clamp(20px, 5vw, 40px); background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: var(--fg); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; font-weight: bold; transition: all 0.3s; z-index: 10000; }
+        .img-modal-close:hover { background: var(--c-red); border-color: var(--c-red); transform: rotate(90deg); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .master-wrapper { margin-top: 20px; width: 92%; }
+            .profile-photo-wrapper { margin-top: 60px; width: 100px; height: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-left" onclick="cancelRegistration()">
+        <span>BACK</span>
+    </div>
+
+    <div class="master-wrapper">
+        <div class="profile-photo-wrapper" onclick="openFullscreenImg()">
+            <img id="profilePhoto" class="profile-photo" alt="Profile Node" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'10\' fill=\'%23111\'/></svg>'">
+            <div class="verified-badge"><svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg></div>
+        </div>
+        
+        <div class="brand-title">INFINITY IDENTITY</div>
+        <h1><strong>FINAL AUTHENTICATION</strong></h1>
+        
+        <div class="summary-grid" id="summaryGrid"></div>
+
+        <div class="payment-box">
+            <div class="payment-amount">₹25.00</div>
+            <div class="payment-desc">Identity Registration Node Processing Fee.<br>Non-refundable gateway charge.</div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-action btn-cancel" onclick="cancelRegistration()">GO BACK / EDIT</button>
+            <button class="btn-action btn-pay" id="btnPay" onclick="processPayment()">PAY & INITIATE ✔</button>
+        </div>
+
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+    </div>
+
+    <div class="img-modal-overlay" id="imgModal" onclick="closeFullscreenImg(event)">
+        <div class="img-modal-close" onclick="closeFullscreenImg(event, true)">&#10005;</div>
+        <img src="" class="img-modal-content" id="fullImg">
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            loadSummary();
+        });
+
+        function loadSummary() {
+            let s = {};
+            try {
+                s = JSON.parse(localStorage.getItem('inf_settings')) || {};
+            } catch(e) {}
+
+            document.getElementById('profilePhoto').src = s.capturedPhoto || '';
+
+            // Auto-Processing DOB logic
+            let bDayName = "NOT PROVIDED";
+            let eAge = "NOT PROVIDED";
+            let zSign = "NOT PROVIDED";
+
+            if (s.dateOfBirth) {
+                const parts = s.dateOfBirth.split('-');
+                if (parts.length === 3) {
+                    const y = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10) - 1;
+                    const d = parseInt(parts[2], 10);
+                    const dateObj = new Date(y, m, d);
+
+                    bDayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+                    const month = m + 1;
+                    const day = d;
+                    if ((month == 1 && day <= 20) || (month == 12 && day >= 22)) zSign = "CAPRICORN ♑";
+                    else if ((month == 1 && day >= 21) || (month == 2 && day <= 18)) zSign = "AQUARIUS ♒";
+                    else if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) zSign = "PISCES ♓";
+                    else if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) zSign = "ARIES ♈";
+                    else if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) zSign = "TAURUS ♉";
+                    else if ((month == 5 && day >= 21) || (month == 6 && day <= 20)) zSign = "GEMINI ♊";
+                    else if ((month == 6 && day >= 21) || (month == 7 && day <= 22)) zSign = "CANCER ♋";
+                    else if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) zSign = "LEO ♌";
+                    else if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) zSign = "VIRGO ♍";
+                    else if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) zSign = "LIBRA ♎";
+                    else if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) zSign = "SCORPIO ♏";
+                    else if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) zSign = "SAGITTARIUS ♐";
+
+                    const today = new Date();
+                    let ageY = today.getFullYear() - dateObj.getFullYear();
+                    let ageM = today.getMonth() - dateObj.getMonth();
+                    let ageD = today.getDate() - dateObj.getDate();
+                    
+                    if (ageD < 0) {
+                        ageM--;
+                        const temp = new Date(today.getFullYear(), today.getMonth(), 0);
+                        ageD += temp.getDate();
+                    }
+                    if (ageM < 0) {
+                        ageY--;
+                        ageM += 12;
+                    }
+                    
+                    eAge = `${ageY} YRS`;
+                    if (ageM > 0) eAge += `, ${ageM} MO`;
+                    if (ageD > 0) eAge += `, ${ageD} DAYS`;
+                }
+            }
+
+            let cleanPhoneCountry = s.phoneCountryName ? s.phoneCountryName.split(' (')[0].toUpperCase() : "N/A";
+            let cleanGuardCountry = s.guardianPhoneCountryName ? s.guardianPhoneCountryName.split(' (')[0].toUpperCase() : "N/A";
+
+            let cleanPrimaryPhone = s.verifiedPhone || "N/A";
+            if (s.phoneCountryCode && cleanPrimaryPhone.startsWith(s.phoneCountryCode)) {
+                cleanPrimaryPhone = cleanPrimaryPhone.replace(s.phoneCountryCode, '').trim();
+            }
+            
+            let cleanGuardianPhone = s.guardianPhone || "N/A";
+            if (s.guardianPhoneCountryCode && cleanGuardianPhone.startsWith(s.guardianPhoneCountryCode)) {
+                cleanGuardianPhone = cleanGuardianPhone.replace(s.guardianPhoneCountryCode, '').trim();
+            }
+
+            const summaryData = [
+                { label: "Name Given at Birth", value: s.birthName },
+                { label: "Current Legal Name", value: s.currentName },
+                { label: "Birth Country", value: s.birthCountry },
+                { label: "Nationality", value: s.nationality },
+                { label: "Date of Birth", value: s.dateOfBirth },
+                { label: "Birthday Name", value: bDayName },
+                { label: "Current Age", value: eAge },
+                { label: "Zodiac Parameter", value: zSign },
+                { label: "Biological Sex at Birth", value: s.birthGender },
+                { label: "Current Identified Gender", value: s.currentGender },
+                { label: "Planet", value: "EARTH" },
+                { label: "Continent", value: "ASIA" },
+                { label: "Country", value: s.locationData?.country || '' },
+                { label: "State", value: s.locationData?.state || '' },
+                { label: "District", value: s.locationData?.district || '' },
+                { label: "Sub District", value: s.locationData?.subDistrict || '' },
+                { label: "Local Body Type", value: s.locationData?.localBody || '' },
+                { label: "Area Category", value: s.locationData?.areaCategory || '' },
+                { label: "Junction / Street or Main Road", value: s.locationData?.junction },
+                { label: "Post Office Name", value: s.locationData?.poName || '' },
+                { label: "Pin Code", value: s.locationData?.pincode || '' },
+                { label: "Ward Parameter Name", value: s.locationData?.wardName || '' },
+                { label: "Ward Number", value: s.locationData?.wardNo || '' },
+                { label: "House or Plot Name", value: s.locationData?.houseName || '' },
+                { label: "House Number", value: s.locationData?.houseNo || '' },
+                { label: "Nearest Core Landmark", value: s.locationData?.landmark },
+                { label: "Map Coordinates Parameter", value: s.locationData?.mapCoordinate || "NOT PROVIDED" },
+                { label: "Manual Full Address Structure", value: s.locationData?.manualAddress },
+                { label: "Compiled Live Address Map", value: s.locationData?.compiledAddress },
+                { label: "Primary Country", value: cleanPhoneCountry },
+                { label: "Country Code", value: s.phoneCountryCode || "N/A" },
+                { label: "Mobile Number", value: cleanPrimaryPhone },
+                { label: "Designated Blood Group", value: s.bloodGroup },
+                { label: "Guardian Full Name", value: s.guardianName },
+                { label: "Guardian Gender", value: s.guardianGender || "N/A" },
+                { label: "Guardian Relationship", value: s.guardianRelation },
+                { label: "Guardian Country", value: cleanGuardCountry },
+                { label: "Guardian Country Code", value: s.guardianPhoneCountryCode || "N/A" },
+                { label: "Guardian Mobile Number", value: cleanGuardianPhone },
+                { label: "Current Religion or Belief", value: s.religion === "Other" ? s.customReligion : s.religion },
+                { label: "Current Denomination or Sect", value: s.denomination === "Other" ? s.customDenomination : s.denomination },
+                { label: "Calendar Rule Practice Level", value: s.practiceLevel },
+                { label: "Community Caste Category", value: s.category === "Other" ? s.customCategory : s.category },
+                { label: "Email Address", value: s.emailSkipped ? "SKIPPED" : s.emergencyContact?.email },
+                { label: "Biometric Mark Parameter 1", value: s.identificationMarks?.mark1 },
+                { label: "Biometric Mark Parameter 2", value: s.identificationMarks?.mark2 }
+            ];
+
+            const grid = document.getElementById('summaryGrid');
+            let htmlStr = '';
+
+            summaryData.forEach(item => {
+                let valContent = item.value ? item.value : 'MISSING CONFIGURATION';
+                let maskClass = item.value ? '' : 'empty';
+
+                if(item.value === 'N/A') {
+                    valContent = 'N/A';
+                    maskClass = '';
+                }
+
+                htmlStr += `
+                    <div class="s-item">
+                        <span class="s-label">${item.label}</span>
+                        <span class="s-value ${maskClass}">${valContent}</span>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = htmlStr;
+        }
+
+        function openFullscreenImg() {
+            const imgSrc = document.getElementById('profilePhoto').src;
+            if (imgSrc && !imgSrc.includes('svg+xml')) {
+                document.getElementById('fullImg').src = imgSrc;
+                document.getElementById('imgModal').classList.add('show');
+            }
+        }
+
+        function closeFullscreenImg(e, force = false) {
+            if (force || e.target.id === 'imgModal') {
+                document.getElementById('imgModal').classList.remove('show');
+                setTimeout(() => { document.getElementById('fullImg').src = ''; }, 300);
+            }
+        }
+
+        function processPayment() {
+            const btnPay = document.getElementById('btnPay');
+            
+            btnPay.classList.add('processing');
+            btnPay.innerHTML = 'PROCESSING GATEWAY CLEARANCE<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btnPay.disabled = true;
+
+            setTimeout(() => {
+                btnPay.classList.remove('processing');
+                btnPay.classList.add('saved');
+                btnPay.innerHTML = 'CLEARANCE SUCCESS ✔';
+                
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => { 
+                        window.location.href = 'saving.html'; 
+                    }, 1000);
+                }, 1000);
+            }, 2500);
+        }
+
+        function cancelRegistration() {
+            document.body.style.opacity = '0';
+            setTimeout(() => { 
+                window.location.href = 'edit.html'; 
+            }, 1000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

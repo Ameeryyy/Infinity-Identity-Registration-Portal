@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Secure Gateway</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-green: #00C851; --c-yellow: #ffbb33; --c-red: #ff4444; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0; transition: opacity 1s ease-in-out; user-select: none;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; font-size: 13px; font-weight: bold; letter-spacing: 2px; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+
+        .container { width: 90%; max-width: 450px; animation: fadeIn 0.5s; text-align: center; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .brand-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; }
+        h2 { font-weight: bold; margin: 0 0 12px 0; font-size: clamp(20px, 6vw, 26px); color: var(--c-blue); text-transform: uppercase; }
+
+        .gateway-ui { display: none; text-align: left; }
+        .gateway-ui.active { display: block; animation: fadeIn 0.4s; }
+
+        .btn-pay { width: 100%; padding: 16px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.3; pointer-events: none; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; display: flex; align-items: center; justify-content: center; }
+        .btn-pay.active { opacity: 1; pointer-events: auto; box-shadow: 0 0 12px rgba(0, 123, 255, 0.4); }
+        .btn-pay.active:hover:not(.processing):not(.success) { background: var(--c-blue) !important; color: #ffffff !important; box-shadow: 0 5px 15px rgba(0, 123, 255, 0.5); border-color: var(--c-blue) !important; }
+        .btn-pay.active:active { transform: scale(0.97); }
+        
+        .btn-cancel { margin-top: 20px; padding: 12px; width: 100%; background: transparent; border: 1px solid rgba(255,68,68,0.4); color: var(--c-red); border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 1.5px; text-transform: uppercase; }
+        .btn-cancel:hover { background: rgba(255,68,68,0.1); border-color: var(--c-red); box-shadow: 0 0 10px rgba(255,68,68,0.2); }
+
+        .smooth-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.5s ease-in-out; }
+        .smooth-wrap.open { grid-template-rows: 1fr; }
+        .smooth-inner { overflow: hidden; }
+
+        /* QR SPECIFIC */
+        .qr-box { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 20px 0; }
+        .qr-placeholder { width: 150px; height: 150px; background: #ffffff; padding: 10px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(255,255,255,0.1); position: relative; }
+        .qr-placeholder svg { width: 100%; height: 100%; fill: #000000; }
+        .qr-instruction { font-size: 11px; opacity: 0.7; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.5; text-align: center; }
+        
+        /* UPI SPECIFIC */
+        .upi-input { width: 100%; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: var(--fg); font-size: 14px; margin-bottom: 15px; box-sizing: border-box; text-align: center; letter-spacing: 1px; outline: none; transition: 0.3s; }
+        .upi-input:focus { border-color: var(--c-blue); background: rgba(0,123,255,0.05); box-shadow: 0 0 10px rgba(0,123,255,0.2); }
+        .divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: rgba(255,255,255,0.4); font-size: 10px; font-weight: bold; letter-spacing: 2px; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px dashed rgba(255,255,255,0.2); }
+        .divider::before { margin-right: 10px; }
+        .divider::after { margin-left: 10px; }
+
+        .qr-status { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 25px; font-size: 12px; font-weight: bold; color: var(--c-yellow); letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; }
+        .pulse-dot { width: 8px; height: 8px; background-color: var(--c-yellow); border-radius: 50%; animation: pulse 1.5s infinite; }
+        .qr-status.success { color: var(--c-green); font-size: 14px; }
+        .qr-status.success .pulse-dot { display: none; }
+        
+        /* CUSTOM ALERT */
+        .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
+        .custom-alert-box { background: var(--bg); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 30px; text-align: center; max-width: 300px; width: 80%; box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform: translateY(20px); transition: 0.3s; }
+        .custom-alert-overlay.show { display: flex; opacity: 1; }
+        .custom-alert-overlay.show .custom-alert-box { transform: translateY(0); }
+        .custom-alert-icon { width: 40px; height: 40px; fill: var(--c-yellow); margin-bottom: 15px; display: inline-block; }
+        .custom-alert-msg { font-size: 14px; font-weight: bold; margin-bottom: 25px; line-height: 1.6; color: var(--fg); letter-spacing: 1px; text-transform: uppercase; }
+        .btn-alert-ok { padding: 12px 30px; background: transparent; border: 1px solid var(--c-blue); color: var(--c-blue); border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.3s; letter-spacing: 2px; text-transform: uppercase; }
+        .btn-alert-ok:hover { background: var(--c-blue); color: #fff; box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4); }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 187, 51, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 187, 51, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 187, 51, 0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="#" class="top-left" onclick="navigateBack(event)">
+        BACK
+    </a>
+    
+    <!-- Custom Theme Alert -->
+    <div class="custom-alert-overlay" id="customAlert">
+        <div class="custom-alert-box">
+            <svg class="custom-alert-icon" viewBox="0 0 24 24"><path d="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16"/></svg>
+            <div class="custom-alert-msg" id="customAlertMsg">Please enter a valid UPI ID</div>
+            <button class="btn-alert-ok" onclick="closeCustomAlert()">OK</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="brand-title">INFINITY GATEWAY</div>
+        <h2 id="pageTitle">Secure Payment</h2>
+
+        <div class="gateway-ui active">
+            
+            <!-- INITIAL TRIGGER WRAP (FOR BOTH QR AND UPI) -->
+            <div class="smooth-wrap open" id="initGenerateWrap">
+                <div class="smooth-inner" style="text-align: center; margin: 30px 0;">
+                    <div style="font-size: 18px; font-weight: bold; color: var(--c-green); margin-bottom: 25px; letter-spacing: 1px;">AMOUNT TO PAY: <span class="dynamic-fee">₹ 25.00</span></div>
+                    
+                    <div id="qrInitSection" style="display: none;">
+                        <button class="btn-pay active" onclick="initiatePaymentFlow()">GENERATE QR CODE</button>
+                    </div>
+
+                    <div id="upiInitSection" style="display: none;">
+                        <button class="btn-pay active" id="btnUpiApp" onclick="initiateUPIAppFlow()">PAY VIA UPI APP</button>
+                        <div class="divider">OR</div>
+                        <input type="text" id="upiIdInput" class="upi-input" placeholder="Enter UPI ID (e.g., name@bank)">
+                        <button class="btn-pay active" id="btnUpiRequest" onclick="initiateUPICustomFlow()" style="border-color: var(--c-yellow); color: var(--c-yellow);">REQUEST PAYMENT</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIVE QR VIEW -->
+            <div class="smooth-wrap" id="qrActiveWrap">
+                <div class="smooth-inner">
+                    <div style="font-size: 16px; font-weight: bold; color: var(--c-green); text-align: center; margin-bottom: 10px; letter-spacing: 1px;">AMOUNT: <span class="dynamic-fee">₹ 25.00</span></div>
+                    <div class="qr-box">
+                        <div class="qr-placeholder" id="dynamicQrContainer">
+                            <svg viewBox="0 0 24 24"><path d="M4,4H10V10H4V4M6,6V8H8V6H6M14,4H20V10H14V4M16,6V8H18V6H16M4,14H10V20H4V14M6,16V18H8V16H6M14,14H17V17H14V14M17,14H20V17H17V14M14,17H17V20H14V17M17,17H20V20H17V17Z"/></svg>
+                        </div>
+                        <div id="orderMetaDisplayQR" style="margin-top: 15px; font-size: 11px; font-weight: bold; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; text-align: center;"></div>
+                        <div class="qr-instruction">
+                            SCAN THIS QR CODE USING ANY UPI APP TO COMPLETE THE SECURE PAYMENT
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: center; margin-bottom: 15px; font-size: 16px; font-weight: bold; letter-spacing: 2px;">
+                        <span id="qrTimer" style="color: var(--c-green);">05:00</span>
+                    </div>
+                    <div class="qr-status" id="qrStatus">
+                        <div class="pulse-dot"></div>
+                        <span id="qrStatusText">AWAITING PAYMENT...</span>
+                    </div>
+                    
+                    <!-- CANCEL BUTTON -->
+                    <button class="btn-cancel" onclick="cancelPayment()">Cancel Payment</button>
+                </div>
+            </div>
+
+            <!-- ACTIVE UPI REQUEST VIEW -->
+            <div class="smooth-wrap" id="upiActiveWrap">
+                <div class="smooth-inner" style="text-align: center;">
+                    <div style="font-size: 16px; font-weight: bold; color: var(--c-green); text-align: center; margin-bottom: 15px; letter-spacing: 1px;">AMOUNT: <span class="dynamic-fee">₹ 25.00</span></div>
+                    <div id="orderMetaDisplayUPI" style="margin-bottom: 25px; font-size: 11px; font-weight: bold; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; text-align: center;"></div>
+                    
+                    <div style="width: 80px; height: 80px; background: rgba(0,123,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; border: 2px solid var(--c-blue);">
+                        <svg style="width: 40px; height: 40px; fill: var(--c-blue);" viewBox="0 0 24 24"><path d="M16,21H8A1,1 0 0,1 7,20V4A1,1 0 0,1 8,3H16A1,1 0 0,1 17,4V20A1,1 0 0,1 16,21M9,19H15V17H9V19M15,15V7H9V15H15M9,5H15V4H9V5M12,18.5A0.5,0.5 0 0,0 12.5,18A0.5,0.5 0 0,0 12,17.5A0.5,0.5 0 0,0 11.5,18A0.5,0.5 0 0,0 12,18.5Z"/></svg>
+                    </div>
+
+                    <div style="font-size: 12px; opacity: 0.8; letter-spacing: 1px; line-height: 1.6; margin-bottom: 25px; text-transform: uppercase;">
+                        Payment request has been sent to your UPI App.<br>Please open your app and approve the transaction.
+                    </div>
+
+                    <div style="display: flex; justify-content: center; margin-bottom: 15px; font-size: 16px; font-weight: bold; letter-spacing: 2px;">
+                        <span id="upiTimer" style="color: var(--c-green);">05:00</span>
+                    </div>
+                    <div class="qr-status" id="upiStatus">
+                        <div class="pulse-dot"></div>
+                        <span id="upiStatusText">AWAITING APPROVAL...</span>
+                    </div>
+                    
+                    <!-- CANCEL BUTTON -->
+                    <button class="btn-cancel" onclick="cancelPayment()">Cancel Payment</button>
+                </div>
+            </div>
+
+            <!-- EXPIRED VIEW -->
+            <div class="smooth-wrap" id="expiredWrap">
+                <div class="smooth-inner" style="text-align: center; margin: 30px 0;">
+                    <div style="color: var(--c-red); font-size: 16px; font-weight: bold; margin-bottom: 25px; letter-spacing: 1px;">SESSION EXPIRED OR CANCELED</div>
+                    <button class="btn-pay active" style="border-color: var(--c-yellow); color: var(--c-yellow);" onclick="resetGateway()">RETRY PAYMENT</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        let timerInterval;
+        let pollingInterval = null;
+        let currentOrderId = "";
+        let paymentMethodType = 'qr'; 
+        
+        // DEVICE DETECTION
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        const CREATE_ORDER_URL = '/api/create_order/';
+        const CHECK_STATUS_URL = '/api/check_status/';
+        const DELETE_TRANSACTION_URL = '/api/delete_transaction/';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            paymentMethodType = urlParams.get('method') || 'qr';
+            
+            const fee = '₹ 25.00';
+            sessionStorage.setItem('feeAmount', fee);
+            document.querySelectorAll('.dynamic-fee').forEach(el => el.innerText = fee);
+
+            if (paymentMethodType === 'upi') {
+                document.getElementById('pageTitle').innerText = 'UPI PAYMENT';
+                document.getElementById('upiInitSection').style.display = 'block';
+                
+                // IF NOT MOBILE, DISABLE UPI APP BUTTON
+                if(!isMobileDevice) {
+                    const btnApp = document.getElementById('btnUpiApp');
+                    btnApp.innerText = "NO UPI APPS DETECTED";
+                    btnApp.style.pointerEvents = 'none';
+                    btnApp.style.opacity = '0.3';
+                    btnApp.style.borderColor = 'rgba(255,255,255,0.2)';
+                    btnApp.style.color = 'rgba(255,255,255,0.5)';
+                }
+            } else {
+                document.getElementById('pageTitle').innerText = 'SCAN QR CODE';
+                document.getElementById('qrInitSection').style.display = 'block';
+            }
+        });
+
+        // CUSTOM ALERT FUNCTIONS
+        function showCustomAlert(msg) {
+            document.getElementById('customAlertMsg').innerText = msg;
+            const alertEl = document.getElementById('customAlert');
+            alertEl.style.display = 'flex';
+            setTimeout(() => alertEl.classList.add('show'), 10);
+        }
+
+        function closeCustomAlert() {
+            const alertEl = document.getElementById('customAlert');
+            alertEl.classList.remove('show');
+            setTimeout(() => alertEl.style.display = 'none', 300);
+        }
+
+        function navigateBack(e) {
+            e.preventDefault();
+            clearInterval(pollingInterval);
+            clearInterval(timerInterval);
+            deletePendingTransaction();
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = 'payment.html'; }, 1000);
+        }
+
+        function resetGateway() {
+            document.getElementById('expiredWrap').classList.remove('open');
+            setTimeout(() => {
+                document.getElementById('initGenerateWrap').classList.add('open');
+                document.getElementById('pageTitle').innerText = paymentMethodType === 'upi' ? 'UPI PAYMENT' : 'SCAN QR CODE';
+            }, 500);
+        }
+        
+        function cancelPayment() {
+            clearInterval(timerInterval);
+            clearInterval(pollingInterval);
+            deletePendingTransaction();
+            
+            document.getElementById('qrActiveWrap').classList.remove('open');
+            document.getElementById('upiActiveWrap').classList.remove('open');
+            
+            setTimeout(() => {
+                document.getElementById('expiredWrap').classList.add('open');
+                document.getElementById('pageTitle').innerText = 'PAYMENT CANCELED';
+            }, 500);
+        }
+
+        async function deletePendingTransaction() {
+            if (!currentOrderId) return;
+            try {
+                await fetch(DELETE_TRANSACTION_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: currentOrderId })
+                });
+            } catch (err) {
+                console.error("Deletion failed", err);
+            }
+        }
+
+        async function createBackendOrder() {
+            const randomBytes = Math.floor(100000 + Math.random() * 900000);
+            currentOrderId = `INF${randomBytes}TX`;
+            const currentFee = '₹ 25.00';
+            
+            // Save ID for payment_success.html to fetch
+            sessionStorage.setItem('current_txn_id', currentOrderId);
+
+            let userSettings = {};
+            try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+            const billedTo = userSettings.currentName || 'NODE USER';
+            const phoneStr = userSettings.verifiedPhone || userSettings.primaryMobile || 'N/A';
+
+            try {
+                await fetch(CREATE_ORDER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        order_id: currentOrderId, 
+                        amount: currentFee,
+                        billed_to: billedTo,
+                        phone: phoneStr,
+                        method: paymentMethodType
+                    })
+                });
+            } catch (err) {
+                console.error("Order creation failed", err);
+            }
+            return currentFee;
+        }
+
+        function getUpiUrl() {
+            const exactAmount = "25.00"; 
+            const payeeName = encodeURIComponent("Infinity Identity Registration Portal");
+            const transactionNote = encodeURIComponent("Your registration fee is");
+            const merchantUpiId = "6238152228@fam"; 
+            
+            return `upi://pay?pa=${merchantUpiId}&pn=${payeeName}&tn=${transactionNote}&cu=INR&am=${exactAmount}&tr=${currentOrderId}`;
+        }
+
+        // --- FLOW 1: QR CODE ---
+        async function initiatePaymentFlow() {
+            document.getElementById('initGenerateWrap').classList.remove('open');
+            
+            await createBackendOrder();
+            const upiUrl = getUpiUrl(); 
+            const qrImage = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}&color=000000&bgcolor=ffffff`;
+
+            setTimeout(() => {
+                document.getElementById('qrActiveWrap').classList.add('open');
+                document.getElementById('orderMetaDisplayQR').innerText = `ORDER ID: ${currentOrderId}`;
+
+                const qrContainer = document.getElementById('dynamicQrContainer');
+                qrContainer.innerHTML = `<img src="${qrImage}" alt="Scan to Pay" style="width:100%; height:100%; border-radius: 8px; object-fit: contain;">`;
+
+                resetStatusUI('qrStatus', 'qrStatusText', 'AWAITING PAYMENT...');
+                startTimer('qrTimer', 'qrActiveWrap');
+                startRealBackendPolling('qrStatus');
+            }, 500);
+        }
+
+        // --- FLOW 2: UPI APP DIRECT LAUNCH ---
+        async function initiateUPIAppFlow() {
+            document.getElementById('initGenerateWrap').classList.remove('open');
+            
+            await createBackendOrder();
+            const upiUrl = getUpiUrl(); 
+
+            // Trigger the OS Intent Chooser
+            window.location.href = upiUrl;
+
+            setTimeout(() => {
+                document.getElementById('upiActiveWrap').classList.add('open');
+                document.getElementById('orderMetaDisplayUPI').innerText = `ORDER ID: ${currentOrderId}`;
+                
+                resetStatusUI('upiStatus', 'upiStatusText', 'AWAITING APPROVAL...');
+                startTimer('upiTimer', 'upiActiveWrap');
+                startRealBackendPolling('upiStatus');
+            }, 500);
+        }
+
+        // --- FLOW 3: CUSTOM UPI ID REQUEST (Collect Request Simulation) ---
+        async function initiateUPICustomFlow() {
+            const upiId = document.getElementById('upiIdInput').value.trim();
+            if(!upiId || !upiId.includes('@')) {
+                showCustomAlert("Please enter a valid UPI ID (e.g., name@bank)");
+                return;
+            }
+
+            const btn = document.getElementById('btnUpiRequest');
+            btn.innerText = "SENDING REQUEST...";
+            
+            await createBackendOrder();
+            
+            document.getElementById('initGenerateWrap').classList.remove('open');
+            
+            setTimeout(() => {
+                document.getElementById('upiActiveWrap').classList.add('open');
+                document.getElementById('orderMetaDisplayUPI').innerText = `ORDER ID: ${currentOrderId} | TO: ${upiId}`;
+                
+                resetStatusUI('upiStatus', 'upiStatusText', 'AWAITING APPROVAL...');
+                startTimer('upiTimer', 'upiActiveWrap');
+                startRealBackendPolling('upiStatus');
+            }, 500);
+        }
+
+        // --- COMMON UTILITIES ---
+        function resetStatusUI(statusId, textId, text) {
+            const statusEl = document.getElementById(statusId);
+            statusEl.classList.remove('success');
+            statusEl.style.color = 'var(--c-yellow)';
+            statusEl.innerHTML = `<div class="pulse-dot"></div><span id="${textId}">${text}</span>`;
+        }
+
+        function startTimer(displayId, wrapIdToClose) {
+            let timeLeft = 300; 
+            const display = document.getElementById(displayId);
+            display.style.color = 'var(--c-green)';
+            
+            clearInterval(timerInterval);
+            clearInterval(pollingInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                display.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                
+                if(timeLeft <= 60) display.style.color = 'var(--c-yellow)';
+                if(timeLeft <= 10) display.style.color = 'var(--c-red)';
+
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    clearInterval(pollingInterval);
+                    deletePendingTransaction();
+                    document.getElementById(wrapIdToClose).classList.remove('open');
+                    setTimeout(() => {
+                        document.getElementById('expiredWrap').classList.add('open');
+                    }, 500);
+                }
+            }, 1000);
+        }
+
+        function startRealBackendPolling(statusContainerId) {
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(CHECK_STATUS_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order_id: currentOrderId })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        if (result.payment_status === 'SUCCESS') {
+                            finalizeTransactionClearance(statusContainerId);
+                        } else if (result.payment_status === 'REFUND') {
+                            handleTransactionFailure(statusContainerId, 'REFUND INITIATED - AMOUNT FAILED');
+                        } else if (result.payment_status === 'REJECTED') {
+                            handleTransactionFailure(statusContainerId, 'PAYMENT REJECTED');
+                        }
+                    }
+                } catch (error) {
+                    console.error("Polling error", error);
+                }
+            }, 2500);
+        }
+
+        function handleTransactionFailure(statusContainerId, msg) {
+            clearInterval(pollingInterval);
+            clearInterval(timerInterval);
+            
+            const statusEl = document.getElementById(statusContainerId);
+            statusEl.classList.remove('success');
+            statusEl.style.color = "var(--c-red)";
+            statusEl.innerHTML = `<svg style="width:16px;height:16px;fill:currentColor;margin-right:8px;" viewBox="0 0 24 24"><path d="M12 2C17.5 2 22 6.5 22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2M12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4M13 7V13H11V7H13M13 15V17H11V15H13Z"/></svg> <span style="font-size: 11px;">${msg}</span>`;
+            
+            if(statusContainerId === 'qrStatus') {
+                const qrContainer = document.getElementById('dynamicQrContainer');
+                qrContainer.style.boxShadow = "0 0 20px rgba(255, 68, 68, 0.4)";
+            }
+
+            setTimeout(() => {
+                cancelPayment();
+            }, 3000);
+        }
+
+        function finalizeTransactionClearance(statusContainerId) {
+            clearInterval(pollingInterval);
+            clearInterval(timerInterval);
+            
+            const statusEl = document.getElementById(statusContainerId);
+            statusEl.classList.add('success');
+            statusEl.innerHTML = '<svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/></svg> <span style="font-size: 13px;">PAYMENT RECEIVED SUCCESSFULLY!</span>';
+            
+            if(statusContainerId === 'qrStatus') {
+                const qrContainer = document.getElementById('dynamicQrContainer');
+                qrContainer.style.borderColor = "var(--c-green)";
+                qrContainer.style.boxShadow = "0 0 20px rgba(0, 200, 81, 0.4)";
+            }
+
+            setTimeout(() => {
+                document.body.style.opacity = '0';
+                setTimeout(() => { window.location.href = `payment_loading.html?method=${paymentMethodType}`; }, 1000);
+            }, 2000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

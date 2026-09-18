@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Faith & Category Registration</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--c-blue); }
+
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0; transition: opacity 1s ease-in-out;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: opacity 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left span { font-weight: 900; letter-spacing: 2px; font-size: 13px; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: left; margin: clamp(40px, 10vh, 60px) auto clamp(20px, 5vh, 40px) auto; padding: clamp(20px, 5vw, 30px); box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); backdrop-filter: blur(10px); z-index: 10; }
+        
+        .step-indicator { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+        
+        .input-group { margin-bottom: clamp(20px, 5vw, 25px); position: relative; z-index: 1; }
+        .input-group label { display: block; font-size: clamp(12px, 3.5vw, 14px); opacity: 0.9; margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 45px; margin-top: 10px; position: relative; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper input { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 12px; outline: none; font-family: inherit; font-weight: bold; letter-spacing: 1px; width: 100%; min-width: 0; text-transform: uppercase; }
+        .input-wrapper.disabled { pointer-events: none; opacity: 0.4; }
+        
+        .char-count { position: absolute; right: 5px; bottom: -18px; font-size: 9px; opacity: 0.6; font-weight: bold; white-space: nowrap; }
+
+        .flexible-grid { display: flex; flex-wrap: wrap; gap: clamp(6px, 2vw, 10px); transition: 0.3s; }
+        .flexible-grid.disabled { pointer-events: none; opacity: 0.4; }
+        .flexible-grid .card-btn { flex: 1 1 calc(33.33% - 10px); min-width: 90px; }
+        .grid-practice .card-btn { flex: 1 1 calc(45% - 10px); min-width: 120px; }
+
+        .card-btn { border: 1px solid var(--fg); padding: clamp(12px, 3vw, 15px) 5px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; text-transform: uppercase; letter-spacing: 1px; }
+        .card-btn:hover { opacity: 0.8; }
+        .card-btn.active { opacity: 1 !important; background: var(--c-blue) !important; color: #ffffff !important; border-color: var(--c-blue) !important; transform: scale(0.96); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
+
+        .hidden-section { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s ease-in-out; }
+        .hidden-section.show { max-height: 800px; opacity: 1; margin-top: 10px; overflow: visible; }
+
+        /* Slide Down Checkbox Wrapper */
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 100px; opacity: 1; margin-bottom: 25px; overflow: visible; margin-top: 15px; }
+        
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group input { display: none; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .btn-next { width: 100%; padding: clamp(14px, 4vw, 16px); background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: clamp(13px, 4vw, 15px); font-weight: bold; cursor: pointer; opacity: 0.4; pointer-events: none; transition: all 0.4s ease; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; }
+        .btn-next.active { opacity: 1; pointer-events: auto; }
+        .btn-next.active:hover { background: var(--c-blue); color: var(--bg); box-shadow: 0 5px 15px color-mix(in srgb, var(--c-blue) 40%, transparent); }
+        .btn-next:active { transform: scale(0.97); }
+        .btn-next.processing { opacity: 1 !important; pointer-events: none; background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); }
+        .btn-next.saved { opacity: 1 !important; pointer-events: none !important; transform: scale(0.98); background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000 !important; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+            .flexible-grid .card-btn { flex: 1 1 calc(45% - 10px); }
+        }
+        @media (max-width: 320px) { .flexible-grid .card-btn { flex: 1 1 100%; } }
+    </style>
+</head>
+<body>
+
+    <div id="homeBtn" class="top-left">
+        <span>BACK</span>
+    </div>
+
+    <div class="container">
+        <div class="step-indicator">STEP 8 OF 11</div>
+        <div class="brand-title">Infinity Identity</div>
+        <h2><strong>Spiritual & Category</strong></h2>
+        <p class="desc">Define your <strong>religious alignment</strong>, <strong>sect</strong>, and <strong>community category</strong>.</p>
+
+        <div class="input-group">
+            <label>Current Religion / Belief</label>
+            <div class="flexible-grid" id="grid-religion">
+                <div class="card-btn" onclick="selectReligion('Islam')">Islam</div>
+                <div class="card-btn" onclick="selectReligion('Hinduism')">Hinduism</div>
+                <div class="card-btn" onclick="selectReligion('Christianity')">Christianity</div>
+                <div class="card-btn" onclick="selectReligion('Buddhism')">Buddhism</div>
+                <div class="card-btn" onclick="selectReligion('Secular')">Secular / Atheist</div>
+                <div class="card-btn" onclick="selectReligion('Other')">Other</div>
+            </div>
+            
+            <div id="otherReligionContainer" class="hidden-section">
+                <div class="input-wrapper">
+                    <input type="text" id="otherReligion" maxlength="30" placeholder="SPECIFY YOUR RELIGION" oninput="formatAlphaNum(this, 'count-otherReligion');" autocomplete="off">
+                </div>
+                <span class="char-count" id="count-otherReligion">0/30</span>
+            </div>
+        </div>
+
+        <div id="sectContainer" class="hidden-section">
+            <div class="input-group">
+                <label>Current Denomination / Sect</label>
+                <div class="flexible-grid" id="grid-sect"></div>
+                
+                <div id="otherSectContainer" class="hidden-section">
+                    <div class="input-wrapper">
+                        <input type="text" id="otherSect" maxlength="25" placeholder="SPECIFY YOUR SECT" oninput="formatAlphaNum(this, 'count-otherSect');" autocomplete="off">
+                    </div>
+                    <span class="char-count" id="count-otherSect">0/25</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="practiceContainer" class="hidden-section">
+            <div class="input-group">
+                <label>Current Level of Practice</label>
+                <span style="display: block; font-size: 9px; opacity: 0.7; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--c-yellow);">* How actively do you follow religious rules?</span>
+                <div class="flexible-grid grid-practice" id="grid-practice">
+                    <div class="card-btn" onclick="selectPractice('Devout')">Devout / Strict</div>
+                    <div class="card-btn" onclick="selectPractice('Moderate')">Moderate</div>
+                    <div class="card-btn" onclick="selectPractice('Cultural')">Cultural / Non-Practicing</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group" style="margin-top: 30px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 25px;">
+            <label>Community Category</label>
+            <div class="flexible-grid" id="grid-category">
+                <div class="card-btn" onclick="selectCategory('General')">GENERAL</div>
+                <div class="card-btn" onclick="selectCategory('OBC')">OBC</div>
+                <div class="card-btn" onclick="selectCategory('OEC')">OEC</div>
+                <div class="card-btn" onclick="selectCategory('SC')">SC</div>
+                <div class="card-btn" onclick="selectCategory('ST')">ST</div>
+                <div class="card-btn" onclick="selectCategory('Other')">OTHER</div>
+            </div>
+            
+            <div id="otherCategoryContainer" class="hidden-section">
+                <div class="input-wrapper">
+                    <input type="text" id="otherCategory" maxlength="25" placeholder="SPECIFY YOUR CATEGORY" oninput="formatAlphaNum(this, 'count-otherCategory');" autocomplete="off">
+                </div>
+                <span class="char-count" id="count-otherCategory">0/25</span>
+            </div>
+        </div>
+
+        <div class="slide-down-wrapper" id="confirmCheckWrapper">
+            <label class="check-group">
+                <input type="checkbox" id="formConfirmCheck" onchange="toggleFinalConfirm()">
+                <div class="custom-check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span class="check-label">I CONFIRM MY SELECTIONS ARE ACCURATE</span>
+            </label>
+        </div>
+
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">NEXT STEP</button>
+
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+    </div>
+
+    <script src="brain.js"></script>
+    <script>
+        const sectsData = {
+            'Islam': ['Sunni', 'Mujahid', 'Shia', 'Ahmadiyya', 'Sufi', 'Other'],
+            'Hinduism': ['Vaishnavism', 'Shaivism', 'Shaktism', 'Smartism', 'Reformist', 'Other'],
+            'Christianity': ['Catholic', 'Orthodox', 'Pentecostal', 'Protestant', 'Baptist', 'Other'],
+            'Buddhism': ['Theravada', 'Mahayana', 'Vajrayana', 'Zen', 'Other'],
+            'Secular': [],
+            'Other': ['Other']
+        };
+
+        let selectedReligion = '';
+        let selectedSect = '';
+        let selectedPractice = '';
+        let selectedCategory = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            
+            const homeBtn = document.getElementById('homeBtn');
+            homeBtn.onclick = function(e) {
+                e.preventDefault();
+                document.body.style.opacity = '0';
+                setTimeout(() => { 
+                    window.location.href = isEdit ? 'edit.html' : 'registration7.html'; 
+                }, 1000);
+            };
+
+            if (isEdit) {
+                let s = {};
+                try { s = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+                
+                if (s.religion) {
+                    selectReligion(s.religion, true);
+                    if (s.religion === 'Other' && s.customReligion) {
+                        const rInput = document.getElementById('otherReligion');
+                        rInput.value = s.customReligion;
+                        document.getElementById('count-otherReligion').innerText = `${s.customReligion.length}/30`;
+                    }
+                    
+                    if (s.denomination) {
+                        selectSect(s.denomination, true);
+                        if (s.denomination === 'Other' && s.customDenomination) {
+                            const sInput = document.getElementById('otherSect');
+                            sInput.value = s.customDenomination;
+                            document.getElementById('count-otherSect').innerText = `${s.customDenomination.length}/25`;
+                        }
+                    }
+                    if (s.practiceLevel) selectPractice(s.practiceLevel, true);
+                    
+                    if (s.category) {
+                        selectCategory(s.category, true);
+                        if (s.category === 'Other' && s.customCategory) {
+                            const cInput = document.getElementById('otherCategory');
+                            cInput.value = s.customCategory;
+                            document.getElementById('count-otherCategory').innerText = `${s.customCategory.length}/25`;
+                        }
+                    }
+                }
+            } else {
+                resetInputs();
+            }
+
+            validateForm();
+        });
+
+        function resetInputs() {
+            selectedReligion = ''; selectedSect = ''; selectedPractice = ''; selectedCategory = '';
+            
+            document.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+            
+            document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.hidden-section').forEach(sec => sec.classList.remove('show'));
+            
+            document.getElementById('count-otherReligion').innerText = '0/30';
+            document.getElementById('count-otherSect').innerText = '0/25';
+            document.getElementById('count-otherCategory').innerText = '0/25';
+
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+            validateForm();
+        }
+
+        function formatAlphaNum(el, countId) {
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+            let val = el.value.toUpperCase().replace(/[^A-Z\s]/g, '').replace(/\s{2,}/g, ' ');
+            if (val.startsWith(' ')) val = val.trimStart();
+            el.value = val;
+            document.getElementById(countId).innerText = `${el.value.length}/${el.getAttribute('maxlength')}`;
+            validateForm();
+        }
+
+        function selectReligion(val, isLoad = false) {
+            if(!isLoad) {
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+            selectedReligion = val;
+            selectedSect = '';
+            
+            document.querySelectorAll('#grid-religion .card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.trim().toUpperCase() === val.toUpperCase());
+            });
+
+            document.getElementById('otherReligionContainer').classList.toggle('show', val === 'Other');
+            if(val !== 'Other') {
+                document.getElementById('otherReligion').value = '';
+                document.getElementById('count-otherReligion').innerText = '0/30';
+            }
+
+            const sectContainer = document.getElementById('sectContainer');
+            const gridSect = document.getElementById('grid-sect');
+            const practiceContainer = document.getElementById('practiceContainer');
+            
+            gridSect.innerHTML = '';
+            
+            if (sectsData[val] && sectsData[val].length > 0) {
+                sectsData[val].forEach(sect => {
+                    const btn = document.createElement('div');
+                    btn.className = 'card-btn';
+                    btn.innerText = sect.toUpperCase();
+                    btn.onclick = () => selectSect(sect);
+                    gridSect.appendChild(btn);
+                });
+                sectContainer.classList.add('show');
+            } else {
+                sectContainer.classList.remove('show');
+                document.getElementById('otherSectContainer').classList.remove('show');
+                selectedSect = 'N/A';
+            }
+
+            practiceContainer.classList.add('show');
+            validateForm();
+        }
+
+        function selectSect(val, isLoad = false) {
+            if(!isLoad) {
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+            selectedSect = val;
+            document.querySelectorAll('#grid-sect .card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.trim().toUpperCase() === val.toUpperCase());
+            });
+
+            document.getElementById('otherSectContainer').classList.toggle('show', val === 'Other');
+            if(val !== 'Other') {
+                document.getElementById('otherSect').value = '';
+                document.getElementById('count-otherSect').innerText = '0/25';
+            }
+            
+            validateForm();
+        }
+
+        function selectPractice(val, isLoad = false) {
+            if(!isLoad) {
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+            selectedPractice = val;
+            document.querySelectorAll('#grid-practice .card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(val));
+            });
+            validateForm();
+        }
+
+        function selectCategory(val, isLoad = false) {
+            if(!isLoad) {
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+            selectedCategory = val;
+            document.querySelectorAll('#grid-category .card-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.trim().toUpperCase() === val.toUpperCase());
+            });
+
+            document.getElementById('otherCategoryContainer').classList.toggle('show', val === 'Other');
+            if(val !== 'Other') {
+                document.getElementById('otherCategory').value = '';
+                document.getElementById('count-otherCategory').innerText = '0/25';
+            }
+            
+            validateForm();
+        }
+
+        function validateForm() {
+            let valid = (selectedReligion !== '' && selectedSect !== '' && selectedPractice !== '' && selectedCategory !== '');
+            
+            if (selectedReligion === 'Other' && document.getElementById('otherReligion').value.trim().length < 3) valid = false;
+            if (selectedSect === 'Other' && document.getElementById('otherSect').value.trim().length < 3) valid = false;
+            if (selectedCategory === 'Other' && document.getElementById('otherCategory').value.trim().length < 3) valid = false;
+
+            const checkWrapper = document.getElementById('confirmCheckWrapper');
+            if (valid) {
+                checkWrapper.classList.add('show');
+            } else {
+                checkWrapper.classList.remove('show');
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+        }
+
+        function toggleFinalConfirm() {
+            const isChecked = document.getElementById('formConfirmCheck').checked;
+            const btnNext = document.getElementById('btnNext');
+            const grids = document.querySelectorAll('.flexible-grid');
+            const inputs = document.querySelectorAll('.input-wrapper');
+
+            if(isChecked) {
+                grids.forEach(g => g.classList.add('disabled'));
+                inputs.forEach(i => i.classList.add('disabled'));
+                btnNext.classList.add('active');
+                btnNext.disabled = false;
+            } else {
+                grids.forEach(g => g.classList.remove('disabled'));
+                inputs.forEach(i => i.classList.remove('disabled'));
+                btnNext.classList.remove('active');
+                btnNext.disabled = true;
+            }
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+
+            const btn = document.getElementById('btnNext');
+            btn.classList.remove('active');
+            btn.classList.add('processing');
+            btn.innerHTML = 'SAVING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btn.disabled = true;
+
+            let s = {};
+            try { s = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+            
+            s.religion = selectedReligion;
+            if (selectedReligion === 'Other') s.customReligion = document.getElementById('otherReligion').value.trim();
+            
+            s.denomination = selectedSect;
+            if (selectedSect === 'Other') s.customDenomination = document.getElementById('otherSect').value.trim();
+            
+            s.practiceLevel = selectedPractice;
+            
+            s.category = selectedCategory;
+            if (selectedCategory === 'Other') s.customCategory = document.getElementById('otherCategory').value.trim();
+            
+            delete s.previousReligion;
+            delete s.customPrevReligion;
+            delete s.previousDenomination;
+            delete s.customPrevDenomination;
+            delete s.previousPracticeLevel;
+
+            localStorage.setItem('inf_settings', JSON.stringify(s));
+
+            setTimeout(() => {
+                btn.classList.remove('processing');
+                btn.classList.add('saved');
+                btn.innerHTML = 'SAVED ✔';
+
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                        window.location.href = isEdit ? 'edit.html' : 'registration9.html';
+                    }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

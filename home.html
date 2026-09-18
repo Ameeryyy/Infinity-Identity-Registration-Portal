@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Identity - Home</title>
+    <style>
+        :root, [data-theme="minimal-dark"] { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; --c-cyan: #00e5ff; }
+        [data-theme="pure-dark"] { --bg: #000000; --fg: #ffffff; --c-blue: #ffffff; --c-red: #ffffff; --c-green: #ffffff; --c-yellow: #ffffff; --c-cyan: #ffffff; }
+        [data-theme="pure-light"] { --bg: #ffffff; --fg: #000000; --c-blue: #000000; --c-red: #000000; --c-green: #000000; --c-yellow: #000000; --c-cyan: #000000; }
+        [data-theme="minimal-light"] { --bg: #ffffff; --fg: #000000; --c-blue: #0056b3; --c-red: #cc0000; --c-green: #007e33; --c-yellow: #ff8800; --c-cyan: #0099cc; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; 
+            opacity: 0;
+            transition: background-color 0.5s ease, color 0.5s ease, opacity 1s ease-in-out;
+        }
+
+        .top-header { position: fixed; top: clamp(20px, 5vw, 40px); left: clamp(5%, 5vw, 40px); right: clamp(5%, 5vw, 40px); z-index: 200; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+        .header-left { display: flex; flex-direction: column; gap: clamp(4px, 1vw, 8px); }
+        
+        .brand-name { font-size: clamp(14px, 4vw, 20px); font-weight: bold; text-transform: uppercase; letter-spacing: clamp(2px, 1vw, 4px); opacity: 0.9; }
+        .info-row { display: flex; align-items: center; gap: clamp(6px, 2vw, 12px); }
+        .live-time { font-size: clamp(12px, 3.5vw, 16px); font-weight: bold; letter-spacing: clamp(1px, 0.5vw, 2px); font-variant-numeric: tabular-nums; color: var(--c-blue); }
+        .separator { font-size: clamp(10px, 3vw, 14px); opacity: 0.4; }
+        .live-date { font-size: clamp(10px, 3vw, 14px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .weather-info { font-size: clamp(10px, 3vw, 14px); font-weight: bold; opacity: 0.6; letter-spacing: clamp(1px, 0.5vw, 2px); text-transform: uppercase; display: flex; align-items: center; gap: clamp(4px, 1vw, 8px); margin-top: 2px; }
+        .weather-info svg { width: clamp(12px, 3.5vw, 16px); height: clamp(12px, 3.5vw, 16px); fill: currentColor; }
+        
+        .header-right { pointer-events: auto; }
+        .notification-btn { display: flex; align-items: center; justify-content: center; width: clamp(35px, 10vw, 45px); height: clamp(35px, 10vw, 45px); border-radius: 50%; background: color-mix(in srgb, var(--fg) 5%, transparent); border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); cursor: pointer; transition: all 0.3s ease; color: var(--fg); text-decoration: none; position: relative; }
+        .notification-btn:hover { background: color-mix(in srgb, var(--fg) 10%, transparent); border-color: var(--c-blue); color: var(--c-blue); transform: scale(1.05); }
+        .notification-btn:active { transform: scale(0.95); }
+        .notification-btn svg { width: clamp(18px, 5vw, 22px); height: clamp(18px, 5vw, 22px); fill: currentColor; }
+        
+        .notification-badge { position: absolute; top: -2px; right: -2px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; background: var(--c-red); border-radius: 10px; box-shadow: 0 0 5px var(--c-red); display: none; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; border: 1px solid var(--bg); }
+
+        @keyframes ring {
+            0% { transform: rotate(0); }
+            15% { transform: rotate(15deg); }
+            30% { transform: rotate(-10deg); }
+            45% { transform: rotate(5deg); }
+            60% { transform: rotate(-5deg); }
+            75% { transform: rotate(2deg); }
+            100% { transform: rotate(0); }
+        }
+        .notification-btn.ringing svg { animation: ring 0.5s ease; fill: var(--c-blue); }
+
+        .main-container { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: clamp(100px, 15vh, 150px) 5% clamp(100px, 15vh, 120px) 5%; box-sizing: border-box; overflow: hidden; width: 100%; }
+        
+        .terminal-log { position: fixed; bottom: clamp(100px, 14vh, 120px); left: 50%; transform: translateX(-50%); width: 100%; z-index: 90; font-family: monospace; font-size: clamp(10px, 2.5vw, 12px); opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; height: 15px; color: var(--c-blue); transition: opacity 0.4s; display: flex; justify-content: center; text-align: center; pointer-events: none; }
+
+        .tab-content { width: 100%; max-width: 900px; display: none; animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+        .tab-content.active { display: block; }
+        
+        .section-head { margin-bottom: clamp(30px, 4vh, 40px); text-align: center; }
+        .section-head h2 { font-size: clamp(28px, 8vw, 42px); font-weight: bold; margin: 0; letter-spacing: 1px; line-height: 1.1; }
+        .section-head p { font-size: clamp(12px, 3.5vw, 16px); opacity: 0.5; margin: clamp(10px, 2vh, 15px) 0 0 0; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .slider-wrapper { position: relative; width: 100vw; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; }
+        .slider-container { display: flex; overflow-x: auto; scroll-behavior: smooth; scroll-snap-type: x mandatory; gap: 20px; width: 100%; padding: 20px calc(50vw - min(45vw, 350px)); scrollbar-width: none; -ms-overflow-style: none; align-items: center; }
+        .slider-container::-webkit-scrollbar { display: none; }
+
+        .big-card { flex: 0 0 clamp(320px, 90vw, 700px); min-height: clamp(220px, 25vh, 280px); width: auto; scroll-snap-align: center; margin: 0; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: clamp(16px, 4vw, 24px); padding: clamp(35px, 6vw, 55px); cursor: pointer; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease, opacity 0.5s ease, border-color 0.4s ease, box-shadow 0.4s ease, background-color 0.5s ease; position: relative; overflow: hidden; background: color-mix(in srgb, var(--fg) 8%, var(--bg)); backdrop-filter: blur(10px); display: flex; align-items: center; gap: clamp(25px, 5vw, 45px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box; text-decoration: none; color: inherit; }
+        
+        .blurred-card { filter: blur(6px); opacity: 0.3; transform: scale(0.85) !important; pointer-events: none; }
+
+        .big-card::after { content: ''; position: absolute; top: -50%; left: -60%; width: 20%; height: 200%; background: color-mix(in srgb, var(--fg) 10%, transparent); transform: rotate(30deg); transition: none; opacity: 0; }
+        @keyframes shine { 0% { left: -60%; opacity: 0; } 10% { opacity: 0.5; } 20% { left: 120%; opacity: 0; } 100% { left: 120%; opacity: 0; } }
+        .big-card.shining::after { animation: shine 3s infinite; transition: none; }
+
+        .big-card:hover { border-color: var(--c-blue); background: color-mix(in srgb, var(--fg) 3%, var(--bg)); transform: translateY(-5px); box-shadow: 0 20px 50px color-mix(in srgb, var(--fg) 5%, transparent); }
+        .big-card:hover::after { animation: none; opacity: 0; } 
+        
+        .big-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fg) 5%, transparent), transparent); transition: all 0.4s; }
+        .big-card:hover::before { left: 200%; transition: all 1.5s ease; }
+
+        .big-card:active { transform: scale(0.98) !important; }
+        .card-icon { width: clamp(60px, 12vw, 90px); height: clamp(60px, 12vw, 90px); fill: var(--c-blue); flex-shrink: 0; opacity: 0.8; transition: opacity 0.3s; }
+        .big-card:hover .card-icon { opacity: 1; }
+        .card-text { text-align: left; flex: 1; }
+        .card-text h3 { font-size: clamp(22px, 5vw, 32px); font-weight: bold; margin: 0 0 clamp(10px, 2vh, 18px) 0; letter-spacing: 1px; color: var(--fg); text-transform: capitalize; }
+        .card-text p { font-size: clamp(14px, 3.5vw, 16px); opacity: 0.7; margin: 0; line-height: 1.6; color: var(--fg); }
+
+        .card-details { margin-top: 20px; padding-top: 20px; border-top: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); font-size: clamp(12px, 3vw, 14px); opacity: 0.8; display: flex; flex-direction: column; gap: 10px; }
+        .detail-row { display: flex; justify-content: space-between; align-items: center; }
+        .detail-value.highlight { color: var(--c-green); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .saved-account-summary { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .sa-stat { display: flex; align-items: baseline; gap: 10px; }
+        .sa-count-large { font-size: clamp(28px, 8vw, 42px); font-weight: bold; color: var(--c-blue); line-height: 1; font-variant-numeric: tabular-nums; }
+        .sa-meta-large { font-size: clamp(10px, 3vw, 12px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Bottom Navigation Bar Styles */
+        .bottom-nav { position: fixed; bottom: clamp(20px, 5vh, 35px); left: 50%; transform: translateX(-50%); width: clamp(260px, 85%, 380px); background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent); border-radius: clamp(30px, 7vw, 45px); display: flex; padding: clamp(6px, 1.5vw, 10px); z-index: 100; box-shadow: 0 15px 45px rgba(0,0,0,0.9); }
+        .nav-btn { flex: 1; padding: clamp(14px, 3.5vh, 20px) 0; border-radius: clamp(25px, 6vw, 38px); display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1.5vw, 10px); color: var(--fg); opacity: 0.4; cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; }
+        .nav-btn:hover { opacity: 0.8; }
+        .nav-btn.active { opacity: 1; background: color-mix(in srgb, var(--fg) 12%, transparent); color: var(--c-blue); transform: scale(1.03); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .nav-btn svg { width: clamp(20px, 5.5vw, 24px); height: clamp(20px, 5.5vw, 24px); fill: currentColor; transition: transform 0.4s; }
+        .nav-btn.active svg { transform: translateY(-2px); fill: var(--c-blue); }
+        .nav-btn span { font-size: clamp(10px, 2.8vw, 13px); font-weight: bold; text-transform: uppercase; letter-spacing: clamp(1px, 0.3vw, 1.5px); }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        @media (max-width: 768px) {
+            .big-card { flex-direction: column; align-items: flex-start; text-align: left; padding: 35px 30px; }
+            .card-details { width: 100%; }
+            .nav-btn { flex-direction: column; gap: 5px; padding: clamp(12px, 3vh, 16px) 0; }
+            .nav-btn.active svg { transform: translateY(0); }
+        }
+
+        @media (max-width: 320px) {
+            .bottom-nav { border-radius: 25px; width: 92%; }
+            .nav-btn { padding: 10px 0; }
+        }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="top-header">
+        <div class="header-left">
+            <div class="brand-name">Infinity Identity</div>
+            <div class="info-row">
+                <div class="live-time" id="liveTime">00:00:00</div>
+                <div class="separator">|</div>
+                <div class="live-date" id="liveDate">SYNCING...</div>
+            </div>
+            
+            <div class="weather-info" id="liveWeather">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg>
+                <span>SYNCING...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="notification-btn" title="Notifications" onclick="openNotifications()">
+                <svg viewBox="0 0 24 24"><path d="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21M19.75,3.19L18.33,4.61C20.04,6.3 21,8.6 21,11H23C23,8.07 21.84,5.25 19.75,3.19M1,11H3C3,8.6 3.96,6.3 5.67,4.61L4.25,3.19C2.16,5.25 1,8.07 1,11Z"/></svg>
+                <div class="notification-badge"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="terminal-log" id="termLog">> WAITING FOR USER INPUT<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span></div>
+
+    <div class="main-container">
+        
+        <div id="tab-register" class="tab-content active">
+            <div class="section-head">
+                <h2>Registration Portal</h2>
+                <p>Establish a secure cryptographic presence</p>
+            </div>
+            
+            <div class="slider-wrapper">
+                <div class="slider-container" id="regSlider">
+                    <div class="big-card shining" onclick="startRegistration(1)">
+                        <svg class="card-icon" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,9V6H3V9H0V11H3V14H5V11H8V9H5Z"/></svg>
+                        <div class="card-text">
+                            <h3>Universal Sync (Age 10+)</h3>
+                            <p>Mandatory global node initialization and biometric synchronization for all individuals aged 5 and above.</p>
+                            
+                            <div class="card-details">
+                                <div class="detail-row">
+                                    <span>System Status:</span>
+                                    <span class="detail-value highlight">Ready for Sync</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Clearance Required:</span>
+                                    <span>Global Protocol</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Est. Processing Time:</span>
+                                    <span>~5 Minutes</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <div id="nav-register" class="nav-btn active" onclick="switchTab('register')">
+            <svg viewBox="0 0 24 24"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/></svg>
+            <span>Register</span>
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            checkUnreadNotifs();
+            
+            const regSlider = document.getElementById('regSlider');
+            if (regSlider) {
+                regSlider.addEventListener('scroll', () => requestAnimationFrame(updateCardBlur));
+                window.addEventListener('resize', () => requestAnimationFrame(updateCardBlur));
+                setTimeout(updateCardBlur, 100);
+            }
+        });
+
+        function smoothNavigate(url) {
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = url; }, 1000);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('nav-' + tabId).classList.add('active');
+            
+            if(tabId === 'register') {
+                setTimeout(updateCardBlur, 50);
+            }
+        }
+
+        function updateCardBlur() {
+            const slider = document.getElementById('regSlider');
+            if (!slider || !document.getElementById('tab-register').classList.contains('active')) return;
+            const cards = slider.querySelectorAll('.big-card');
+            const sliderCenter = slider.getBoundingClientRect().left + slider.offsetWidth / 2;
+            
+            cards.forEach((card, index) => {
+                const rect = card.getBoundingClientRect();
+                const cardCenter = rect.left + rect.width / 2;
+                const diff = Math.abs(sliderCenter - cardCenter);
+                
+                if (diff < rect.width * 0.4) {
+                    card.classList.remove('blurred-card');
+                } else {
+                    card.classList.add('blurred-card');
+                }
+            });
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12; hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            document.getElementById('liveTime').innerText = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=9.4981&longitude=76.3388&current_weather=true');
+                const data = res.ok ? await res.json() : null;
+                if(data) {
+                    const temp = Math.round(data.current_weather.temperature);
+                    document.getElementById('liveWeather').innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg><span>${temp}°C ALAPPUZHA</span>`;
+                } else { throw new Error('Offline'); }
+            } catch (error) {
+                document.getElementById('liveWeather').innerHTML = `<svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg><span>WEATHER OFFLINE</span>`;
+            }
+        }
+        fetchWeather();
+
+        const waveDots = '<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+
+const logs = [
+    "> SYSTEM ONLINE" + waveDots,
+    "> READY TO INITIALIZE NEW NODE" + waveDots,
+    "> ENCRYPTION MODULES STANDBY" + waveDots,
+    "> WAITING FOR USER INPUT" + waveDots,
+    "> VERIFYING SECURITY PROTOCOLS" + waveDots,
+    "> SYNCHRONIZING CORE DATABASE" + waveDots,
+    "> ESTABLISHING SECURE CONNECTION" + waveDots,
+    "> AUTHENTICATION SYSTEM READY" + waveDots,
+    "> SCANNING NETWORK INTEGRITY" + waveDots,
+    "> INITIALIZING IDENTITY MATRIX" + waveDots
+];
+        let logIndex = 0;
+        setInterval(() => {
+            const term = document.getElementById('termLog');
+            if(term) {
+                term.style.opacity = '0';
+                setTimeout(() => { 
+                    term.innerHTML = logs[logIndex]; 
+                    term.style.opacity = '0.5'; 
+                    logIndex = (logIndex + 1) % logs.length;
+                }, 400);
+            }
+        }, 4000);
+
+        function checkUnreadNotifs() {
+            const badge = document.querySelector('.notification-badge');
+            let unreadCount = parseInt(localStorage.getItem('inf_unread_notifs')) || 0; 
+            
+            if(unreadCount > 0) {
+                badge.style.display = 'flex';
+                badge.innerText = unreadCount;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function openNotifications() {
+            const btn = document.querySelector('.notification-btn');
+            btn.classList.add('ringing');
+            setTimeout(() => { smoothNavigate('notification.html'); }, 500);
+        }
+
+        function startRegistration(sectionNum) {
+            sessionStorage.setItem('targetSection', sectionNum || 1);
+            smoothNavigate('agreement.html');
+        }
+
+    </script>
+    <script src="brain.js"></script>
+</body>
+</html>

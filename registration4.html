@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity - Location Node</title>
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--c-blue); }
+
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0; transition: opacity 1s ease-in-out;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left span { font-weight: 900; letter-spacing: 2px; font-size: 13px; }
+        
+        .container { width: 90%; max-width: 550px; animation: fadeIn 0.5s; text-align: left; margin: 60px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); z-index: 10; }
+        
+        .step-indicator { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(25px, 6vw, 35px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+
+        .input-group { margin-bottom: 25px; position: relative; z-index: 5; }
+        .input-group label { display: block; font-size: 11px; opacity: 0.9; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--fg); }
+        
+        .input-wrapper { display: flex; align-items: center; border: 1px solid var(--fg); border-radius: 12px; transition: 0.3s; background: transparent; overflow: hidden; height: 48px; position: relative; z-index: 1; }
+        .input-wrapper:focus-within { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .input-wrapper.error { border-color: var(--c-red); box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.15); }
+        .input-wrapper.success { border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(0, 200, 81, 0.15); }
+        .input-wrapper.disabled { opacity: 0.25; pointer-events: none; border-color: rgba(255,255,255,0.2); }
+        .input-wrapper.hard-locked { opacity: 0.8; pointer-events: none; border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(0, 200, 81, 0.15); background: color-mix(in srgb, var(--c-green) 5%, transparent); }
+        
+        .input-wrapper input, .input-wrapper textarea { flex: 1; padding: 0 15px; background: transparent; border: none; color: inherit; font-size: 13px; outline: none; font-family: inherit; font-weight: bold; letter-spacing: 1px; width: 100%; min-width: 0; text-transform: uppercase; }
+        .input-wrapper input::placeholder, .input-wrapper textarea::placeholder { font-weight: normal; opacity: 0.4; letter-spacing: normal; text-transform: none; }
+        .input-wrapper input { height: 100%; }
+        
+        .input-wrapper.textarea-wrapper { height: auto; padding: 10px 0; background: rgba(255,255,255,0.03); }
+        .input-wrapper textarea { resize: none; line-height: 1.5; padding: 5px 15px; }
+
+        .char-count { position: absolute; right: 5px; bottom: -18px; font-size: 9px; opacity: 0.6; font-weight: bold; white-space: nowrap; }
+
+        .row-grid { display: flex; gap: 15px; position: relative; z-index: 5; }
+        .row-grid .input-group { flex: 1; }
+
+        /* Custom Select Theme */
+        .custom-select-wrapper { position: relative; width: 100%; z-index: 100; }
+        .custom-select { width: 100%; padding: 0 15px; background: transparent; border: 1px solid var(--fg); border-radius: 12px; color: var(--fg); font-size: 13px; font-weight: bold; letter-spacing: 1px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; text-transform: uppercase; transition: 0.3s; height: 48px; }
+        .custom-select:hover:not(.disabled) { border-color: var(--c-blue); }
+        .custom-select.open { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .custom-select.disabled { opacity: 0.25; pointer-events: none; border-color: rgba(255,255,255,0.2); }
+        .custom-select.success { border-color: var(--c-green) !important; box-shadow: 0 0 0 3px rgba(0, 200, 81, 0.15); }
+        .custom-select.error { border-color: var(--c-red) !important; box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.15); }
+        
+        .custom-select span { opacity: 0.4; transition: opacity 0.3s; font-weight: normal; }
+        .custom-select span.selected { opacity: 1; font-weight: bold; }
+        .custom-select svg { width: 16px; height: 16px; fill: currentColor; transition: transform 0.3s ease; opacity: 0.5; }
+        .custom-select.open svg { transform: rotate(180deg); fill: var(--c-blue); opacity: 1; }
+        
+        .custom-options { position: absolute; top: calc(100% + 5px); left: 0; width: 100%; background: #0a0a0a; border: 1px solid var(--c-blue); border-radius: 12px; z-index: 9999; max-height: 220px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); padding: 0; margin: 0; list-style: none; box-shadow: 0 15px 35px rgba(0,0,0,0.9); }
+        .custom-options.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        
+        .custom-options::-webkit-scrollbar { width: 6px; }
+        .custom-options::-webkit-scrollbar-track { background: transparent; }
+        .custom-options::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+        .custom-options::-webkit-scrollbar-thumb:hover { background: var(--c-blue); }
+
+        .custom-options li { padding: 14px 16px; cursor: pointer; transition: background 0.2s; font-size: 11px; font-weight: bold; letter-spacing: 1px; color: var(--fg); border-bottom: 1px solid rgba(255,255,255,0.05); text-transform: uppercase; }
+        .custom-options li:last-child { border-bottom: none; }
+        .custom-options li:hover, .custom-options li.selected { background-color: var(--c-blue); color: #fff; }
+
+        .slide-down-wrapper { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out; margin-bottom: 0; }
+        .slide-down-wrapper.show { max-height: 100px; opacity: 1; margin-bottom: 25px; overflow: visible; margin-top: 20px; }
+        
+        .check-group { display: flex; align-items: center; gap: clamp(10px, 3vw, 15px); cursor: pointer; padding: 12px; border-radius: 12px; transition: opacity 0.3s; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+        .check-group:active { opacity: 0.7; }
+        .check-group input { display: none; }
+        .custom-check { width: 22px; height: 22px; border: 2px solid var(--fg); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; flex-shrink: 0; box-sizing: border-box; }
+        .custom-check svg { width: 14px; height: 14px; fill: var(--bg); opacity: 0; transition: opacity 0.3s; transform: scale(0.5); }
+        .check-group input:checked + .custom-check { background: var(--c-blue); border-color: var(--c-blue); }
+        .check-group input:checked + .custom-check svg { opacity: 1; transform: scale(1); fill: #ffffff; }
+        .check-label { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .btn-next { width: 100%; padding: 16px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0.4; pointer-events: none; transition: all 0.4s ease; letter-spacing: 2px; text-transform: uppercase; margin-top: 5px; display: flex; align-items: center; justify-content: center; }
+        .btn-next.active { opacity: 1; pointer-events: auto; box-shadow: 0 0 12px rgba(0, 123, 255, 0.4); }
+        .btn-next.active:hover:not(.processing):not(.saved) { background: var(--c-blue) !important; color: #ffffff !important; box-shadow: 0 5px 15px rgba(0, 123, 255, 0.5); }
+        .btn-next:active { transform: scale(0.97); }
+        .btn-next.processing { opacity: 1 !important; pointer-events: none; background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); }
+        .btn-next.saved { opacity: 1 !important; pointer-events: none !important; transform: scale(0.98); background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000000 !important; box-shadow: none !important; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="homeBtn" class="top-left">
+        <span>BACK</span>
+    </div>
+    
+    <div class="container">
+        <div class="step-indicator">STEP 4 OF 11</div>
+        <div class="brand-title">INFINITY IDENTITY</div>
+        
+        <h2><strong>LOCATION NODE</strong></h2>
+        <p class="desc">Provide your verified <strong>Geospatial Location Parameters</strong> to synchronize your regional identity terminal node.</p>
+        
+        <div class="row-grid">
+            <div class="input-group">
+                <label>Planet</label>
+                <div class="input-wrapper hard-locked">
+                    <input type="text" id="geoPlanet" value="EARTH" readonly disabled>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Continent</label>
+                <div class="input-wrapper hard-locked">
+                    <input type="text" id="geoContinent" value="ASIA" readonly disabled>
+                </div>
+            </div>
+        </div>
+
+        <div class="row-grid">
+            <div class="input-group">
+                <label>Country</label>
+                <div class="input-wrapper hard-locked">
+                    <input type="text" id="geoCountry" value="INDIA" readonly disabled>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>State</label>
+                <div class="input-wrapper hard-locked">
+                    <input type="text" id="geoState" value="KERALA" readonly disabled>
+                </div>
+            </div>
+        </div>
+
+        <div class="row-grid">
+            <div class="input-group" style="z-index: 100;">
+                <label>District</label>
+                <div class="custom-select-wrapper" id="districtWrapper">
+                    <div class="custom-select" id="districtSelect" onclick="toggleDropdown('districtOptions')">
+                        <span id="districtText">SELECT DISTRICT</span>
+                        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                    <ul class="custom-options" id="districtOptions"></ul>
+                    <input type="hidden" id="geoDistrict" value="">
+                </div>
+            </div>
+            <div class="input-group" style="z-index: 100;">
+                <label>Sub District / Taluk</label>
+                <div class="custom-select-wrapper" id="subDistrictWrapper">
+                    <div class="custom-select disabled" id="subDistrictSelect" onclick="toggleDropdown('subDistrictOptions')">
+                        <span id="subDistrictText">SELECT TALUK</span>
+                        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                    <ul class="custom-options" id="subDistrictOptions"></ul>
+                    <input type="hidden" id="geoSubDistrict" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="row-grid">
+            <div class="input-group" style="z-index: 99;">
+                <label>Local Body Type</label>
+                <div class="custom-select-wrapper" id="localBodyWrapper">
+                    <div class="custom-select disabled" id="localBodySelect" onclick="toggleDropdown('localBodyOptions')">
+                        <span id="localBodyText">SELECT TYPE</span>
+                        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                    <ul class="custom-options" id="localBodyOptions">
+                        <li onclick="selectOption('localBody', 'PANCHAYAT', 'PANCHAYAT', event)">PANCHAYAT</li>
+                        <li onclick="selectOption('localBody', 'MUNICIPALITY', 'MUNICIPALITY', event)">MUNICIPALITY</li>
+                        <li onclick="selectOption('localBody', 'CORPORATION', 'CORPORATION', event)">CORPORATION</li>
+                    </ul>
+                    <input type="hidden" id="localBody" value="">
+                </div>
+            </div>
+            <div class="input-group" style="z-index: 99;">
+                <label>Area Category</label>
+                <div class="custom-select-wrapper" id="areaCategoryWrapper">
+                    <div class="custom-select disabled" id="areaCategorySelect" onclick="toggleDropdown('areaCategoryOptions')">
+                        <span id="areaCategoryText">SELECT AREA</span>
+                        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                    </div>
+                    <ul class="custom-options" id="areaCategoryOptions">
+                        <li onclick="selectOption('areaCategory', 'VILLAGE', 'VILLAGE', event)">VILLAGE</li>
+                        <li onclick="selectOption('areaCategory', 'TOWN', 'TOWN', event)">TOWN</li>
+                        <li onclick="selectOption('areaCategory', 'CITY', 'CITY', event)">CITY</li>
+                    </ul>
+                    <input type="hidden" id="areaCategory" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Junction / Street / Main Road</label>
+            <div class="input-wrapper disabled" id="junctionWrapper">
+                <input type="text" id="junctionName" maxlength="40" placeholder="ENTER NEAREST JUNCTION OR STREET NAME" oninput="formatAlphaNum(this); validateForm()" autocomplete="off" disabled>
+            </div>
+            <span class="char-count" id="count-junctionName">0/40</span>
+        </div>
+
+        <div class="row-grid">
+            <div class="input-group">
+                <label>Post Office Name</label>
+                <div class="input-wrapper disabled" id="poNameWrapper">
+                    <input type="text" id="poName" maxlength="25" placeholder="POST OFFICE NAME" oninput="formatAlphaNum(this); validateForm()" autocomplete="off" disabled>
+                </div>
+                <span class="char-count" id="count-poName">0/25</span>
+            </div>
+            <div class="input-group">
+                <label>Pincode</label>
+                <div class="input-wrapper disabled" id="pincodeWrapper">
+                    <input type="text" id="pincode" maxlength="6" placeholder="6 DIGITS" oninput="formatNumber(this); validateForm()" autocomplete="off" disabled>
+                </div>
+                <span class="char-count" id="count-pincode">0/6</span>
+            </div>
+        </div>
+
+        <div class="row-grid">
+            <div class="input-group">
+                <label>Ward Name</label>
+                <div class="input-wrapper disabled" id="wardNameWrapper">
+                    <input type="text" id="wardName" maxlength="25" placeholder="WARD NAME" oninput="formatAlphaNum(this); validateForm()" autocomplete="off" disabled>
+                </div>
+                <span class="char-count" id="count-wardName">0/25</span>
+            </div>
+            <div class="input-group">
+                <label>Ward No.</label>
+                <div class="input-wrapper disabled" id="wardNoWrapper">
+                    <input type="text" id="wardNo" maxlength="2" placeholder="NO." oninput="formatNumber(this); validateForm()" autocomplete="off" disabled>
+                </div>
+                <span class="char-count" id="count-wardNo">0/2</span>
+            </div>
+        </div>
+
+        <div class="row-grid">
+            <div class="input-group">
+                <label>House Name / Plot Name</label>
+                <div class="input-wrapper disabled" id="houseNameWrapper">
+                    <input type="text" id="houseName" maxlength="30" placeholder="HOUSE NAME" oninput="formatAlphaNum(this); validateForm()" autocomplete="off" disabled>
+                </div>
+                <span class="char-count" id="count-houseName">0/30</span>
+            </div>
+            <div class="input-group">
+                <label>House No.</label>
+                <div class="input-wrapper disabled" id="houseNoWrapper">
+                    <input type="text" id="houseNo" maxlength="5" placeholder="NO." oninput="formatAlphaNum(this); validateForm()" autocomplete="off" disabled>
+                </div>
+                <span class="char-count" id="count-houseNo">0/5</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Nearest Landmark</label>
+            <div class="input-wrapper disabled" id="landmarkWrapper">
+                <input type="text" id="landmark" maxlength="50" placeholder="ENTER NEAREST LANDMARK (REQUIRED)" oninput="formatAlphaNum(this); validateForm()" autocomplete="off" disabled>
+            </div>
+            <span class="char-count" id="count-landmark">0/50</span>
+        </div>
+
+        <div class="input-group">
+            <label>Map Coordinate (Optional)</label>
+            <div class="input-wrapper disabled" id="coordinateWrapper">
+                <input type="text" id="mapCoordinate" maxlength="50" placeholder="ENTER MAP COORDINATE IF AVAILABLE" oninput="formatAlphaNum(this); validateForm()" autocomplete="off" disabled>
+            </div>
+            <span class="char-count" id="count-mapCoordinate">0/50</span>
+        </div>
+
+        <div class="input-group">
+            <label>Manual Full Address</label>
+            <div class="input-wrapper textarea-wrapper disabled" id="manualAddressWrapper">
+                <textarea id="manualAddress" maxlength="100" rows="3" placeholder="ENTER YOUR COMPLETE ADDRESS MANUALLY" oninput="formatAlphaNum(this); validateForm()" disabled></textarea>
+            </div>
+            <span class="char-count" id="count-manualAddress">0/100</span>
+        </div>
+
+        <div class="input-group">
+            <label>Generated Full Address</label>
+            <div class="input-wrapper textarea-wrapper disabled" id="addressWrapper">
+                <textarea id="fullAddress" rows="4" placeholder="AUTOMATICALLY ARRANGED ADDRESS LIVE PREVIEW" readonly disabled></textarea>
+            </div>
+        </div>
+
+        <div class="slide-down-wrapper" id="confirmCheckWrapper">
+            <label class="check-group">
+                <input type="checkbox" id="formConfirmCheck" onchange="toggleFinalConfirm()">
+                <div class="custom-check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <span class="check-label">I CONFIRM MY GEOSPATIAL PARAMETERS ARE ACCURATE</span>
+            </label>
+        </div>
+        
+        <button id="btnNext" class="btn-next" onclick="saveAndProceed()">NEXT STEP</button>
+
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        const keralaData = {
+            "Alappuzha": ["Ambalappuzha", "Chengannur", "Cherthala", "Karthikappally", "Kuttanad", "Mavelikkara"],
+            "Ernakulam": ["Aluva", "Kanayannur", "Kochi", "Kothamangalam", "Kunnathunad", "Muvattupuzha", "Paravur"],
+            "Idukki": ["Devikulam", "Idukki", "Peermade", "Thodupuzha", "Udumbanchola"],
+            "Kannur": ["Iritty", "Kannur", "Payyanur", "Taliparamba", "Thalassery"],
+            "Kasaragod": ["Hosdurg", "Kasaragod", "Manjeshwaram", "Vellarikundu"],
+            "Kollam": ["Karunagappally", "Kollam", "Kottarakkara", "Kunnathur", "Pathanapuram", "Punalur"],
+            "Kottayam": ["Changanassery", "Kanjirappally", "Kottayam", "Meenachil", "Vaikom"],
+            "Kozhikode": ["Koyilandy", "Kozhikode", "Thamarassery", "Vatakara"],
+            "Malappuram": ["Ernad", "Kondotty", "Nilambur", "Perinthalmanna", "Ponnani", "Tirur", "Tirurangadi"],
+            "Palakkad": ["Alathur", "Chittur", "Mannarkkad", "Ottappalam", "Palakkad", "Pattambi"],
+            "Pathanamthitta": ["Adoor", "Konni", "Kozhencherry", "Mallappally", "Ranni", "Thiruvalla"],
+            "Thiruvananthapuram": ["Chirayinkeezhu", "Kattakkada", "Nedumangad", "Neyyattinkara", "Thiruvananthapuram", "Varkala"],
+            "Thrissur": ["Chalakudy", "Chavakkad", "Kodungallur", "Kunnamkulam", "Mukundapuram", "Thalapilly", "Thrissur"],
+            "Wayanad": ["Mananthavady", "Sultan Bathery", "Vythiri"]
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+            initKeralaDropdowns();
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            const referrer = document.referrer || '';
+            const isBackNavigation = referrer.includes('registration5.html');
+            
+            const homeBtn = document.getElementById('homeBtn');
+            
+            if (isEdit) {
+                 homeBtn.onclick = function(e) {
+                    e.preventDefault();
+                    document.body.style.opacity = '0';
+                    setTimeout(() => { window.location.href = 'edit.html'; }, 1000);
+                };
+            } else {
+                 homeBtn.onclick = function(e) {
+                    e.preventDefault();
+                    document.body.style.opacity = '0';
+                    setTimeout(() => { window.location.href = 'registration3.html'; }, 1000);
+                };
+            }
+
+            if (isEdit || isBackNavigation) {
+                let userSettings = {};
+                try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+                
+                if (userSettings.locationData) {
+                    if (userSettings.locationData.district) {
+                        selectOption('district', userSettings.locationData.district, userSettings.locationData.district, null, true);
+                    }
+                    if (userSettings.locationData.subDistrict) {
+                        selectOption('subDistrict', userSettings.locationData.subDistrict, userSettings.locationData.subDistrict, null, true);
+                    }
+                    if (userSettings.locationData.localBody) {
+                        selectOption('localBody', userSettings.locationData.localBody, userSettings.locationData.localBody, null, true);
+                    }
+                    if (userSettings.locationData.areaCategory) {
+                        selectOption('areaCategory', userSettings.locationData.areaCategory, userSettings.locationData.areaCategory, null, true);
+                    }
+
+                    document.getElementById('junctionName').value = userSettings.locationData.junction || '';
+                    document.getElementById('poName').value = userSettings.locationData.poName || '';
+                    document.getElementById('pincode').value = userSettings.locationData.pincode || '';
+                    document.getElementById('wardName').value = userSettings.locationData.wardName || '';
+                    document.getElementById('wardNo').value = userSettings.locationData.wardNo || '';
+                    document.getElementById('houseName').value = userSettings.locationData.houseName || '';
+                    document.getElementById('houseNo').value = userSettings.locationData.houseNo || '';
+                    document.getElementById('landmark').value = userSettings.locationData.landmark || '';
+                    document.getElementById('mapCoordinate').value = userSettings.locationData.mapCoordinate || '';
+                    document.getElementById('manualAddress').value = userSettings.locationData.manualAddress || '';
+                    
+                    updateCounts();
+                    validateForm();
+                } else {
+                    resetInputs();
+                }
+            } else {
+                resetInputs();
+            }
+        });
+
+        function initKeralaDropdowns() {
+            const distOptions = document.getElementById('districtOptions');
+            let html = '';
+            Object.keys(keralaData).forEach(dist => {
+                html += `<li onclick="selectOption('district', '${dist}', '${dist}', event)">${dist.toUpperCase()}</li>`;
+            });
+            distOptions.innerHTML = html;
+        }
+
+        function toggleDropdown(listId) {
+            const selectWrapper = document.getElementById(listId).previousElementSibling;
+            if (selectWrapper.classList.contains('disabled')) return;
+
+            const isCurrentlyOpen = selectWrapper.classList.contains('open');
+
+            document.querySelectorAll('.custom-options').forEach(el => { if(el.id !== listId) el.classList.remove('show'); });
+            document.querySelectorAll('.custom-select').forEach(el => { if(el.nextElementSibling.id !== listId) el.classList.remove('open'); });
+            
+            document.querySelectorAll('.input-group').forEach(el => el.style.zIndex = '5');
+            document.querySelectorAll('.row-grid').forEach(el => el.style.zIndex = '5');
+            
+            const list = document.getElementById(listId);
+            if (!isCurrentlyOpen) {
+                list.classList.add('show');
+                selectWrapper.classList.add('open');
+                
+                const group = selectWrapper.closest('.input-group');
+                const row = selectWrapper.closest('.row-grid');
+                if (group) group.style.zIndex = '9999';
+                if (row) row.style.zIndex = '9999';
+            } else {
+                list.classList.remove('show');
+                selectWrapper.classList.remove('open');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            if(!e.target.closest('.custom-select-wrapper')) {
+                document.querySelectorAll('.custom-options').forEach(el => el.classList.remove('show'));
+                document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('open'));
+                document.querySelectorAll('.input-group').forEach(el => el.style.zIndex = '5');
+                document.querySelectorAll('.row-grid').forEach(el => el.style.zIndex = '5');
+            }
+        });
+
+        function selectOption(field, val, text, event, isLoad = false) {
+            if(event) event.stopPropagation();
+
+            if (!isLoad && document.getElementById('formConfirmCheck').checked) {
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+
+            if (field === 'district') {
+                document.getElementById('geoDistrict').value = val;
+                const textEl = document.getElementById('districtText');
+                textEl.innerText = text.toUpperCase();
+                textEl.classList.add('selected');
+                
+                const subDistOptions = document.getElementById('subDistrictOptions');
+                let subHtml = '';
+                if(keralaData[val]) {
+                    keralaData[val].forEach(sub => {
+                        subHtml += `<li onclick="selectOption('subDistrict', '${sub}', '${sub}', event)">${sub.toUpperCase()}</li>`;
+                    });
+                }
+                subDistOptions.innerHTML = subHtml;
+                
+                document.getElementById('geoSubDistrict').value = '';
+                const subTextEl = document.getElementById('subDistrictText');
+                subTextEl.innerText = 'SELECT TALUK';
+                subTextEl.classList.remove('selected');
+
+                document.getElementById('subDistrictSelect').classList.remove('disabled');
+
+                document.getElementById('districtOptions').classList.remove('show');
+                document.getElementById('districtSelect').classList.remove('open');
+            } 
+            else if (field === 'subDistrict') {
+                document.getElementById('geoSubDistrict').value = val;
+                const textEl = document.getElementById('subDistrictText');
+                textEl.innerText = text.toUpperCase();
+                textEl.classList.add('selected');
+
+                document.getElementById('subDistrictOptions').classList.remove('show');
+                document.getElementById('subDistrictSelect').classList.remove('open');
+            }
+            else if (field === 'localBody') {
+                document.getElementById('localBody').value = val;
+                const textEl = document.getElementById('localBodyText');
+                textEl.innerText = text.toUpperCase();
+                textEl.classList.add('selected');
+
+                document.getElementById('localBodyOptions').classList.remove('show');
+                document.getElementById('localBodySelect').classList.remove('open');
+            }
+            else if (field === 'areaCategory') {
+                document.getElementById('areaCategory').value = val;
+                const textEl = document.getElementById('areaCategoryText');
+                textEl.innerText = text.toUpperCase();
+                textEl.classList.add('selected');
+
+                document.getElementById('areaCategoryOptions').classList.remove('show');
+                document.getElementById('areaCategorySelect').classList.remove('open');
+            }
+
+            validateForm();
+        }
+
+        function resetInputs() {
+            const inputs = ['geoDistrict', 'geoSubDistrict', 'localBody', 'areaCategory', 'junctionName', 'poName', 'pincode', 'wardName', 'wardNo', 'houseName', 'houseNo', 'landmark', 'mapCoordinate', 'manualAddress'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.value = '';
+            });
+            document.getElementById('fullAddress').value = '';
+            
+            document.getElementById('districtText').innerText = 'SELECT DISTRICT';
+            document.getElementById('districtText').classList.remove('selected');
+            
+            document.getElementById('subDistrictText').innerText = 'SELECT TALUK';
+            document.getElementById('subDistrictText').classList.remove('selected');
+            document.getElementById('subDistrictSelect').classList.add('disabled');
+
+            document.getElementById('localBodyText').innerText = 'SELECT TYPE';
+            document.getElementById('localBodyText').classList.remove('selected');
+            document.getElementById('localBodySelect').classList.add('disabled');
+
+            document.getElementById('areaCategoryText').innerText = 'SELECT AREA';
+            document.getElementById('areaCategoryText').classList.remove('selected');
+            document.getElementById('areaCategorySelect').classList.add('disabled');
+
+            updateCounts();
+            validateForm();
+        }
+
+        function formatNumber(el) {
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+            el.value = el.value.replace(/[^0-9]/g, '');
+            updateCounts();
+            validateForm();
+        }
+
+        function formatAlphaNum(el) {
+            document.getElementById('formConfirmCheck').checked = false;
+            toggleFinalConfirm();
+            let val = el.value.toUpperCase();
+            val = val.replace(/[^A-Z0-9 \-\,\.\/]/g, '');
+            val = val.replace(/\s{2,}/g, ' ');
+            if (val.startsWith(' ')) val = val.trimStart();
+            el.value = val;
+            updateCounts();
+            validateForm();
+        }
+
+        function updateCounts() {
+            const ids = ['junctionName', 'poName', 'pincode', 'wardName', 'wardNo', 'houseName', 'houseNo', 'landmark', 'mapCoordinate', 'manualAddress'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                const countEl = document.getElementById('count-' + id);
+                if (el && countEl) {
+                    countEl.innerText = `${el.value.length}/${el.getAttribute('maxlength')}`;
+                }
+            });
+        }
+
+        function setFieldState(id, wrapperId, enable) {
+            const el = document.getElementById(id);
+            const wrapper = document.getElementById(wrapperId);
+            if(enable) {
+                wrapper.classList.remove('disabled');
+                if(el) el.disabled = false;
+            } else {
+                wrapper.classList.add('disabled');
+                if(el) el.disabled = true;
+            }
+        }
+
+        function adjustSelectBorder(inputId, wrapperId, isValid) {
+            const val = document.getElementById(inputId).value;
+            const select = document.getElementById(wrapperId).querySelector('.custom-select');
+            if (!select) return;
+            if(val === '') {
+                select.classList.remove('error', 'success');
+            } else if (isValid) {
+                select.classList.remove('error');
+                select.classList.add('success');
+            } else {
+                select.classList.remove('success');
+                select.classList.add('error');
+            }
+        }
+
+        function adjustInputBorder(inputId, wrapperId, isValid) {
+            const val = document.getElementById(inputId).value;
+            if(val === '') {
+                removeClasses(wrapperId);
+            } else if (isValid) {
+                toggleClass(wrapperId, 'success', 'error');
+            } else {
+                toggleClass(wrapperId, 'error', 'success');
+            }
+        }
+
+        function toggleClass(id, addCls, removeCls) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.remove(removeCls);
+                el.classList.add(addCls);
+            }
+        }
+
+        function removeClasses(id) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.remove('error');
+                el.classList.remove('success');
+            }
+        }
+
+        function validateForm() {
+            const country = "INDIA";
+            const state = "KERALA";
+            const district = document.getElementById('geoDistrict').value.trim();
+            const subDistrict = document.getElementById('geoSubDistrict').value.trim();
+            const localBody = document.getElementById('localBody').value.trim();
+            const areaCat = document.getElementById('areaCategory').value.trim();
+            const junction = document.getElementById('junctionName').value.trim();
+            const po = document.getElementById('poName').value.trim();
+            const pin = document.getElementById('pincode').value.trim();
+            const wardName = document.getElementById('wardName').value.trim();
+            const wardNo = document.getElementById('wardNo').value.trim();
+            const houseName = document.getElementById('houseName').value.trim();
+            const houseNo = document.getElementById('houseNo').value.trim();
+            const lm = document.getElementById('landmark').value.trim();
+            const mapCoord = document.getElementById('mapCoordinate').value.trim();
+            const manualAddr = document.getElementById('manualAddress').value.trim();
+
+            let dValid = district !== '';
+            let sdValid = subDistrict !== '';
+            let lbValid = localBody !== '';
+            let acValid = areaCat !== '';
+            let jValid = (junction.length >= 3 && !document.getElementById('junctionName').value.endsWith(' '));
+            let poValid = (po.length >= 3 && !document.getElementById('poName').value.endsWith(' '));
+            let pinValid = (pin.length === 6);
+            let wnValid = (wardName.length >= 3 && !document.getElementById('wardName').value.endsWith(' '));
+            let wnNoValid = (wardNo !== '');
+            let hnValid = (houseName.length >= 3 && !document.getElementById('houseName').value.endsWith(' '));
+            let hNoValid = (houseNo !== '' && !document.getElementById('houseNo').value.endsWith(' '));
+            let lmValid = (lm.length >= 3 && !document.getElementById('landmark').value.endsWith(' '));
+            let maValid = (manualAddr.length >= 5 && !document.getElementById('manualAddress').value.endsWith(' '));
+            let mcValid = mapCoord === '' || (mapCoord.length >= 3 && !document.getElementById('mapCoordinate').value.endsWith(' '));
+
+            // Dynamic Step Locking Control
+            setFieldState('subDistrictSelect', 'subDistrictWrapper', dValid);
+            if(dValid) document.getElementById('subDistrictSelect').classList.remove('disabled');
+            else document.getElementById('subDistrictSelect').classList.add('disabled');
+            
+            const geoGeoValid = dValid && sdValid;
+            setFieldState('localBodySelect', 'localBodyWrapper', geoGeoValid);
+            if(geoGeoValid) document.getElementById('localBodySelect').classList.remove('disabled');
+            else document.getElementById('localBodySelect').classList.add('disabled');
+            
+            setFieldState('areaCategorySelect', 'areaCategoryWrapper', geoGeoValid && lbValid);
+            if(geoGeoValid && lbValid) document.getElementById('areaCategorySelect').classList.remove('disabled');
+            else document.getElementById('areaCategorySelect').classList.add('disabled');
+            
+            setFieldState('junctionName', 'junctionWrapper', geoGeoValid && lbValid && acValid);
+            setFieldState('poName', 'poNameWrapper', geoGeoValid && lbValid && acValid && jValid);
+            setFieldState('pincode', 'pincodeWrapper', geoGeoValid && lbValid && acValid && jValid);
+            
+            const upperMidValid = geoGeoValid && lbValid && acValid && jValid && poValid && pinValid;
+            setFieldState('wardName', 'wardNameWrapper', upperMidValid);
+            setFieldState('wardNo', 'wardNoWrapper', upperMidValid);
+            
+            const lowerMidValid = upperMidValid && wnValid && wnNoValid;
+            setFieldState('houseName', 'houseNameWrapper', lowerMidValid);
+            setFieldState('houseNo', 'houseNoWrapper', lowerMidValid);
+            
+            const finalFieldsValid = lowerMidValid && hnValid && hNoValid;
+            setFieldState('landmark', 'landmarkWrapper', finalFieldsValid);
+            
+            setFieldState('mapCoordinate', 'coordinateWrapper', finalFieldsValid && lmValid);
+            setFieldState('manualAddress', 'manualAddressWrapper', finalFieldsValid && lmValid);
+
+            // Setup border dynamic styling classes
+            adjustSelectBorder('geoDistrict', 'districtWrapper', dValid);
+            adjustSelectBorder('geoSubDistrict', 'subDistrictWrapper', sdValid);
+            adjustSelectBorder('localBody', 'localBodyWrapper', lbValid);
+            adjustSelectBorder('areaCategory', 'areaCategoryWrapper', acValid);
+            adjustInputBorder('junctionName', 'junctionWrapper', jValid);
+            adjustInputBorder('poName', 'poNameWrapper', poValid);
+            adjustInputBorder('pincode', 'pincodeWrapper', pinValid);
+            adjustInputBorder('wardName', 'wardNameWrapper', wnValid);
+            adjustInputBorder('wardNo', 'wardNoWrapper', wnNoValid);
+            adjustInputBorder('houseName', 'houseNameWrapper', hnValid);
+            adjustInputBorder('houseNo', 'houseNoWrapper', hNoValid);
+            adjustInputBorder('landmark', 'landmarkWrapper', lmValid);
+            adjustInputBorder('manualAddress', 'manualAddressWrapper', maValid);
+            if(mapCoord !== '') adjustInputBorder('mapCoordinate', 'coordinateWrapper', mcValid);
+            else removeClasses('coordinateWrapper');
+
+            // Auto Arrange Address String Logic
+            if (geoGeoValid && lbValid && acValid && jValid && poValid && pinValid && wnValid && wnNoValid && hnValid && hNoValid) {
+                let addressString = `${houseName}, H.NO: ${houseNo}, WARD: ${wardName} (${wardNo}), ${junction},\n`;
+                addressString += `P.O: ${po}, PIN: ${pin}, SUB-DIST: ${subDistrict},\n`;
+                addressString += `DIST: ${district}, STATE: ${state}, COUNTRY: ${country}.\n`;
+                addressString += `[PLANET: EARTH, CONTINENT: ASIA]\n`;
+                addressString += `[LOCAL BODY: ${localBody}, TYPE: ${areaCat}]\n`;
+                addressString += `[LANDMARK: ${lm}]`;
+                if (mapCoord !== '') addressString += `\n[COORDINATES: ${mapCoord}]`;
+                document.getElementById('fullAddress').value = addressString.toUpperCase();
+                document.getElementById('addressWrapper').classList.remove('disabled');
+                toggleClass('addressWrapper', 'success', 'error');
+            } else {
+                document.getElementById('fullAddress').value = '';
+                document.getElementById('addressWrapper').classList.add('disabled');
+                removeClasses('addressWrapper');
+            }
+
+            let honorFieldValids = dValid && sdValid && lbValid && acValid && jValid && poValid && pinValid && wnValid && wnNoValid && hnValid && hNoValid && lmValid;
+            let formAllValid = honorFieldValids && maValid && mcValid;
+
+            // Clear visual states if empty to match registration 1 style
+            if(document.getElementById('geoDistrict').value === '') document.getElementById('districtWrapper').querySelector('.custom-select').classList.remove('success', 'error');
+            if(document.getElementById('geoSubDistrict').value === '') document.getElementById('subDistrictWrapper').querySelector('.custom-select').classList.remove('success', 'error');
+            if(document.getElementById('localBody').value === '') document.getElementById('localBodyWrapper').querySelector('.custom-select').classList.remove('success', 'error');
+            if(document.getElementById('areaCategory').value === '') document.getElementById('areaCategoryWrapper').querySelector('.custom-select').classList.remove('success', 'error');
+            if(document.getElementById('junctionName').value === '') removeClasses('junctionWrapper');
+            if(document.getElementById('poName').value === '') removeClasses('poNameWrapper');
+            if(document.getElementById('pincode').value === '') removeClasses('pincodeWrapper');
+            if(document.getElementById('wardName').value === '') removeClasses('wardNameWrapper');
+            if(document.getElementById('wardNo').value === '') removeClasses('wardNoWrapper');
+            if(document.getElementById('houseName').value === '') removeClasses('houseNameWrapper');
+            if(document.getElementById('houseNo').value === '') removeClasses('houseNoWrapper');
+            if(document.getElementById('landmark').value === '') removeClasses('landmarkWrapper');
+            if(document.getElementById('manualAddress').value === '') removeClasses('manualAddressWrapper');
+
+            const checkWrapper = document.getElementById('confirmCheckWrapper');
+            if (formAllValid) {
+                checkWrapper.classList.add('show');
+            } else {
+                checkWrapper.classList.remove('show');
+                document.getElementById('formConfirmCheck').checked = false;
+                toggleFinalConfirm();
+            }
+            updateCounts();
+        }
+
+        function toggleFinalConfirm() {
+            const isChecked = document.getElementById('formConfirmCheck').checked;
+            const btnNext = document.getElementById('btnNext');
+            const inputs = ['junctionName', 'poName', 'pincode', 'wardName', 'wardNo', 'houseName', 'houseNo', 'landmark', 'mapCoordinate', 'manualAddress'];
+
+            if(isChecked) {
+                document.getElementById('districtSelect').classList.add('disabled');
+                document.getElementById('subDistrictSelect').classList.add('disabled');
+                document.getElementById('localBodySelect').classList.add('disabled');
+                document.getElementById('areaCategorySelect').classList.add('disabled');
+                inputs.forEach(id => document.getElementById(id).disabled = true);
+                btnNext.classList.add('active');
+                btnNext.disabled = false;
+            } else {
+                document.getElementById('districtSelect').classList.remove('disabled');
+                document.getElementById('subDistrictSelect').classList.remove('disabled');
+                document.getElementById('localBodySelect').classList.remove('disabled');
+                document.getElementById('areaCategorySelect').classList.remove('disabled');
+                inputs.forEach(id => document.getElementById(id).disabled = false);
+                validateForm(); 
+                btnNext.classList.remove('active');
+                btnNext.disabled = true;
+            }
+        }
+
+        function saveAndProceed() {
+            if (!document.getElementById('btnNext').classList.contains('active')) return;
+            
+            const btnNext = document.getElementById('btnNext');
+            btnNext.classList.remove('active');
+            btnNext.classList.add('processing');
+            btnNext.innerHTML = 'SAVING<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btnNext.disabled = true;
+            
+            let userSettings = {};
+            try {
+                userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {};
+            } catch(e) {}
+            
+            userSettings.locationData = {
+                country: 'INDIA',
+                state: 'KERALA',
+                district: document.getElementById('geoDistrict').value.trim(),
+                subDistrict: document.getElementById('geoSubDistrict').value.trim(),
+                localBody: document.getElementById('localBody').value.trim(),
+                areaCategory: document.getElementById('areaCategory').value.trim(),
+                junction: document.getElementById('junctionName').value.trim(),
+                poName: document.getElementById('poName').value.trim(),
+                pincode: document.getElementById('pincode').value.trim(),
+                wardName: document.getElementById('wardName').value.trim(),
+                wardNo: document.getElementById('wardNo').value.trim(),
+                houseName: document.getElementById('houseName').value.trim(),
+                houseNo: document.getElementById('houseNo').value.trim(),
+                landmark: document.getElementById('landmark').value.trim(),
+                mapCoordinate: document.getElementById('mapCoordinate').value.trim(),
+                manualAddress: document.getElementById('manualAddress').value.trim(),
+                compiledAddress: document.getElementById('fullAddress').value
+            };
+            
+            localStorage.setItem('inf_settings', JSON.stringify(userSettings));
+            
+            setTimeout(() => { 
+                btnNext.classList.remove('processing');
+                btnNext.classList.add('saved');
+                btnNext.innerHTML = 'SAVED ✔';
+
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+                        window.location.href = isEdit ? 'edit.html' : 'registration5.html'; 
+                    }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

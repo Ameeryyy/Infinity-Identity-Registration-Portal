@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity Identity - Photo Capture Node</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+    <style>
+        :root { --bg: #000000; --fg: #ffffff; --c-blue: #007bff; --c-red: #ff4444; --c-green: #00C851; --c-yellow: #ffbb33; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg) !important; 
+            color: var(--fg) !important; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; 
+            opacity: 0; transition: opacity 1s ease-in-out;
+        }
+
+        .top-left { position: absolute; top: clamp(15px, 4vw, 30px); left: clamp(15px, 4vw, 30px); cursor: pointer; opacity: 0.6; transition: 0.3s; color: inherit; display: flex; align-items: center; justify-content: center; text-decoration: none; z-index: 10; }
+        .top-left:hover { opacity: 1; color: var(--c-blue); }
+        .top-left span { font-weight: 900; letter-spacing: 2px; font-size: 13px; }
+        
+        .container { width: 90%; max-width: 500px; animation: fadeIn 0.5s; text-align: center; margin: 40px auto; padding: 30px; box-sizing: border-box; border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; background: rgba(128,128,128,0.02); z-index: 10; }
+        
+        .step-indicator { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; color: var(--c-blue); }
+        .brand-title { font-size: clamp(10px, 2.5vw, 12px); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 8px; text-align: center; }
+        h2 { font-weight: bold; margin-top: 0; margin-bottom: 10px; font-size: clamp(20px, 6vw, 26px); text-align: center; text-transform: uppercase; }
+        p.desc { font-size: clamp(11px, 3vw, 13px); opacity: 0.7; text-align: center; margin-bottom: clamp(15px, 4vw, 25px); line-height: 1.5; }
+        strong { font-weight: bold; opacity: 1; color: var(--c-blue); }
+
+        /* Liveness AI Prompt Display */
+        #livenessPrompt { font-size: 13px; font-weight: bold; color: var(--c-yellow); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; min-height: 20px; transition: 0.3s ease; text-shadow: 0 0 10px rgba(255, 187, 51, 0.4); }
+
+        .cam-wrapper { position: relative; width: clamp(200px, 60vw, 260px); height: clamp(200px, 60vw, 260px); border-radius: 50%; border: 2px dashed rgba(0, 123, 255, 0.5); display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto 20px auto; background: #050505; box-shadow: 0 0 25px rgba(0, 123, 255, 0.15); transition: all 0.3s ease; }
+        .cam-wrapper.captured { border-style: solid; border-color: var(--c-green); box-shadow: 0 0 30px rgba(0, 200, 81, 0.3); }
+
+        /* Real camera view - NO MIRRORING (as requested) */
+        video, img.preview-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        
+        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--c-blue); box-shadow: 0 0 15px var(--c-blue); animation: scan 2s infinite ease-in-out; z-index: 5; }
+        @keyframes scan { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+        /* Photo Gallery Styling */
+        .photo-gallery { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 25px; width: 100%; max-height: 150px; overflow-y: auto; padding: 5px; }
+        .thumb-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid transparent; cursor: pointer; opacity: 0.5; transition: all 0.3s ease; }
+        .thumb-img:hover { opacity: 0.8; transform: scale(1.05); }
+        .thumb-img.selected { border-color: var(--c-green); opacity: 1; transform: scale(1.15); box-shadow: 0 0 10px rgba(0, 200, 81, 0.4); }
+        
+        .photo-gallery::-webkit-scrollbar { width: 4px; }
+        .photo-gallery::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+
+        .status-badge { font-size: 11px; font-weight: bold; padding: 8px 16px; border-radius: 20px; background: rgba(0, 123, 255, 0.1); color: var(--c-blue); letter-spacing: 1.5px; border: 1px solid rgba(0, 123, 255, 0.3); text-transform: uppercase; margin: 0 auto 25px auto; transition: all 0.3s ease; display: inline-block; }
+        .status-badge.success { background: rgba(0, 200, 81, 0.15); color: var(--c-green); border-color: var(--c-green); }
+        .status-badge.error { background: rgba(255, 68, 68, 0.15); color: var(--c-red); border-color: var(--c-red); }
+        .status-badge.warning { background: rgba(255, 187, 51, 0.15); color: var(--c-yellow); border-color: var(--c-yellow); }
+
+        .btn-main { width: 100%; padding: 16px; background: transparent; color: var(--c-blue); border: 1px solid var(--c-blue); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
+        .btn-main:hover:not(:disabled) { background: var(--c-blue); color: #ffffff; box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4); }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-main:disabled { opacity: 0.4; pointer-events: none; border-color: rgba(255,255,255,0.2); color: var(--fg); }
+        
+        /* Highlight capture button when ready */
+        .btn-main.ready-to-capture { color: var(--c-green); border-color: var(--c-green); opacity: 1; box-shadow: 0 0 12px rgba(0, 200, 81, 0.3); }
+        .btn-main.ready-to-capture:hover { background: var(--c-green) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(0, 200, 81, 0.5); }
+
+        .btn-retake { background: transparent; color: var(--fg); border-color: rgba(255,255,255,0.2); margin-bottom: 0; margin-top: 10px; opacity: 0.7; }
+        .btn-retake:hover { background: rgba(255,255,255,0.1) !important; color: #ffffff !important; box-shadow: none !important; border-color: var(--fg); opacity: 1; }
+
+        .btn-next { width: 100%; padding: 16px; background: transparent; color: var(--c-green); border: 1px solid var(--c-green); border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.4s ease; letter-spacing: 2px; text-transform: uppercase; display: none; align-items: center; justify-content: center; }
+        .btn-next:hover:not(.processing) { background: var(--c-green); color: #000000; box-shadow: 0 5px 15px rgba(0, 200, 81, 0.4); }
+        .btn-next:active { transform: scale(0.97); }
+        .btn-next.processing { display: flex; opacity: 1 !important; pointer-events: none; background: var(--c-yellow) !important; border-color: var(--c-yellow) !important; color: #000000 !important; box-shadow: 0 5px 15px rgba(255, 187, 51, 0.3); }
+        .btn-next.saved { opacity: 1 !important; pointer-events: none !important; transform: scale(0.98); background: var(--c-green) !important; border-color: var(--c-green) !important; color: #000000 !important; box-shadow: none !important; }
+
+        .wave-dots { display: inline-block; margin-left: 2px; }
+        .wave-dots span { display: inline-block; animation: wave 1.2s infinite ease-in-out; }
+        .wave-dots span:nth-child(1) { animation-delay: 0s; }
+        .wave-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .info-carousel { font-size: clamp(11px, 2.5vw, 13px); opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.5s ease-in-out; pointer-events: none; height: 20px; margin-top: 25px; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; }
+        .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid transparent; border-top-color: var(--c-cyan); border-right-color: var(--c-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .container { border: none; background: transparent; backdrop-filter: none; padding: 0; margin-top: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="homeBtn" class="top-left">
+        <span>BACK</span>
+    </div>
+    
+    <div class="container">
+        <div class="step-indicator">STEP 11 OF 11</div>
+        <div class="brand-title">INFINITY IDENTITY</div>
+        
+        <h2><strong>USER PICTURE</strong></h2>
+        <p class="desc">
+            Position your face clearly within the frame. Complete the live AI verification to finalize your <strong>identity node</strong>.
+        </p>
+
+        <div id="livenessPrompt" style="display: none;"></div>
+
+        <div class="cam-wrapper" id="camWrapper">
+            <video id="webcam" autoplay playsinline muted></video>
+            <img id="capturedImg" class="preview-img" style="display: none;" alt="Captured Face">
+            <div class="scan-line" id="scanLine"></div>
+        </div>
+
+        <div id="photoGallery" class="photo-gallery"></div>
+
+        <div>
+            <div class="status-badge" id="statusBadge">SYSTEM INITIALIZING...</div>
+        </div>
+
+        <button class="btn-main" id="btnCapture" disabled onclick="capturePhoto()">CAPTURE USER PICTURE</button>
+        
+        <button class="btn-next" id="btnProceed" onclick="saveAndProceed()">PROCEED TO REVIEW ✔</button>
+        <button class="btn-main btn-retake" id="btnRetake" style="display: none;" onclick="retakePhoto()">RETAKE LIVENESS SCAN</button>
+
+        <div id="infoCarousel" class="info-carousel">System Architecture Integrity: Verified<div class="spinner-inline"></div></div>
+
+        <canvas id="canvas" style="display: none;"></canvas>
+    </div>
+    
+    <script src="brain.js"></script>
+    <script>
+        let cameraUtil = null;
+        let faceMesh = null;
+        let capturedDataUrl = "";
+        let capturedPhotosArray = [];
+        
+        // Liveness & Quality States
+        let livenessPassed = false;
+        let currentChallengeIdx = 0;
+        let isBlinkClosed = false;
+        let isReadyForCapture = false;
+        let prevNosePos = {x: 0, y: 0};
+
+        // Hidden canvas for lighting detection
+        const lightCanvas = document.createElement('canvas');
+        lightCanvas.width = 64; 
+        lightCanvas.height = 64;
+        const lightCtx = lightCanvas.getContext('2d', { willReadFrequently: true });
+
+        const challenges = [
+            { type: 'BLINK', msg: 'PLEASE BLINK YOUR EYES', count: 1, current: 0 },
+            { type: 'TURN_RIGHT', msg: 'TURN YOUR HEAD SLIGHTLY TO THE RIGHT', count: 1, current: 0 },
+            { type: 'SMILE', msg: 'SMILE OR OPEN YOUR MOUTH', count: 1, current: 0 }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 100);
+
+            const isEdit = new URLSearchParams(window.location.search).get('edit') === 'true';
+            
+            document.getElementById('homeBtn').onclick = function(e) {
+                e.preventDefault();
+                document.body.style.opacity = '0';
+                setTimeout(() => { 
+                    window.location.href = isEdit ? 'edit.html' : 'registration10.html'; 
+                }, 1000);
+            };
+
+            if (isEdit) {
+                let userSettings = {};
+                try { userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {}; } catch(e) {}
+                
+                if (userSettings.capturedPhoto) {
+                    capturedDataUrl = userSettings.capturedPhoto;
+                    
+                    if(!capturedPhotosArray.includes(capturedDataUrl)) {
+                        capturedPhotosArray.push(capturedDataUrl);
+                    }
+                    
+                    livenessPassed = true;
+                    renderGallery();
+                    
+                    const img = document.getElementById('capturedImg');
+                    const video = document.getElementById('webcam');
+                    const scanLine = document.getElementById('scanLine');
+                    const wrapper = document.getElementById('camWrapper');
+                    const status = document.getElementById('statusBadge');
+                    const btnCap = document.getElementById('btnCapture');
+                    const btnProc = document.getElementById('btnProceed');
+                    const btnRetake = document.getElementById('btnRetake');
+                    const promptBox = document.getElementById('livenessPrompt');
+
+                    img.src = capturedDataUrl;
+                    img.style.display = 'block';
+                    video.style.display = 'none';
+                    scanLine.style.display = 'none';
+                    promptBox.style.display = 'none';
+
+                    wrapper.classList.add('captured');
+                    status.classList.add('success');
+                    status.innerText = "PREVIOUS PHOTO LOADED ✔";
+
+                    btnCap.style.display = 'none';
+                    btnProc.style.display = 'flex';
+                    btnRetake.style.display = 'flex';
+                } else {
+                    initLivenessAI();
+                }
+            } else {
+                initLivenessAI();
+            }
+        });
+
+        function renderGallery() {
+            const gallery = document.getElementById('photoGallery');
+            gallery.innerHTML = '';
+            
+            capturedPhotosArray.forEach((photoUrl) => {
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                img.className = 'thumb-img' + (photoUrl === capturedDataUrl ? ' selected' : '');
+                img.onclick = () => selectFromGallery(photoUrl);
+                gallery.appendChild(img);
+            });
+        }
+
+        function selectFromGallery(url) {
+            capturedDataUrl = url;
+            renderGallery(); 
+
+            const img = document.getElementById('capturedImg');
+            const video = document.getElementById('webcam');
+            const scanLine = document.getElementById('scanLine');
+            const wrapper = document.getElementById('camWrapper');
+            const status = document.getElementById('statusBadge');
+            const btnCap = document.getElementById('btnCapture');
+            const btnProc = document.getElementById('btnProceed');
+            const btnRetake = document.getElementById('btnRetake');
+            const promptBox = document.getElementById('livenessPrompt');
+
+            img.src = capturedDataUrl;
+            img.style.display = 'block';
+            video.style.display = 'none';
+            scanLine.style.display = 'none';
+            promptBox.style.display = 'none';
+            livenessPassed = true;
+
+            wrapper.classList.add('captured');
+            status.classList.remove('error', 'warning');
+            status.classList.add('success');
+            status.innerText = "PHOTO SELECTED ✔";
+
+            btnCap.style.display = 'none';
+            btnProc.style.display = 'flex';
+            btnRetake.style.display = 'flex';
+        }
+
+        // === AI LIVENESS DETECTION SYSTEM ===
+        async function initLivenessAI() {
+            const status = document.getElementById('statusBadge');
+            const promptBox = document.getElementById('livenessPrompt');
+            
+            status.innerText = "LOADING AI MODELS...";
+            status.className = 'status-badge warning';
+            promptBox.style.display = 'block';
+            promptBox.innerText = "PLEASE WAIT...";
+
+            faceMesh = new FaceMesh({locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+            }});
+            
+            faceMesh.setOptions({
+                maxNumFaces: 1,
+                refineLandmarks: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+            
+            faceMesh.onResults(onResults);
+            
+            const videoElement = document.getElementById('webcam');
+            
+            cameraUtil = new Camera(videoElement, {
+                onFrame: async () => {
+                    if (!livenessPassed && videoElement.style.display !== 'none') {
+                        await faceMesh.send({image: videoElement});
+                    }
+                },
+                width: 640,
+                height: 640
+            });
+            
+            cameraUtil.start();
+            status.innerText = "CAMERA INITIALIZED";
+        }
+
+        function getDistance(p1, p2) {
+            return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        }
+
+        function isMoving(nose) {
+            const dx = nose.x - prevNosePos.x;
+            const dy = nose.y - prevNosePos.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            prevNosePos = {x: nose.x, y: nose.y};
+            return dist > 0.005; // Strict movement threshold
+        }
+
+        function checkLighting(video) {
+            lightCtx.drawImage(video, 0, 0, 64, 64);
+            const data = lightCtx.getImageData(0, 0, 64, 64).data;
+            let sum = 0;
+            for(let i = 0; i < data.length; i += 4) {
+                sum += (data[i] + data[i+1] + data[i+2]) / 3;
+            }
+            return sum / (64 * 64);
+        }
+
+        function onResults(results) {
+            if (livenessPassed) return;
+            const promptBox = document.getElementById('livenessPrompt');
+            const status = document.getElementById('statusBadge');
+            const btnCap = document.getElementById('btnCapture');
+            const videoElement = document.getElementById('webcam');
+
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                status.innerText = "FACE TRACKING ACTIVE";
+                status.className = 'status-badge';
+                
+                const landmarks = results.multiFaceLandmarks[0];
+                
+                if (currentChallengeIdx < challenges.length) {
+                    const challenge = challenges[currentChallengeIdx];
+                    promptBox.innerText = challenge.msg;
+                    promptBox.style.color = "var(--c-yellow)";
+                    btnCap.disabled = true;
+                    btnCap.classList.remove('ready-to-capture');
+                    
+                    if (challenge.type === 'BLINK') {
+                        const leftEyeDist = getDistance(landmarks[159], landmarks[145]);
+                        const rightEyeDist = getDistance(landmarks[386], landmarks[374]);
+                        
+                        if (leftEyeDist < 0.02 && rightEyeDist < 0.02) {
+                            if (!isBlinkClosed) {
+                                isBlinkClosed = true;
+                                challenge.current++;
+                                if (challenge.current >= challenge.count) advanceChallenge();
+                            }
+                        } else {
+                            isBlinkClosed = false;
+                        }
+                    } 
+                    else if (challenge.type === 'TURN_RIGHT') {
+                        const noseX = landmarks[1].x;
+                        const leftCheekX = landmarks[234].x;
+                        const rightCheekX = landmarks[454].x;
+                        const faceWidth = rightCheekX - leftCheekX;
+                        
+                        if (faceWidth > 0) {
+                            const ratio = (noseX - leftCheekX) / faceWidth;
+                            if (ratio < 0.35) advanceChallenge();
+                        }
+                    } 
+                    else if (challenge.type === 'SMILE') {
+                        const mouthWidth = getDistance(landmarks[61], landmarks[291]);
+                        const faceWidth = getDistance(landmarks[234], landmarks[454]);
+                        
+                        if ((mouthWidth / faceWidth) > 0.42) {
+                            advanceChallenge();
+                        }
+                    }
+                } else {
+                    // ALL LIVENESS CHALLENGES PASSED - MANUAL ALIGNMENT & CAPTURE STAGE
+                    let warningMsg = "";
+
+                    // 1. Check Lighting
+                    let lightLevel = checkLighting(videoElement);
+                    if (lightLevel < 60) {
+                        warningMsg = "LIGHTING TOO LOW - PLEASE MOVE TO A BRIGHTER AREA";
+                    } else if (lightLevel > 230) {
+                        warningMsg = "LIGHTING TOO BRIGHT/GLARE - ADJUST POSITION";
+                    }
+
+                    // 2. Check Movement
+                    let moving = isMoving(landmarks[1]);
+                    if (!warningMsg && moving) {
+                        warningMsg = "MOVEMENT DETECTED - PLEASE HOLD VERY STILL";
+                    }
+
+                    // 3. Check Head Alignment (Strabismus tolerant)
+                    const noseX = landmarks[1].x;
+                    const leftCheekX = landmarks[234].x;
+                    const rightCheekX = landmarks[454].x;
+                    const faceWidth = rightCheekX - leftCheekX;
+                    
+                    let isStraight = false;
+                    if (faceWidth > 0.1) {
+                        const ratio = (noseX - leftCheekX) / faceWidth;
+                        if (ratio > 0.40 && ratio < 0.60) {
+                            isStraight = true;
+                        }
+                    }
+                    if (!warningMsg && !isStraight) {
+                        warningMsg = "HEAD NOT CENTERED - PLEASE LOOK STRAIGHT AT CAMERA";
+                    }
+
+                    // 4. Check Neutral Face (No Smile)
+                    const mouthWidth = getDistance(landmarks[61], landmarks[291]);
+                    const isSmiling = (mouthWidth / faceWidth) > 0.40;
+                    if (!warningMsg && isSmiling) {
+                        warningMsg = "NEUTRAL FACE REQUIRED - DO NOT SMILE";
+                    }
+
+                    if (warningMsg) {
+                        isReadyForCapture = false;
+                        btnCap.disabled = true;
+                        btnCap.classList.remove('ready-to-capture');
+                        
+                        promptBox.innerText = warningMsg;
+                        promptBox.style.color = "var(--c-yellow)";
+                        status.innerText = "ACTION REQUIRED";
+                        status.className = 'status-badge warning';
+                    } else {
+                        isReadyForCapture = true;
+                        btnCap.disabled = false;
+                        btnCap.classList.add('ready-to-capture');
+                        
+                        promptBox.innerText = "PERFECT. PLEASE CLICK 'CAPTURE USER PICTURE'";
+                        promptBox.style.color = "var(--c-green)";
+                        status.innerText = "READY FOR CAPTURE ✔";
+                        status.className = 'status-badge success';
+                    }
+                }
+            } else {
+                isReadyForCapture = false;
+                btnCap.disabled = true;
+                btnCap.classList.remove('ready-to-capture');
+                promptBox.innerText = "PLEASE LOOK STRAIGHT AT THE CAMERA";
+                promptBox.style.color = "var(--c-red)";
+                status.innerText = "NO FACE DETECTED";
+                status.className = 'status-badge error';
+            }
+        }
+
+        function advanceChallenge() {
+            const status = document.getElementById('statusBadge');
+            status.innerText = "GOOD! NEXT...";
+            status.className = 'status-badge success';
+            currentChallengeIdx++;
+        }
+
+        function capturePhoto() {
+            if (!isReadyForCapture) return;
+
+            livenessPassed = true; // Block FaceMesh tracking loop completely
+
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('canvas');
+            const img = document.getElementById('capturedImg');
+            const wrapper = document.getElementById('camWrapper');
+            const status = document.getElementById('statusBadge');
+            const btnCap = document.getElementById('btnCapture');
+            const btnProc = document.getElementById('btnProceed');
+            const btnRetake = document.getElementById('btnRetake');
+            const scanLine = document.getElementById('scanLine');
+            const promptBox = document.getElementById('livenessPrompt');
+
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 640;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw pure camera feed without CSS mirroring
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const newDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            capturedDataUrl = newDataUrl;
+            
+            if(!capturedPhotosArray.includes(newDataUrl)) {
+                capturedPhotosArray.push(newDataUrl);
+            }
+            
+            renderGallery();
+
+            img.src = capturedDataUrl;
+            img.style.display = 'block';
+            video.style.display = 'none';
+            scanLine.style.display = 'none';
+            promptBox.style.display = 'none';
+
+            wrapper.classList.add('captured');
+            status.classList.remove('warning', 'error');
+            status.classList.add('success');
+            status.innerText = "LIVENESS VERIFIED & CAPTURED ✔";
+
+            btnCap.style.display = 'none';
+            btnProc.style.display = 'flex';
+            btnRetake.style.display = 'flex';
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+
+        function retakePhoto() {
+            const img = document.getElementById('capturedImg');
+            const video = document.getElementById('webcam');
+            const scanLine = document.getElementById('scanLine');
+            const wrapper = document.getElementById('camWrapper');
+            const status = document.getElementById('statusBadge');
+            const btnCap = document.getElementById('btnCapture');
+            const btnProc = document.getElementById('btnProceed');
+            const btnRetake = document.getElementById('btnRetake');
+            const promptBox = document.getElementById('livenessPrompt');
+
+            // Reset States
+            livenessPassed = false;
+            currentChallengeIdx = 0;
+            isBlinkClosed = false;
+            isReadyForCapture = false;
+            prevNosePos = {x: 0, y: 0};
+            
+            challenges.forEach(c => c.current = 0);
+
+            img.style.display = 'none';
+            video.style.display = 'block';
+            scanLine.style.display = 'block';
+            promptBox.style.display = 'block';
+
+            wrapper.classList.remove('captured');
+            status.classList.remove('success', 'error');
+            status.className = 'status-badge warning';
+            status.innerText = "RESTARTING AI SCAN...";
+
+            btnCap.style.display = 'flex';
+            btnCap.disabled = true;
+            btnCap.classList.remove('ready-to-capture');
+            btnProc.style.display = 'none';
+            btnRetake.style.display = 'none';
+            
+            capturedDataUrl = "";
+            renderGallery(); 
+
+            if(!cameraUtil) {
+                initLivenessAI();
+            }
+        }
+
+        function saveAndProceed() {
+            const btnProc = document.getElementById('btnProceed');
+            btnProc.classList.add('processing');
+            btnProc.innerHTML = 'SAVING NODE<span class="wave-dots"><span>.</span><span>.</span><span>.</span></span>';
+            btnProc.style.pointerEvents = 'none';
+            
+            let userSettings = {};
+            try {
+                userSettings = JSON.parse(localStorage.getItem('inf_settings')) || {};
+            } catch(e) {}
+            
+            userSettings.capturedPhoto = capturedDataUrl;
+            localStorage.setItem('inf_settings', JSON.stringify(userSettings));
+            
+            setTimeout(() => { 
+                btnProc.classList.remove('processing');
+                btnProc.classList.add('saved');
+                btnProc.innerHTML = 'SAVED ✔';
+
+                setTimeout(() => {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        window.location.href = 'edit.html'; 
+                    }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+
+        const archInfo = [
+            "System Architecture Integrity: Verified",
+            "Establishing Secure Cryptographic Tunnels",
+            "End-to-End AES-GCM Encryption Active",
+            "Synchronizing Decentralized Nodes",
+            "Zero-Knowledge Proofs Validated",
+            "Protecting Digital Footprint...",
+            "Private Data Exclusively Controlled",
+            "Monitoring Network Latency",
+            "Awaiting User Authorization",
+            "Quantum-Resistant Protocols Engaged"
+        ];
+        let infoIndex = 0;
+        setInterval(() => {
+            const el = document.getElementById('infoCarousel');
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    infoIndex = (infoIndex + 1) % archInfo.length;
+                    el.innerHTML = archInfo[infoIndex] + '<div class="spinner-inline"></div>';
+                    el.style.opacity = '0.6';
+                }, 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
